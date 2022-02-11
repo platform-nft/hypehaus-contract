@@ -43,6 +43,10 @@ describe('HypeHaus', () => {
   });
 
   describe('Initialization', () => {
+    it('reports that the owner of the contract is the deployer', async () => {
+      expect(await hypeHaus.owner()).to.eq(deployer.address);
+    });
+
     it('reports the expected balances for a newly deployed contract', async () => {
       const $1M = ethers.utils.parseUnits('1000000', 18);
       expect(await hypeHaus.balanceOf(deployer.address, hausCoinId)).to.eq($1M);
@@ -70,11 +74,22 @@ describe('HypeHaus', () => {
         .withArgs(4, 1234);
     });
 
-    it('fails when creating a token that already exists', async () => {
+    it('fails to create a new token that already exists', async () => {
       await hypeHaus.createNewToken('ABC_HAUS', 1111);
       await expect(
         hypeHaus.createNewToken('ABC_HAUS', 2222),
-      ).to.be.revertedWith('This ID is already taken');
+      ).to.be.revertedWith('This token ID is already taken');
+    });
+  });
+
+  describe('Transactions', () => {
+    it('successfully transfers 10 HAUS Coins from deployer to the owner', async () => {
+      const initial = await hypeHaus.balanceOf(deployer.address, hausCoinId);
+      hypeHaus.awardToken(hausCoinId, owner.address, 10);
+      expect(await hypeHaus.balanceOf(owner.address, hausCoinId)).to.eq(10);
+      expect(await hypeHaus.balanceOf(deployer.address, hausCoinId)).to.eq(
+        initial.sub(10),
+      );
     });
   });
 });

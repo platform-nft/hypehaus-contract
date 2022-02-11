@@ -36,7 +36,7 @@ contract HypeHaus is ERC1155, Ownable {
     {
         highestId += 1;
         bytes32 newTokenKey = keccak256(bytes(name));
-        require(tokenIds[newTokenKey] == 0, "This ID is already taken");
+        require(tokenIds[newTokenKey] == 0, "This token ID is already taken");
 
         tokenIds[newTokenKey] = highestId;
         _mint(msg.sender, highestId, amount, "");
@@ -44,11 +44,13 @@ contract HypeHaus is ERC1155, Ownable {
         emit CreateNewToken(highestId, amount);
     }
 
+    // TODO: Add ability to add more HAUS coins
+
     function awardToken(
         uint256 id,
         address awardee,
         uint256 amount
     ) public payable onlyOwner {
-        _mint(awardee, id, amount, "");
+        _safeTransferFrom(msg.sender, awardee, id, amount, "");
     }
 }
