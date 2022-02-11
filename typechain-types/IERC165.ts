@@ -6,8 +6,6 @@ import {
   BigNumber,
   BytesLike,
   CallOverrides,
-  ContractTransaction,
-  Overrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -16,32 +14,32 @@ import { FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface GreeterInterface extends utils.Interface {
-  contractName: "Greeter";
+export interface IERC165Interface extends utils.Interface {
+  contractName: "IERC165";
   functions: {
-    "greet()": FunctionFragment;
-    "setGreeting(string)": FunctionFragment;
+    "supportsInterface(bytes4)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "greet", values?: undefined): string;
-  encodeFunctionData(functionFragment: "setGreeting", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "supportsInterface",
+    values: [BytesLike]
+  ): string;
 
-  decodeFunctionResult(functionFragment: "greet", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setGreeting",
+    functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
 
   events: {};
 }
 
-export interface Greeter extends BaseContract {
-  contractName: "Greeter";
+export interface IERC165 extends BaseContract {
+  contractName: "IERC165";
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: GreeterInterface;
+  interface: IERC165Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -63,44 +61,37 @@ export interface Greeter extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    greet(overrides?: CallOverrides): Promise<[string]>;
-
-    setGreeting(
-      _greeting: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    supportsInterface(
+      interfaceId: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
   };
 
-  greet(overrides?: CallOverrides): Promise<string>;
-
-  setGreeting(
-    _greeting: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  supportsInterface(
+    interfaceId: BytesLike,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
 
   callStatic: {
-    greet(overrides?: CallOverrides): Promise<string>;
-
-    setGreeting(_greeting: string, overrides?: CallOverrides): Promise<void>;
+    supportsInterface(
+      interfaceId: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
   };
 
   filters: {};
 
   estimateGas: {
-    greet(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setGreeting(
-      _greeting: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    supportsInterface(
+      interfaceId: BytesLike,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    greet(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setGreeting(
-      _greeting: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    supportsInterface(
+      interfaceId: BytesLike,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }
