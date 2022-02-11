@@ -1,6 +1,20 @@
 {
-  "bracketSpacing": true,
-  "jsxBracketSameLine": true,
-  "singleQuote": true,
-  "trailingComma": "all"
+  "overrides": [
+    {
+      "files": ["**/*.js", "**/*.ts"],
+      "options": {
+        "bracketSpacing": true,
+        "jsxBracketSameLine": true,
+        "singleQuote": true,
+        "tabWidth": 2,
+        "trailingComma": "all"
+      }
+    },
+    {
+      "files": ["**/*.sol"],
+      "options": {
+        "tabWidth": 4
+      }
+    }
+  ]
 }
