@@ -1,12 +1,14 @@
-import { expect } from "chai";
-import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expect } from 'chai';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { HypeHaus } from "../typechain-types/HypeHaus";
+import { HypeHaus } from '../typechain-types/HypeHaus';
 
-describe("HypeHaus", () => {
+describe('HypeHaus', () => {
   let owner: SignerWithAddress;
+  let deployer: SignerWithAddress;
+  let client: SignerWithAddress;
 
   let hypeHaus: HypeHaus;
   let hausCoinId: BigNumber;
@@ -14,9 +16,12 @@ describe("HypeHaus", () => {
   let daoHausId: BigNumber;
 
   beforeEach(async () => {
-    owner = (await ethers.getSigners())[0];
+    const signers = await ethers.getSigners();
+    owner = signers[0];
+    deployer = signers[1];
+    client = signers[2];
 
-    const factory = await ethers.getContractFactory("HypeHaus");
+    const factory = await ethers.getContractFactory('HypeHaus', deployer);
     hypeHaus = (await factory.deploy()) as HypeHaus;
     await hypeHaus.deployed();
 
@@ -31,37 +36,45 @@ describe("HypeHaus", () => {
     daoHausId = await hypeHaus.getIdForTokenKey(DAO_HAUS);
   });
 
-  it("reports the appropriate token ID for a given token key", async () => {
+  it('reports the appropriate token ID for a given token key', async () => {
     expect(hausCoinId).to.eq(0);
     expect(hypeHausId).to.eq(1);
     expect(daoHausId).to.eq(2);
   });
 
-  describe("Initialization", () => {
-    it("reports the expected balance for a newly deployed contract", async () => {
-      const $1M = ethers.utils.parseUnits("1000000", 18);
-      expect(await hypeHaus.balanceOf(owner.address, hausCoinId)).to.eq($1M);
-      expect(await hypeHaus.balanceOf(owner.address, hypeHausId)).to.eq(555);
-      expect(await hypeHaus.balanceOf(owner.address, daoHausId)).to.eq(8888);
+  describe('Initialization', () => {
+    it('reports the expected balances for a newly deployed contract', async () => {
+      const $1M = ethers.utils.parseUnits('1000000', 18);
+      expect(await hypeHaus.balanceOf(deployer.address, hausCoinId)).to.eq($1M);
+      expect(await hypeHaus.balanceOf(deployer.address, hypeHausId)).to.eq(555);
+      expect(await hypeHaus.balanceOf(deployer.address, daoHausId)).to.eq(8888);
+
+      expect(await hypeHaus.balanceOf(owner.address, hausCoinId)).to.eq(0);
+      expect(await hypeHaus.balanceOf(owner.address, hypeHausId)).to.eq(0);
+      expect(await hypeHaus.balanceOf(owner.address, daoHausId)).to.eq(0);
+
+      expect(await hypeHaus.balanceOf(client.address, hausCoinId)).to.eq(0);
+      expect(await hypeHaus.balanceOf(client.address, hypeHausId)).to.eq(0);
+      expect(await hypeHaus.balanceOf(client.address, daoHausId)).to.eq(0);
     });
   });
 
-  describe("Token Creation", () => {
-    it("successfully creates a new token", async () => {
-      await expect(hypeHaus.createNewToken("ABC_HAUS", 1111))
-        .to.emit(hypeHaus, "CreateNewToken")
+  describe('Token Creation', () => {
+    it('successfully creates a new token', async () => {
+      await expect(hypeHaus.createNewToken('ABC_HAUS', 1111))
+        .to.emit(hypeHaus, 'CreateNewToken')
         .withArgs(3, 1111);
 
-      await expect(hypeHaus.createNewToken("DEF_HAUS", 1234))
-        .to.emit(hypeHaus, "CreateNewToken")
+      await expect(hypeHaus.createNewToken('DEF_HAUS', 1234))
+        .to.emit(hypeHaus, 'CreateNewToken')
         .withArgs(4, 1234);
     });
 
-    it("fails when creating a token that already exists", async () => {
-      await hypeHaus.createNewToken("ABC_HAUS", 1111);
+    it('fails when creating a token that already exists', async () => {
+      await hypeHaus.createNewToken('ABC_HAUS', 1111);
       await expect(
-        hypeHaus.createNewToken("ABC_HAUS", 2222)
-      ).to.be.revertedWith("This ID is already taken");
+        hypeHaus.createNewToken('ABC_HAUS', 2222),
+      ).to.be.revertedWith('This ID is already taken');
     });
   });
 });
