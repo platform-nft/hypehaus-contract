@@ -43,7 +43,7 @@ describe('HypeHaus', () => {
   });
 
   describe('Initialization', () => {
-    it('reports that the owner of the contract is the deployer', async () => {
+    it('reports the deployer is the owner of the contract', async () => {
       expect(await hypeHaus.owner()).to.eq(deployer.address);
     });
 
