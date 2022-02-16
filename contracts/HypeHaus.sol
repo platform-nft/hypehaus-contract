@@ -6,54 +6,65 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract HypeHaus is ERC1155, Ownable {
-    event CreateNewToken(uint256 id, uint256 amount);
+    /**
+     * @dev Emitted when a new token kind has been created.
+     */
+    event CreateNewTokenKind(uint256 id, uint256 amount, string uri);
 
-    bytes32 public constant HAUS_COIN = keccak256("HAUS_COIN");
-    bytes32 public constant HYPE_HAUS = keccak256("HYPE_HAUS");
-    bytes32 public constant DAO_HAUS = keccak256("DAO_HAUS");
+    uint256 public constant HAUS_COIN = 0;
+    uint256 public constant HYPE_HAUS = 1;
+    uint256 public constant DAO_HAUS = 2;
 
-    bytes16 internal constant _HEX_SYMBOLS = "0123456789abcdef";
-    uint256 internal constant _URI_LENGTH = 64;
-
-    mapping(bytes32 => uint256) private _tokenIds;
+    mapping(uint256 => string) private _tokenUris;
     uint256 private _nextId = 3;
 
     constructor() ERC1155("") {
-        _tokenIds[HAUS_COIN] = 0;
-        _tokenIds[HYPE_HAUS] = 1;
-        _tokenIds[DAO_HAUS] = 2;
+        // First we mint the appropriate amount for each token type.
+        _mint(msg.sender, HAUS_COIN, 1e6 * 10**18, "");
+        _mint(msg.sender, HYPE_HAUS, 555, "");
+        _mint(msg.sender, DAO_HAUS, 8888, "");
 
-        _mint(msg.sender, _tokenIds[HAUS_COIN], 1e6 * 10**18, "");
-        _mint(msg.sender, _tokenIds[HYPE_HAUS], 555, "");
-        _mint(msg.sender, _tokenIds[DAO_HAUS], 8888, "");
+        // Then we set the URI for each token type.
+        _tokenUris[HAUS_COIN] = "ipfs://<haus-coin>/{id}.json";
+        _tokenUris[HYPE_HAUS] = "ipfs://<hype-haus>/{id}.json";
+        _tokenUris[DAO_HAUS] = "ipfs://<dao-haus>/{id}.json";
     }
 
-    function getIdForTokenKey(bytes32 tokenKey)
-        external
-        view
-        returns (uint256)
-    {
-        return _tokenIds[tokenKey];
+    /**
+     * @dev Adds more HAUS coins by `amount`.
+     */
+    function mintMoreHausCoins(uint256 amount) external onlyOwner {
+        _mint(msg.sender, HAUS_COIN, amount, "");
     }
 
-    function createNewToken(string memory name, uint256 amount)
+    /**
+     * @dev Creates a new token kind with the given `amount` and `uri`.
+     *
+     * It is up to the the whoever calls this function to decide if the JSON
+     * file name `uri` points to conforms to the ERC-1155 Metadata URI JSON
+     * Schema.
+     *
+     * @return The ID of the newly-created token kind.
+     */
+    function createNewTokenKind(uint256 amount, string calldata uri_)
         external
         onlyOwner
+        returns (uint256)
     {
-        bytes32 newTokenKey = keccak256(bytes(name));
-        require(_tokenIds[newTokenKey] == 0, "This token ID is already taken");
+        uint256 newTokenId = _nextId;
 
-        _tokenIds[newTokenKey] = _nextId;
-        _mint(msg.sender, _nextId, amount, "");
+        _mint(msg.sender, newTokenId, amount, "");
+        _tokenUris[newTokenId] = uri_;
+        emit CreateNewTokenKind(newTokenId, amount, uri_);
 
-        emit CreateNewToken(_nextId, amount);
         _nextId += 1;
+        return newTokenId;
     }
 
-    function mintMoreHausCoins(uint256 amount) external onlyOwner {
-        _mint(msg.sender, _tokenIds[HAUS_COIN], amount, "");
-    }
-
+    /**
+     * @dev Awards `amount` token(s) with the given token kind `id` to the
+     * `awardee`.
+     */
     function awardToken(
         uint256 id,
         address awardee,
@@ -62,31 +73,14 @@ contract HypeHaus is ERC1155, Ownable {
         _safeTransferFrom(msg.sender, awardee, id, amount, "");
     }
 
-    // OpenSea doesn't replace "{id}" with the actual ID, so we'll do it
-    // manually here.
-    function uri(uint256 id) public pure override returns (string memory) {
-        bytes memory buffer = new bytes(_URI_LENGTH);
-        uint256 i = _URI_LENGTH - 1;
-
-        // We'll loop until the condition at the end doesn't hold true.
-        while (true) {
-            buffer[i] = _HEX_SYMBOLS[id & 0xf];
-            id >>= 4;
-            // We don't want to decrement if i == 0 because that would cause an
-            // underflow error.
-            if (i == 0) break;
-            else i -= 1;
-        }
-
-        string memory hexString = string(buffer);
-
-        return
-            string(
-                abi.encodePacked(
-                    "https://gateway.pinata.cloud/ipfs/---/metadata/api/item/",
-                    hexString,
-                    ".json"
-                )
-            );
+    /**
+     * @dev Returns the URI of the given token type ID.
+     *
+     * This function DOES NOT process `{id}` nor asserts that the JSON file name
+     * it points to conforms to the ERC-1155 Metadata URI JSON Schema. It is up
+     * to the client's discretion to do what they want with the URI.
+     */
+    function uri(uint256 id) public view override returns (string memory) {
+        return _tokenUris[id];
     }
 }

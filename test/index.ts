@@ -5,6 +5,10 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { HypeHaus } from '../typechain-types/HypeHaus';
 
+const HAUS_COIN_URI = 'ipfs://<haus-coin>/{id}.json';
+const HYPE_HAUS_URI = 'ipfs://<hype-haus>/{id}.json';
+const DAO_HAUS_URI = 'ipfs://<dao-haus>/{id}.json';
+
 describe('HypeHaus Contract', () => {
   let owner: SignerWithAddress;
   let deployer: SignerWithAddress;
@@ -25,15 +29,9 @@ describe('HypeHaus Contract', () => {
     hypeHaus = (await factory.deploy()) as HypeHaus;
     await hypeHaus.deployed();
 
-    const [HAUS_COIN_KEY, HYPE_HAUS_KEY, DAO_HAUS_KEY] = await Promise.all([
-      hypeHaus.HAUS_COIN(),
-      hypeHaus.HYPE_HAUS(),
-      hypeHaus.DAO_HAUS(),
-    ]);
-
-    HAUS_COIN = await hypeHaus.getIdForTokenKey(HAUS_COIN_KEY);
-    HYPE_HAUS = await hypeHaus.getIdForTokenKey(HYPE_HAUS_KEY);
-    DAO_HAUS = await hypeHaus.getIdForTokenKey(DAO_HAUS_KEY);
+    HAUS_COIN = await hypeHaus.HAUS_COIN();
+    HYPE_HAUS = await hypeHaus.HYPE_HAUS();
+    DAO_HAUS = await hypeHaus.DAO_HAUS();
   });
 
   describe('Initialization', () => {
@@ -64,36 +62,22 @@ describe('HypeHaus Contract', () => {
   });
 
   describe('Token URI', () => {
-    it('reports correct token URI for given token ID', async () => {
-      async function checkFileIdForTokenId(tokenId: BigNumber) {
-        const tokenUri = await hypeHaus.uri(tokenId);
-        const [fileId] = tokenUri.slice(-1 * (64 + '.json'.length)).split('.');
-        expect(fileId).to.match(/^[0-9a-f]{64}$/g);
-        expect(fileId).to.eq(tokenId.toHexString().slice(2).padStart(64, '0'));
-      }
-
-      await checkFileIdForTokenId(HAUS_COIN);
-      await checkFileIdForTokenId(HYPE_HAUS);
-      await checkFileIdForTokenId(DAO_HAUS);
+    it('reports correct token URI for given token kind ID', async () => {
+      expect(await hypeHaus.uri(HAUS_COIN)).to.eq(HAUS_COIN_URI);
+      expect(await hypeHaus.uri(HYPE_HAUS)).to.eq(HYPE_HAUS_URI);
+      expect(await hypeHaus.uri(DAO_HAUS)).to.eq(DAO_HAUS_URI);
     });
   });
 
   describe('Token Creation', () => {
     it('successfully creates new tokens', async () => {
-      await expect(hypeHaus.createNewToken('ABC_HAUS', 1111))
-        .to.emit(hypeHaus, 'CreateNewToken')
-        .withArgs(3, 1111);
+      await expect(hypeHaus.createNewTokenKind(1111, ''))
+        .to.emit(hypeHaus, 'CreateNewTokenKind')
+        .withArgs(3, 1111, '');
 
-      await expect(hypeHaus.createNewToken('DEF_HAUS', 1234))
-        .to.emit(hypeHaus, 'CreateNewToken')
-        .withArgs(4, 1234);
-    });
-
-    it('fails to create new token that already exists', async () => {
-      await hypeHaus.createNewToken('ABC_HAUS', 1111);
-      await expect(
-        hypeHaus.createNewToken('ABC_HAUS', 2222),
-      ).to.be.revertedWith('This token ID is already taken');
+      await expect(hypeHaus.createNewTokenKind(1234, ''))
+        .to.emit(hypeHaus, 'CreateNewTokenKind')
+        .withArgs(4, 1234, '');
     });
   });
 
@@ -151,12 +135,14 @@ describe('HypeHaus Contract', () => {
     });
   });
 
-  // describe('Minting', () => {
-  //   describe('HAUS Coins', () => {
-  //     it('successfully mints more HAUS coins', async () => {
-  //       const $1M = ethers.utils.parseUnits('1000000', 18);
-  //       await hypeHaus.mintMoreHausCoins(1000);
-  //     });
-  //   });
-  // });
+  /*
+  describe('Minting', () => {
+    describe('HAUS Coins', () => {
+      it('successfully mints more HAUS coins', async () => {
+        const $1M = ethers.utils.parseUnits('1000000', 18);
+        await hypeHaus.mintMoreHausCoins(1000);
+      });
+    });
+  });
+  */
 });

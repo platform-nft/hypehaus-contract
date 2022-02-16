@@ -27,8 +27,7 @@ export interface HypeHausInterface extends utils.Interface {
     "awardToken(uint256,address,uint256)": FunctionFragment;
     "balanceOf(address,uint256)": FunctionFragment;
     "balanceOfBatch(address[],uint256[])": FunctionFragment;
-    "createNewToken(string,uint256)": FunctionFragment;
-    "getIdForTokenKey(bytes32)": FunctionFragment;
+    "createNewTokenKind(uint256,string)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "mintMoreHausCoins(uint256)": FunctionFragment;
     "owner()": FunctionFragment;
@@ -57,12 +56,8 @@ export interface HypeHausInterface extends utils.Interface {
     values: [string[], BigNumberish[]]
   ): string;
   encodeFunctionData(
-    functionFragment: "createNewToken",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getIdForTokenKey",
-    values: [BytesLike]
+    functionFragment: "createNewTokenKind",
+    values: [BigNumberish, string]
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
@@ -109,11 +104,7 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "createNewToken",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getIdForTokenKey",
+    functionFragment: "createNewTokenKind",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -153,7 +144,7 @@ export interface HypeHausInterface extends utils.Interface {
 
   events: {
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "CreateNewToken(uint256,uint256)": EventFragment;
+    "CreateNewTokenKind(uint256,uint256,string)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "TransferBatch(address,address,address,uint256[],uint256[])": EventFragment;
     "TransferSingle(address,address,address,uint256,uint256)": EventFragment;
@@ -161,7 +152,7 @@ export interface HypeHausInterface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "CreateNewToken"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "CreateNewTokenKind"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TransferBatch"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TransferSingle"): EventFragment;
@@ -175,12 +166,13 @@ export type ApprovalForAllEvent = TypedEvent<
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
-export type CreateNewTokenEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  { id: BigNumber; amount: BigNumber }
+export type CreateNewTokenKindEvent = TypedEvent<
+  [BigNumber, BigNumber, string],
+  { id: BigNumber; amount: BigNumber; uri: string }
 >;
 
-export type CreateNewTokenEventFilter = TypedEventFilter<CreateNewTokenEvent>;
+export type CreateNewTokenKindEventFilter =
+  TypedEventFilter<CreateNewTokenKindEvent>;
 
 export type OwnershipTransferredEvent = TypedEvent<
   [string, string],
@@ -251,11 +243,11 @@ export interface HypeHaus extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    DAO_HAUS(overrides?: CallOverrides): Promise<[string]>;
+    DAO_HAUS(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    HAUS_COIN(overrides?: CallOverrides): Promise<[string]>;
+    HAUS_COIN(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    HYPE_HAUS(overrides?: CallOverrides): Promise<[string]>;
+    HYPE_HAUS(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     awardToken(
       id: BigNumberish,
@@ -276,16 +268,11 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber[]]>;
 
-    createNewToken(
-      name: string,
+    createNewTokenKind(
       amount: BigNumberish,
+      uri_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    getIdForTokenKey(
-      tokenKey: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
 
     isApprovedForAll(
       account: string,
@@ -341,11 +328,11 @@ export interface HypeHaus extends BaseContract {
     uri(id: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
   };
 
-  DAO_HAUS(overrides?: CallOverrides): Promise<string>;
+  DAO_HAUS(overrides?: CallOverrides): Promise<BigNumber>;
 
-  HAUS_COIN(overrides?: CallOverrides): Promise<string>;
+  HAUS_COIN(overrides?: CallOverrides): Promise<BigNumber>;
 
-  HYPE_HAUS(overrides?: CallOverrides): Promise<string>;
+  HYPE_HAUS(overrides?: CallOverrides): Promise<BigNumber>;
 
   awardToken(
     id: BigNumberish,
@@ -366,16 +353,11 @@ export interface HypeHaus extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber[]>;
 
-  createNewToken(
-    name: string,
+  createNewTokenKind(
     amount: BigNumberish,
+    uri_: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  getIdForTokenKey(
-    tokenKey: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
 
   isApprovedForAll(
     account: string,
@@ -431,11 +413,11 @@ export interface HypeHaus extends BaseContract {
   uri(id: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    DAO_HAUS(overrides?: CallOverrides): Promise<string>;
+    DAO_HAUS(overrides?: CallOverrides): Promise<BigNumber>;
 
-    HAUS_COIN(overrides?: CallOverrides): Promise<string>;
+    HAUS_COIN(overrides?: CallOverrides): Promise<BigNumber>;
 
-    HYPE_HAUS(overrides?: CallOverrides): Promise<string>;
+    HYPE_HAUS(overrides?: CallOverrides): Promise<BigNumber>;
 
     awardToken(
       id: BigNumberish,
@@ -456,14 +438,9 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber[]>;
 
-    createNewToken(
-      name: string,
+    createNewTokenKind(
       amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getIdForTokenKey(
-      tokenKey: BytesLike,
+      uri_: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -531,11 +508,16 @@ export interface HypeHaus extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "CreateNewToken(uint256,uint256)"(
+    "CreateNewTokenKind(uint256,uint256,string)"(
       id?: null,
-      amount?: null
-    ): CreateNewTokenEventFilter;
-    CreateNewToken(id?: null, amount?: null): CreateNewTokenEventFilter;
+      amount?: null,
+      uri?: null
+    ): CreateNewTokenKindEventFilter;
+    CreateNewTokenKind(
+      id?: null,
+      amount?: null,
+      uri?: null
+    ): CreateNewTokenKindEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -609,15 +591,10 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    createNewToken(
-      name: string,
+    createNewTokenKind(
       amount: BigNumberish,
+      uri_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    getIdForTokenKey(
-      tokenKey: BytesLike,
-      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     isApprovedForAll(
@@ -700,15 +677,10 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    createNewToken(
-      name: string,
+    createNewTokenKind(
       amount: BigNumberish,
+      uri_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getIdForTokenKey(
-      tokenKey: BytesLike,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     isApprovedForAll(
