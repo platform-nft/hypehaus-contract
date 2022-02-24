@@ -17,8 +17,8 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface HypeHausInterface extends utils.Interface {
-  contractName: "HypeHaus";
+export interface HypeHausERC721Interface extends utils.Interface {
+  contractName: "HypeHausERC721";
   functions: {
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
@@ -164,13 +164,13 @@ export type TransferEvent = TypedEvent<
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
-export interface HypeHaus extends BaseContract {
-  contractName: "HypeHaus";
+export interface HypeHausERC721 extends BaseContract {
+  contractName: "HypeHausERC721";
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: HypeHausInterface;
+  interface: HypeHausERC721Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

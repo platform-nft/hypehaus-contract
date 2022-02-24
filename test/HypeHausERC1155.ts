@@ -3,18 +3,18 @@ import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { HypeHaus } from '../typechain-types/HypeHaus';
+import { HypeHausERC1155 } from '../typechain-types/HypeHausERC1155';
 
 const HAUS_COIN_URI = 'ipfs://<haus-coin>/{id}.json';
 const HYPE_HAUS_URI = 'ipfs://<hype-haus>/{id}.json';
 const DAO_HAUS_URI = 'ipfs://<dao-haus>/{id}.json';
 
-describe('HypeHaus Contract', () => {
+describe('HypeHaus ERC1155 contract', () => {
   let owner: SignerWithAddress;
   let deployer: SignerWithAddress;
   let client: SignerWithAddress;
 
-  let hypeHaus: HypeHaus;
+  let hypeHaus: HypeHausERC1155;
   let HAUS_COIN: BigNumber;
   let HYPE_HAUS: BigNumber;
   let DAO_HAUS: BigNumber;
@@ -25,8 +25,11 @@ describe('HypeHaus Contract', () => {
     deployer = signers[1];
     client = signers[2];
 
-    const factory = await ethers.getContractFactory('HypeHaus', deployer);
-    hypeHaus = (await factory.deploy()) as HypeHaus;
+    const factory = await ethers.getContractFactory(
+      'HypeHausERC1155',
+      deployer,
+    );
+    hypeHaus = (await factory.deploy()) as HypeHausERC1155;
     await hypeHaus.deployed();
 
     HAUS_COIN = await hypeHaus.HAUS_COIN();
