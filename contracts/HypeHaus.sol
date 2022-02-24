@@ -76,9 +76,9 @@ contract HypeHaus is ERC1155, Ownable {
     /**
      * @dev Returns the URI of the given token type ID.
      *
-     * This function DOES NOT process `{id}` nor asserts that the JSON file name
-     * it points to conforms to the ERC-1155 Metadata URI JSON Schema. It is up
-     * to the client's discretion to do what they want with the URI.
+     * This function DOES NOT process `{id}` nor asserts that the filename of
+     * the JSON file stored conforms to the ERC-1155 Metadata URI JSON Schema.
+     * It is up to the client's discretion to do what they want with the URI.
      */
     function uri(uint256 id) public view override returns (string memory) {
         return _tokenUris[id];

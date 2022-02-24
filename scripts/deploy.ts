@@ -1,10 +1,10 @@
 import { ethers } from 'hardhat';
 
 async function main() {
-  const HypeHausContract = await ethers.getContractFactory('HypeHausContract');
-  const hypeHausContract = await HypeHausContract.deploy();
-  await hypeHausContract.deployed();
-  console.log('HyperHausContract deployed to:', hypeHausContract.address);
+  const HypeHaus = await ethers.getContractFactory('HypeHaus');
+  const hypeHaus = await HypeHaus.deploy();
+  await hypeHaus.deployed();
+  console.log('HyperHaus deployed to:', hypeHaus.address);
 }
 
 main().catch((error) => {
