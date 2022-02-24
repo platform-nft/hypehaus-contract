@@ -85,13 +85,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.HypeHaus__factory>;
     getContractFactory(
+      name: "HypeHausBase",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.HypeHausBase__factory>;
+    getContractFactory(
+      name: "TestHypeHaus",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TestHypeHaus__factory>;
+    getContractFactory(
       name: "HypeHausERC1155",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.HypeHausERC1155__factory>;
-    getContractFactory(
-      name: "HypeHausERC721",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.HypeHausERC721__factory>;
     getContractFactory(
       name: "IHausCoin",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -188,15 +192,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.HypeHaus>;
     getContractAt(
+      name: "HypeHausBase",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.HypeHausBase>;
+    getContractAt(
+      name: "TestHypeHaus",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TestHypeHaus>;
+    getContractAt(
       name: "HypeHausERC1155",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.HypeHausERC1155>;
-    getContractAt(
-      name: "HypeHausERC721",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.HypeHausERC721>;
     getContractAt(
       name: "IHausCoin",
       address: string,

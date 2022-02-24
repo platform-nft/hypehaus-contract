@@ -13,13 +13,15 @@ describe('HausCoin contract', () => {
     deployer = signers[0];
 
     const factory = await ethers.getContractFactory('HausCoin', deployer);
-    hausCoin = (await factory.deploy(50)) as HausCoin;
+    hausCoin = (await factory.deploy()) as HausCoin;
     await hausCoin.deployed();
   });
 
   describe('Initialization', () => {
-    it('it reports the expected total supply', async () => {
-      expect(await hausCoin.totalSupply()).to.eq(50);
+    it('reports the expected initial total supply', async () => {
+      expect(await hausCoin.totalSupply()).to.eq(
+        ethers.BigNumber.from(1e6).mul(ethers.BigNumber.from(10).pow(18)),
+      );
     });
   });
 });

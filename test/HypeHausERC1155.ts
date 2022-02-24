@@ -9,7 +9,7 @@ const HAUS_COIN_URI = 'ipfs://<haus-coin>/{id}.json';
 const HYPE_HAUS_URI = 'ipfs://<hype-haus>/{id}.json';
 const DAO_HAUS_URI = 'ipfs://<dao-haus>/{id}.json';
 
-describe('HypeHaus ERC1155 contract', () => {
+describe('ERC1155 contract', () => {
   let owner: SignerWithAddress;
   let deployer: SignerWithAddress;
   let client: SignerWithAddress;
