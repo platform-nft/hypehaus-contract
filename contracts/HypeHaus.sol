@@ -40,17 +40,20 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         onlyOwner
         returns (uint256)
     {
-        require(_nextTokenId < _maxSupply, "Supply exhausted");
+        require(_nextTokenId < _maxSupply, "HypeHaus: Supply exhausted");
 
         uint256 newTokenId = _nextTokenId;
         _safeMint(awardee, newTokenId);
-        _setTokenURI(
-            newTokenId,
-            string(abi.encodePacked(Strings.toString(newTokenId), ".json"))
-        );
-        emit AwardToken(newTokenId, awardee);
 
+        // This function will prepend `_baseURIString` for us.
+        string memory newTokenURI = string(
+            abi.encodePacked(Strings.toString(newTokenId), ".json")
+        );
+        _setTokenURI(newTokenId, newTokenURI);
+
+        emit AwardToken(newTokenId, awardee);
         _nextTokenId += 1;
+
         return newTokenId;
     }
 
@@ -75,7 +78,8 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Return the base URI provided through the constructor.
+     * @dev Overrides the default `baseURI` function to return the custom base
+     * URI provided through the constructor.
      */
     function _baseURI() internal view override returns (string memory) {
         return _baseURIString;

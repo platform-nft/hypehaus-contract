@@ -57,7 +57,7 @@ describe('HypeHaus contract', () => {
       );
 
       await expect(hypeHaus.awardToken(addresses.owner)).to.be.revertedWith(
-        'Supply exhausted',
+        'HypeHaus: Supply exhausted',
       );
     });
   });
