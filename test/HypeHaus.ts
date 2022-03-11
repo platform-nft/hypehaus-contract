@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-import { TestHypeHaus } from '../typechain-types/TestHypeHaus';
+import { HypeHaus } from '../typechain-types/HypeHaus';
 
 const MAX_SUPPLY = 10;
 const BASE_URL = 'test://abc123/';
 
 describe('HypeHaus contract', () => {
-  let hypeHaus: TestHypeHaus;
+  let hypeHaus: HypeHaus;
   let addresses: Record<'client' | 'deployer' | 'owner', string>;
 
   beforeEach(async () => {
@@ -18,9 +18,9 @@ describe('HypeHaus contract', () => {
       client: client.address,
     };
 
-    const factory = await ethers.getContractFactory('TestHypeHaus', deployer);
+    const factory = await ethers.getContractFactory('HypeHaus', deployer);
 
-    hypeHaus = (await factory.deploy()) as TestHypeHaus;
+    hypeHaus = (await factory.deploy(MAX_SUPPLY, BASE_URL)) as HypeHaus;
     await hypeHaus.deployed();
   });
 
@@ -32,19 +32,19 @@ describe('HypeHaus contract', () => {
 
   describe('Awarding', () => {
     it('successfully mints HYPEhaus tokens when supply available', async () => {
-      expect(await hypeHaus.totalSupply()).to.eq(0);
+      expect(await hypeHaus.totalMinted()).to.eq(0);
 
       await expect(hypeHaus.awardToken(addresses.owner))
         .to.emit(hypeHaus, 'AwardToken')
         .withArgs(0, addresses.owner);
 
-      expect(await hypeHaus.totalSupply()).to.eq(1);
+      expect(await hypeHaus.totalMinted()).to.eq(1);
 
       await expect(hypeHaus.awardToken(addresses.owner))
         .to.emit(hypeHaus, 'AwardToken')
         .withArgs(1, addresses.owner);
 
-      expect(await hypeHaus.totalSupply()).to.eq(2);
+      expect(await hypeHaus.totalMinted()).to.eq(2);
     });
 
     it('fails to mint HYPEhaus tokens when supply exhausted', async () => {

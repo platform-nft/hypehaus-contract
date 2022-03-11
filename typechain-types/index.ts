@@ -15,8 +15,6 @@ export type { IERC165 } from "./IERC165";
 export type { HausCoin } from "./HausCoin";
 export type { IHausCoin } from "./IHausCoin";
 export type { HypeHaus } from "./HypeHaus";
-export type { HypeHausBase } from "./HypeHausBase";
-export type { TestHypeHaus } from "./TestHypeHaus";
 
 export { Ownable__factory } from "./factories/Ownable__factory";
 export { ERC20__factory } from "./factories/ERC20__factory";
@@ -32,5 +30,3 @@ export { IERC165__factory } from "./factories/IERC165__factory";
 export { HausCoin__factory } from "./factories/HausCoin__factory";
 export { IHausCoin__factory } from "./factories/IHausCoin__factory";
 export { HypeHaus__factory } from "./factories/HypeHaus__factory";
-export { HypeHausBase__factory } from "./factories/HypeHausBase__factory";
-export { TestHypeHaus__factory } from "./factories/TestHypeHaus__factory";

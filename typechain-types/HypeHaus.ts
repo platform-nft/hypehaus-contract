@@ -36,7 +36,7 @@ export interface HypeHausInterface extends utils.Interface {
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
-    "totalSupply()": FunctionFragment;
+    "totalMinted()": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
@@ -84,7 +84,7 @@ export interface HypeHausInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "totalSupply",
+    functionFragment: "totalMinted",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -130,7 +130,7 @@ export interface HypeHausInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "tokenURI", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "totalSupply",
+    functionFragment: "totalMinted",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -293,7 +293,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
+    totalMinted(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     transferFrom(
       from: string,
@@ -374,7 +374,7 @@ export interface HypeHaus extends BaseContract {
 
   tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+  totalMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
   transferFrom(
     from: string,
@@ -450,7 +450,7 @@ export interface HypeHaus extends BaseContract {
 
     tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+    totalMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
     transferFrom(
       from: string,
@@ -588,7 +588,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+    totalMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
     transferFrom(
       from: string,
@@ -679,7 +679,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    totalMinted(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     transferFrom(
       from: string,
