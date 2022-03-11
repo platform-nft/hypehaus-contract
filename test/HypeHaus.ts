@@ -69,6 +69,12 @@ describe('HypeHaus contract', () => {
 
       await hypeHaus.awardToken(addresses.client);
       expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URL}1.json`);
+
+      await hypeHaus.awardToken(addresses.client);
+      expect(await hypeHaus.tokenURI(2)).to.eq(`${BASE_URL}2.json`);
+
+      // We don't care about the error message so we leave it blank here
+      await expect(hypeHaus.tokenURI(3)).to.be.revertedWith('');
     });
   });
 });
