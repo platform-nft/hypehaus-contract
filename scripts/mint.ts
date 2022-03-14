@@ -4,11 +4,10 @@ import { HypeHaus } from '../typechain-types/HypeHaus';
 const { CONTRACT_ADDRESS = '', LOCAL_CONTRACT_ADDRESS = '' } = process.env;
 
 async function main() {
-  console.log('On network:', hre.network.name);
+  const { name: networkName } = hre.network;
+  console.log('On network:', networkName);
   const contractAddress =
-    hre.network.name === 'localhost'
-      ? LOCAL_CONTRACT_ADDRESS
-      : CONTRACT_ADDRESS;
+    networkName === 'localhost' ? LOCAL_CONTRACT_ADDRESS : CONTRACT_ADDRESS;
 
   const [deployer, another] = await ethers.getSigners();
   console.log("Deployer's address:", deployer.address);
@@ -19,10 +18,11 @@ async function main() {
   const printTotalMinted = async () => {
     const totalMinted = await hypeHaus
       .totalMinted()
-      .then((it) => it.toString());
+      .then((value) => value.toString());
     console.log('Total minted so far:', totalMinted);
   };
 
+  // First print initial minted amount
   await printTotalMinted();
 
   await hypeHaus.mintHypeHaus(deployer.address);

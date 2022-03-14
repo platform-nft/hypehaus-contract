@@ -18,7 +18,7 @@ async function main() {
   const hypeHaus = await HypeHaus.deploy(555, `ipfs://${METADATA_CID}/`);
   await hypeHaus.deployed();
 
-  console.log('HyperHaus deployed to:', hypeHaus.address);
+  console.log('HyperHaus contract deployed to:', hypeHaus.address);
 }
 
 main().catch((error) => {

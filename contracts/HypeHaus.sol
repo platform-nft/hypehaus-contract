@@ -19,7 +19,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     string internal _baseURIString = "";
 
     constructor(uint256 maxSupply_, string memory baseURI_)
-        ERC721("HypeHaus", "HYPE")
+        ERC721("HYPEhaus", "HYPE")
     {
         _maxSupply = maxSupply_;
         _baseURIString = baseURI_;

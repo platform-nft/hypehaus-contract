@@ -4,7 +4,7 @@ import { ethers } from 'hardhat';
 import { HypeHaus } from '../typechain-types/HypeHaus';
 
 const MAX_SUPPLY = 10;
-const BASE_URL = 'test://abc123/';
+const BASE_URI = 'test://abc123/';
 
 describe('HypeHaus contract', () => {
   let hypeHaus: HypeHaus;
@@ -20,7 +20,7 @@ describe('HypeHaus contract', () => {
 
     const factory = await ethers.getContractFactory('HypeHaus', deployer);
 
-    hypeHaus = (await factory.deploy(MAX_SUPPLY, BASE_URL)) as HypeHaus;
+    hypeHaus = (await factory.deploy(MAX_SUPPLY, BASE_URI)) as HypeHaus;
     await hypeHaus.deployed();
   });
 
@@ -65,16 +65,16 @@ describe('HypeHaus contract', () => {
   describe('Token URI', () => {
     it('reports correct token URI for given token ID', async () => {
       await hypeHaus.mintHypeHaus(addresses.owner);
-      expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URL}0.json`);
+      expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URI}0.json`);
 
       await hypeHaus.mintHypeHaus(addresses.client);
-      expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URL}1.json`);
+      expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URI}1.json`);
 
       await hypeHaus.mintHypeHaus(addresses.client);
-      expect(await hypeHaus.tokenURI(2)).to.eq(`${BASE_URL}2.json`);
+      expect(await hypeHaus.tokenURI(2)).to.eq(`${BASE_URI}2.json`);
 
       await hypeHaus.mintHypeHaus(addresses.client);
-      expect(await hypeHaus.tokenURI(3)).to.eq(`${BASE_URL}3.json`);
+      expect(await hypeHaus.tokenURI(3)).to.eq(`${BASE_URI}3.json`);
 
       // We don't care about the error messages so we leave it blank here
       await expect(hypeHaus.tokenURI(4)).to.be.revertedWith('');
