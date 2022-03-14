@@ -34,14 +34,14 @@ describe('HypeHaus contract', () => {
     it('successfully mints HYPEhaus tokens when supply available', async () => {
       expect(await hypeHaus.totalMinted()).to.eq(0);
 
-      await expect(hypeHaus.awardToken(addresses.owner))
-        .to.emit(hypeHaus, 'AwardToken')
+      await expect(hypeHaus.mintHypeHaus(addresses.owner))
+        .to.emit(hypeHaus, 'MintHypeHaus')
         .withArgs(0, addresses.owner);
 
       expect(await hypeHaus.totalMinted()).to.eq(1);
 
-      await expect(hypeHaus.awardToken(addresses.owner))
-        .to.emit(hypeHaus, 'AwardToken')
+      await expect(hypeHaus.mintHypeHaus(addresses.owner))
+        .to.emit(hypeHaus, 'MintHypeHaus')
         .withArgs(1, addresses.owner);
 
       expect(await hypeHaus.totalMinted()).to.eq(2);
@@ -50,13 +50,13 @@ describe('HypeHaus contract', () => {
     it('fails to mint HYPEhaus tokens when supply exhausted', async () => {
       await Promise.all(
         [...Array(MAX_SUPPLY).keys()].map(async (_, index) => {
-          await hypeHaus.awardToken(
+          await hypeHaus.mintHypeHaus(
             index % 2 == 0 ? addresses.owner : addresses.client,
           );
         }),
       );
 
-      await expect(hypeHaus.awardToken(addresses.owner)).to.be.revertedWith(
+      await expect(hypeHaus.mintHypeHaus(addresses.owner)).to.be.revertedWith(
         'HypeHaus: Supply exhausted',
       );
     });
@@ -64,17 +64,21 @@ describe('HypeHaus contract', () => {
 
   describe('Token URI', () => {
     it('reports correct token URI for given token ID', async () => {
-      await hypeHaus.awardToken(addresses.owner);
+      await hypeHaus.mintHypeHaus(addresses.owner);
       expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URL}0.json`);
 
-      await hypeHaus.awardToken(addresses.client);
+      await hypeHaus.mintHypeHaus(addresses.client);
       expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URL}1.json`);
 
-      await hypeHaus.awardToken(addresses.client);
+      await hypeHaus.mintHypeHaus(addresses.client);
       expect(await hypeHaus.tokenURI(2)).to.eq(`${BASE_URL}2.json`);
 
-      // We don't care about the error message so we leave it blank here
-      await expect(hypeHaus.tokenURI(3)).to.be.revertedWith('');
+      await hypeHaus.mintHypeHaus(addresses.client);
+      expect(await hypeHaus.tokenURI(3)).to.eq(`${BASE_URL}3.json`);
+
+      // We don't care about the error messages so we leave it blank here
+      await expect(hypeHaus.tokenURI(4)).to.be.revertedWith('');
+      await expect(hypeHaus.tokenURI(MAX_SUPPLY)).to.be.revertedWith('');
     });
   });
 });

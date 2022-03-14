@@ -22,11 +22,11 @@ export interface HypeHausInterface extends utils.Interface {
   contractName: "HypeHaus";
   functions: {
     "approve(address,uint256)": FunctionFragment;
-    "awardToken(address)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "maxSupply()": FunctionFragment;
+    "mintHypeHaus(address)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
@@ -45,7 +45,6 @@ export interface HypeHausInterface extends utils.Interface {
     functionFragment: "approve",
     values: [string, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "awardToken", values: [string]): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
   encodeFunctionData(
     functionFragment: "getApproved",
@@ -56,6 +55,10 @@ export interface HypeHausInterface extends utils.Interface {
     values: [string, string]
   ): string;
   encodeFunctionData(functionFragment: "maxSupply", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "mintHypeHaus",
+    values: [string]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -97,7 +100,6 @@ export interface HypeHausInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "awardToken", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
@@ -108,6 +110,10 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "maxSupply", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "mintHypeHaus",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
@@ -145,14 +151,14 @@ export interface HypeHausInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "AwardToken(uint256,address)": EventFragment;
+    "MintHypeHaus(uint256,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AwardToken"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MintHypeHaus"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
@@ -171,12 +177,12 @@ export type ApprovalForAllEvent = TypedEvent<
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
-export type AwardTokenEvent = TypedEvent<
+export type MintHypeHausEvent = TypedEvent<
   [BigNumber, string],
-  { tokenId: BigNumber; awardee: string }
+  { tokenId: BigNumber; receiver: string }
 >;
 
-export type AwardTokenEventFilter = TypedEventFilter<AwardTokenEvent>;
+export type MintHypeHausEventFilter = TypedEventFilter<MintHypeHausEvent>;
 
 export type OwnershipTransferredEvent = TypedEvent<
   [string, string],
@@ -227,11 +233,6 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    awardToken(
-      awardee: string,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     balanceOf(owner: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getApproved(
@@ -246,6 +247,11 @@ export interface HypeHaus extends BaseContract {
     ): Promise<[boolean]>;
 
     maxSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    mintHypeHaus(
+      receiver: string,
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     name(overrides?: CallOverrides): Promise<[string]>;
 
@@ -314,11 +320,6 @@ export interface HypeHaus extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  awardToken(
-    awardee: string,
-    overrides?: PayableOverrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   getApproved(
@@ -333,6 +334,11 @@ export interface HypeHaus extends BaseContract {
   ): Promise<boolean>;
 
   maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
+
+  mintHypeHaus(
+    receiver: string,
+    overrides?: PayableOverrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   name(overrides?: CallOverrides): Promise<string>;
 
@@ -395,8 +401,6 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    awardToken(awardee: string, overrides?: CallOverrides): Promise<BigNumber>;
-
     balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     getApproved(
@@ -411,6 +415,11 @@ export interface HypeHaus extends BaseContract {
     ): Promise<boolean>;
 
     maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
+
+    mintHypeHaus(
+      receiver: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -488,11 +497,11 @@ export interface HypeHaus extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "AwardToken(uint256,address)"(
+    "MintHypeHaus(uint256,address)"(
       tokenId?: null,
-      awardee?: null
-    ): AwardTokenEventFilter;
-    AwardToken(tokenId?: null, awardee?: null): AwardTokenEventFilter;
+      receiver?: null
+    ): MintHypeHausEventFilter;
+    MintHypeHaus(tokenId?: null, receiver?: null): MintHypeHausEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -522,11 +531,6 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    awardToken(
-      awardee: string,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     getApproved(
@@ -541,6 +545,11 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
+
+    mintHypeHaus(
+      receiver: string,
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -610,11 +619,6 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    awardToken(
-      awardee: string,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     balanceOf(
       owner: string,
       overrides?: CallOverrides
@@ -632,6 +636,11 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     maxSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    mintHypeHaus(
+      receiver: string,
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

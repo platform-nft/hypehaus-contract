@@ -7,9 +7,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract HypeHaus is ERC721URIStorage, Ownable {
     /**
-     * @dev Emitted when a new HYPEhaus token is awarded to an address.
+     * @dev Emitted when a new HYPEhaus token is minted.
      */
-    event AwardToken(uint256 tokenId, address awardee);
+    event MintHypeHaus(uint256 tokenId, address receiver);
 
     // The next available token ID
     uint256 internal _nextTokenId = 0;
@@ -26,15 +26,14 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Mints a new HYPEhaus token and awards it to the `awardee`.
-     * @return uint256 The new ID associated with the newly minted token.
+     * @dev Mints a new HYPEhaus token to the `receiver`.
+     * @return uint256 The ID associated with the newly minted token.
      *
      * TODO: Maybe the token URI generation should happen in the front-end
      * instead? It'll be much more easier and efficient to let JavaScript
-     * generate the URI before passing it to this function, but can we restrict
-     * it so that only the contract's owner can do that?
+     * generate the URI before passing it to this function.
      */
-    function awardToken(address awardee)
+    function mintHypeHaus(address receiver)
         external
         payable
         onlyOwner
@@ -43,15 +42,14 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         require(_nextTokenId < _maxSupply, "HypeHaus: Supply exhausted");
 
         uint256 newTokenId = _nextTokenId;
-        _safeMint(awardee, newTokenId);
-
-        // This function will prepend `_baseURIString` for us.
         string memory newTokenURI = string(
+            // This function will prepend `_baseURIString` for us.
             abi.encodePacked(Strings.toString(newTokenId), ".json")
         );
-        _setTokenURI(newTokenId, newTokenURI);
 
-        emit AwardToken(newTokenId, awardee);
+        _safeMint(receiver, newTokenId);
+        _setTokenURI(newTokenId, newTokenURI);
+        emit MintHypeHaus(newTokenId, receiver);
         _nextTokenId += 1;
 
         return newTokenId;
@@ -60,8 +58,8 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Returns the maximum supply of HYPEhaus tokens available. Note that
      * this value never changes -- it DOES NOT decrease as the amount of tokens
-     * minted increase. Use `totalMinted` instead to calculate how many tokens
-     * are available to be minted.
+     * minted increase. Instead, subtract `maxSupply()` with `totalMinted()` to
+     * calculate how many tokens are available to be minted.
      */
     function maxSupply() external view returns (uint256) {
         return _maxSupply;
@@ -71,9 +69,8 @@ contract HypeHaus is ERC721URIStorage, Ownable {
      * @dev Returns the total amount of HYPEhaus tokens minted.
      */
     function totalMinted() external view returns (uint256) {
-        // Since this function expects a 1-indexed value, we can just return
-        // `_nextTokenId` since it is incremented every time a new token is
-        // minted.
+        // It is appropriate to return `_nextTokenId` since it is incremented
+        // every time a new token is minted.
         return _nextTokenId;
     }
 
