@@ -1,7 +1,8 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { HardhatUserConfig, task, types } from 'hardhat/config';
+import { HardhatUserConfig, subtask, task, types } from 'hardhat/config';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { HypeHaus } from './typechain-types/HypeHaus';
 
 import '@nomiclabs/hardhat-ethers';
@@ -18,6 +19,29 @@ const {
   LOCAL_CONTRACT_ADDRESS = '',
 } = process.env;
 
+const connectToContract = async (
+  hre: HardhatRuntimeEnvironment,
+  contract?: string,
+) => {
+  const networkName = hre.network.name;
+  console.log('On network:', networkName);
+
+  const contractAddress =
+    contract ||
+    (networkName === 'localhost' ? LOCAL_CONTRACT_ADDRESS : CONTRACT_ADDRESS);
+  console.log('Contract address:', contractAddress);
+
+  const HypeHaus = await hre.ethers.getContractFactory('HypeHaus');
+  const hypeHaus = HypeHaus.attach(contractAddress) as HypeHaus;
+
+  return hypeHaus;
+};
+
+const logTotalMinted = async (contract: HypeHaus) => {
+  const totalMinted = await contract.totalMinted();
+  console.log('Total minted so far:', totalMinted.toString());
+};
+
 task('accounts', 'Prints the list of accounts', async (_, hre) => {
   const accounts = await hre.ethers.getSigners();
   for (const account of accounts) {
@@ -25,7 +49,22 @@ task('accounts', 'Prints the list of accounts', async (_, hre) => {
   }
 });
 
-task('mint-hypehaus', 'Mints a HYPEhaus token for the given address')
+task(
+  'hypehaus:total-minted',
+  'Reports the total amount of HYPEhaus tokens minted',
+)
+  .addOptionalParam(
+    'contract',
+    'The address of the contract to connect to',
+    undefined,
+    types.string,
+  )
+  .setAction(async ({ contract }: { contract?: string }, hre) => {
+    const hypeHaus = await connectToContract(hre, contract);
+    await logTotalMinted(hypeHaus);
+  });
+
+task('hypehaus:mint', 'Mints a HYPEhaus token for the given address')
   .addPositionalParam(
     'receiver',
     'The address of the receiver who will get the token',
@@ -39,41 +78,14 @@ task('mint-hypehaus', 'Mints a HYPEhaus token for the given address')
     types.string,
   )
   .setAction(async (params: { receiver: string; contract?: string }, hre) => {
-    const networkName = hre.network.name;
-    console.log('On network:', networkName);
-
-    if (networkName === 'hardhat') {
-      console.warn(
-        `WARNING: You are on the hardhat network, which means this script`,
-        `won't be able to communicate with a local instance of hardhat (if one`,
-        `is running).`,
-      );
-    }
-
-    const contractAddress =
-      params.contract ||
-      (networkName === 'localhost' ? LOCAL_CONTRACT_ADDRESS : CONTRACT_ADDRESS);
-    console.log('Contract address:', contractAddress);
-
-    const HypeHaus = await hre.ethers.getContractFactory('HypeHaus');
-    const hypeHaus = HypeHaus.attach(contractAddress) as HypeHaus;
-
-    const printTotalMinted = async () => {
-      const totalMinted = await hypeHaus
-        .totalMinted()
-        .then((value) => value.toString());
-      console.log('Total minted so far:', totalMinted);
-    };
-
-    // First print initial minted amount
-    await printTotalMinted();
-
+    const hypeHaus = await connectToContract(hre, params.contract);
+    // First log the current minted amount
+    await logTotalMinted(hypeHaus);
     // Next, mint the next available token to the receiver
     await hypeHaus.mintHypeHaus(params.receiver);
-
-    // Finally, print the total minted (note: this may report the previous total
+    // Finally, log the total minted (note: this may report the previous total
     // minted value if the contract was not updated in time)
-    await printTotalMinted();
+    await logTotalMinted(hypeHaus);
   });
 
 const config: HardhatUserConfig = {
