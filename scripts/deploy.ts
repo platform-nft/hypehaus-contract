@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 
 const { METADATA_CID } = process.env;
 
@@ -9,6 +9,9 @@ async function main() {
         'deploying the contract.',
     );
   }
+
+  const networkName = network.name;
+  console.log('On network:', networkName);
 
   const [deployer] = await ethers.getSigners();
   console.log('Deploying contract with account:', deployer.address);
