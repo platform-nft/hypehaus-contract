@@ -43,7 +43,6 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
         uint256 newTokenId = _nextTokenId;
         string memory newTokenURI = string(
-            // This function will prepend `_baseURIString` for us.
             abi.encodePacked(Strings.toString(newTokenId), ".json")
         );
 
@@ -75,8 +74,12 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Overrides the default `baseURI` function to return the custom base
-     * URI provided through the constructor.
+     * @dev Overrides the inherited `_baseURI` function to return the custom
+     * base URI provided through the constructor.
+     *
+     * The function `tokenURI` will do the magic of prepending the base URI
+     * returned from this function with the file name generated when minting
+     * a HYPEhaus token with `mintHypeHaus`.
      */
     function _baseURI() internal view override returns (string memory) {
         return _baseURIString;

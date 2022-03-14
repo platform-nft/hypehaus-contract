@@ -19,9 +19,12 @@ const {
   LOCAL_CONTRACT_ADDRESS = '',
 } = process.env;
 
+const HH_TOTAL_MINTED = 'hypehaus:total-minted';
+const HH_MINT = 'hypehaus:mint';
+
 const connectToContract = async (
   hre: HardhatRuntimeEnvironment,
-  contract?: string,
+  contract: string | undefined,
 ) => {
   const networkName = hre.network.name;
   console.log('On network:', networkName);
@@ -49,10 +52,7 @@ task('accounts', 'Prints the list of accounts', async (_, hre) => {
   }
 });
 
-task(
-  'hypehaus:total-minted',
-  'Reports the total amount of HYPEhaus tokens minted',
-)
+task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEhaus tokens minted')
   .addOptionalParam(
     'contract',
     'The address of the contract to connect to',
@@ -64,7 +64,7 @@ task(
     await logTotalMinted(hypeHaus);
   });
 
-task('hypehaus:mint', 'Mints a HYPEhaus token for the given address')
+task(HH_MINT, 'Mints a HYPEhaus token for the given address')
   .addPositionalParam(
     'receiver',
     'The address of the receiver who will get the token',
