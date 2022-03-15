@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { HardhatUserConfig, subtask, task, types } from 'hardhat/config';
+import { HardhatUserConfig, task, types } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { HypeHaus } from './typechain-types/HypeHaus';
 
@@ -21,6 +21,7 @@ const {
 
 const HH_TOTAL_MINTED = 'hypehaus:total-minted';
 const HH_MINT = 'hypehaus:mint';
+const HH_MINT_TO_ADDRESS = 'hypehaus:mint-to';
 
 const connectToContract = async (
   hre: HardhatRuntimeEnvironment,
@@ -28,6 +29,15 @@ const connectToContract = async (
 ) => {
   const networkName = hre.network.name;
   console.log('On network:', networkName);
+
+  if (networkName === 'hardhat') {
+    console.warn(
+      `WARNING: You are currently running this task on the Hardhat network,`,
+      `which won't be able to connect to a local instance of Hardhat (if any`,
+      `is running). If this was not intended, re-run this task again with`,
+      `"--network localhost".`,
+    );
+  }
 
   const contractAddress =
     contract ||
@@ -64,7 +74,21 @@ task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEhaus tokens minted')
     await logTotalMinted(hypeHaus);
   });
 
-task(HH_MINT, 'Mints a HYPEhaus token for the given address')
+task(HH_MINT, 'Mints a HYPEhaus token on behalf of the contract owner')
+  .addOptionalParam(
+    'contract',
+    'The address of the contract to connect to',
+    undefined,
+    types.string,
+  )
+  .setAction(async (params: { contract?: string }, hre) => {
+    const hypeHaus = await connectToContract(hre, params.contract);
+    await logTotalMinted(hypeHaus);
+    await hypeHaus.mintHypeHaus({ value: hre.ethers.utils.parseEther('0.05') });
+    await logTotalMinted(hypeHaus);
+  });
+
+task(HH_MINT_TO_ADDRESS, 'Mints a HYPEhaus token to the given address')
   .addPositionalParam(
     'receiver',
     'The address of the receiver who will get the token',
@@ -82,7 +106,7 @@ task(HH_MINT, 'Mints a HYPEhaus token for the given address')
     // First log the current minted amount
     await logTotalMinted(hypeHaus);
     // Next, mint the next available token to the receiver
-    await hypeHaus.mintHypeHaus(params.receiver);
+    await hypeHaus.mintHypeHausToAddress(params.receiver);
     // Finally, log the total minted (note: this may report the previous total
     // minted value if the contract was not updated in time)
     await logTotalMinted(hypeHaus);

@@ -26,7 +26,8 @@ export interface HypeHausInterface extends utils.Interface {
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "maxSupply()": FunctionFragment;
-    "mintHypeHaus(address)": FunctionFragment;
+    "mintHypeHaus()": FunctionFragment;
+    "mintHypeHausToAddress(address)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
@@ -57,6 +58,10 @@ export interface HypeHausInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "maxSupply", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mintHypeHaus",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mintHypeHausToAddress",
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
@@ -112,6 +117,10 @@ export interface HypeHausInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "maxSupply", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "mintHypeHaus",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "mintHypeHausToAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -249,6 +258,10 @@ export interface HypeHaus extends BaseContract {
     maxSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     mintHypeHaus(
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    mintHypeHausToAddress(
       receiver: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -336,6 +349,10 @@ export interface HypeHaus extends BaseContract {
   maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   mintHypeHaus(
+    overrides?: PayableOverrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  mintHypeHausToAddress(
     receiver: string,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -416,7 +433,9 @@ export interface HypeHaus extends BaseContract {
 
     maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-    mintHypeHaus(
+    mintHypeHaus(overrides?: CallOverrides): Promise<BigNumber>;
+
+    mintHypeHausToAddress(
       receiver: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -547,6 +566,10 @@ export interface HypeHaus extends BaseContract {
     maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     mintHypeHaus(
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    mintHypeHausToAddress(
       receiver: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -638,6 +661,10 @@ export interface HypeHaus extends BaseContract {
     maxSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     mintHypeHaus(
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    mintHypeHausToAddress(
       receiver: string,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;

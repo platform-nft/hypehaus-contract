@@ -5,13 +5,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
+import "hardhat/console.sol";
+
 contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Emitted when a new HYPEhaus token is minted.
      */
     event MintHypeHaus(uint256 tokenId, address receiver);
 
-    // The next available token ID
+    // The minimum set price to mint a HYPEhaus token.
+    uint256 internal constant PRICE = 0.05 ether;
+
+    // The next available token ID.
     uint256 internal _nextTokenId = 0;
     // The maximum supply available for the HYPEhaus NFT.
     uint256 internal _maxSupply = 0;
@@ -25,18 +30,8 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         _baseURIString = baseURI_;
     }
 
-    /**
-     * @dev Mints a new HYPEhaus token to the `receiver`.
-     * @return uint256 The ID associated with the newly minted token.
-     *
-     * TODO: Maybe the token URI generation should happen in the front-end
-     * instead? It'll be much more easier and efficient to let JavaScript
-     * generate the URI before passing it to this function.
-     */
-    function mintHypeHaus(address receiver)
-        external
-        payable
-        onlyOwner
+    function _doMintHypeHausToAddress(address receiver)
+        internal
         returns (uint256)
     {
         require(_nextTokenId < _maxSupply, "HypeHaus: Supply exhausted");
@@ -52,6 +47,30 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         _nextTokenId += 1;
 
         return newTokenId;
+    }
+
+    function mintHypeHaus() external payable returns (uint256) {
+        require(msg.value >= PRICE, "HypeHaus: Not enough ETH");
+        return _doMintHypeHausToAddress(msg.sender);
+    }
+
+    /**
+     * @dev Mints a new HYPEhaus token to the `receiver`.
+     * @return uint256 The ID associated with the newly minted token.
+     *
+     * TODO: Maybe the token URI generation should happen in the front-end
+     * instead? It'll be much more easier and efficient to let JavaScript
+     * generate the URI before passing it to this function.
+     *
+     * TODO: Do we need this function when we already have `mintHypeHaus`?
+     */
+    function mintHypeHausToAddress(address receiver)
+        public
+        payable
+        onlyOwner
+        returns (uint256)
+    {
+        return _doMintHypeHausToAddress(receiver);
     }
 
     /**
