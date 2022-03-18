@@ -5,29 +5,40 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-import "hardhat/console.sol";
-
 contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Emitted when a new HYPEhaus token is minted.
      */
     event MintHypeHaus(uint256 tokenId, address receiver);
 
-    // The minimum set price to mint a HYPEhaus token.
-    uint256 internal constant PRICE = 0.05 ether;
+    uint8 internal constant MAX_TOKENS_PER_OG_WALLET = 5;
+    uint8 internal constant MAX_TOKENS_PER_COMMUNITY_WALLET = 3;
+    uint8 internal constant MAX_TOKENS_PER_PUBLIC_WALLET = 3;
+
+    uint256 internal constant COMMUNITY_SALE_PRICE = 0.05 ether;
+    uint256 internal constant PUBLIC_SALE_PRICE = 0.08 ether;
+
+    // The maximum supply available for the HYPEhaus NFT.
+    uint256 internal immutable _maxSupply;
+    // The base URI to be prepended to the full token URI.
+    string internal _baseURIString;
 
     // The next available token ID.
+    // TODO: Consider using OpenZeppelin's `Counter` utility and renaming this
+    // to `tokenCount`.
     uint256 internal _nextTokenId = 0;
-    // The maximum supply available for the HYPEhaus NFT.
-    uint256 internal _maxSupply = 0;
-    // The base URI to be prepended to the full token URI.
-    string internal _baseURIString = "";
 
     constructor(uint256 maxSupply_, string memory baseURI_)
         ERC721("HYPEhaus", "HYPE")
     {
         _maxSupply = maxSupply_;
         _baseURIString = baseURI_;
+    }
+
+    function _salePrice() internal pure returns (uint256) {
+        // TODO: Add logic to determine if it is either a community sale or
+        // public sale is on at the moment.
+        return PUBLIC_SALE_PRICE;
     }
 
     function _doMintHypeHausToAddress(address receiver)
@@ -50,7 +61,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     function mintHypeHaus() external payable returns (uint256) {
-        require(msg.value >= PRICE, "HypeHaus: Not enough ETH");
+        require(msg.value >= _salePrice(), "HypeHaus: Not enough ETH");
         return _doMintHypeHausToAddress(msg.sender);
     }
 
@@ -74,10 +85,14 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Returns the maximum supply of HYPEhaus tokens available. Note that
-     * this value never changes -- it DOES NOT decrease as the amount of tokens
-     * minted increase. Instead, subtract `maxSupply()` with `totalMinted()` to
-     * calculate how many tokens are available to be minted.
+     * @dev Returns the maximum supply of HYPEhaus tokens available.
+     *
+     * @notice this value never changes -- it DOES NOT decrease as the amount of
+     * tokens minted increase. Instead, subtract `maxSupply()` with
+     * `totalMinted()` to calculate how many tokens are available to be minted.
+     *
+     * TODO: Should we instead inherit from `IERC721Enumerable` to replace this
+     * with `totalSupply()`?
      */
     function maxSupply() external view returns (uint256) {
         return _maxSupply;
@@ -87,8 +102,9 @@ contract HypeHaus is ERC721URIStorage, Ownable {
      * @dev Returns the total amount of HYPEhaus tokens minted.
      */
     function totalMinted() external view returns (uint256) {
-        // It is appropriate to return `_nextTokenId` since it is incremented
-        // every time a new token is minted.
+        // It is appropriate to return `_nextTokenId` because it starts at zero
+        // and will always increment by one when a new token is successfully
+        // minted.
         return _nextTokenId;
     }
 

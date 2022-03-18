@@ -6,7 +6,7 @@ import { HypeHaus } from '../typechain-types/HypeHaus';
 
 const MAX_SUPPLY = 10;
 const BASE_URI = 'test://abc123/';
-const PRICE = '0.05';
+const PRICE = '0.08';
 
 describe('HypeHaus contract', () => {
   let hypeHaus: HypeHaus;
