@@ -36,8 +36,8 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     function _salePrice() internal pure returns (uint256) {
-        // TODO: Add logic to determine if it is either a community sale or
-        // public sale is on at the moment.
+        // TODO: Add logic to determine if a community sale or public sale is on
+        // at the moment.
         return PUBLIC_SALE_PRICE;
     }
 
