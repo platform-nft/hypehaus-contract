@@ -8,6 +8,12 @@ const MAX_SUPPLY = 10;
 const BASE_URI = 'test://abc123/';
 const PRICE = '0.08';
 
+enum ActiveSale {
+  None = 0,
+  Community = 1,
+  Public = 2,
+}
+
 describe('HypeHausAlt contract', () => {
   let hypeHaus: HypeHausAlt;
   let signers: Record<'deployer' | 'client1' | 'client2', SignerWithAddress>;
@@ -24,6 +30,7 @@ describe('HypeHausAlt contract', () => {
 
     hypeHaus = (await factory.deploy(MAX_SUPPLY, BASE_URI)) as HypeHausAlt;
     await hypeHaus.deployed();
+    await hypeHaus.setActiveSale(ActiveSale.Public);
   });
 
   describe('Initialization', () => {
@@ -74,6 +81,14 @@ describe('HypeHausAlt contract', () => {
       const errorMsg = 'HypeHausAlt: Nonexistent token';
       await expect(hypeHaus.tokenURI(2)).to.be.revertedWith(errorMsg);
       await expect(hypeHaus.tokenURI(MAX_SUPPLY)).to.be.revertedWith(errorMsg);
+    });
+  });
+
+  describe('Active Sale', () => {
+    it('fails to mint HYPEhaus tokens when public sale closed', async () => {
+      await hypeHaus.setActiveSale(ActiveSale.None);
+      const errorMsg = 'HypeHausAlt: Public sale closed';
+      await expect(hypeHaus.mintHypeHaus()).to.be.revertedWith(errorMsg);
     });
   });
 });

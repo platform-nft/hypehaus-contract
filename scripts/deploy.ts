@@ -5,7 +5,7 @@ const { METADATA_CID } = process.env;
 async function main() {
   if (!METADATA_CID) {
     throw new Error(
-      'Metadata CID is not set. Please set one in an .env file before ' +
+      'METADATA_CID has not been set. Please set it in an .env file before ' +
         'deploying the contract.',
     );
   }

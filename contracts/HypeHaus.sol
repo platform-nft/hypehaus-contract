@@ -87,7 +87,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Returns the maximum supply of HYPEhaus tokens available.
      *
-     * @notice this value never changes -- it DOES NOT decrease as the amount of
+     * @notice This value never changes -- it DOES NOT decrease as the amount of
      * tokens minted increase. Instead, subtract `maxSupply()` with
      * `totalMinted()` to calculate how many tokens are available to be minted.
      *
