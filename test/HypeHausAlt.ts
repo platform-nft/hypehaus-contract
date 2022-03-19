@@ -63,7 +63,7 @@ describe('HypeHausAlt contract', () => {
     it('fails to mint HYPEhaus tokens with insufficient funds', async () => {
       await expect(
         hypeHaus.connect(signers.client1).mintHypeHaus(),
-      ).to.be.revertedWith('HypeHausAlt: Not enough ETH');
+      ).to.be.revertedWith('HypeHausAlt: Not enough ETH sent');
     });
   });
 
@@ -87,7 +87,7 @@ describe('HypeHausAlt contract', () => {
   describe('Active Sale', () => {
     it('fails to mint HYPEhaus tokens when public sale closed', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
-      const errorMsg = 'HypeHausAlt: Public sale closed';
+      const errorMsg = 'HypeHausAlt: Sale not open to public yet';
       await expect(hypeHaus.mintHypeHaus()).to.be.revertedWith(errorMsg);
     });
   });

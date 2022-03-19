@@ -10,10 +10,14 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
     using Strings for uint256;
     using Counters for Counters.Counter;
 
+    // ====== EVENTS ======
+
     /**
      * @dev Emitted when a new HYPEhaus token is minted.
      */
     event MintHypeHaus(uint256 tokenId, address receiver);
+
+    // ====== ENUMS ======
 
     /**
      * @dev An enumeration of all the possible sales.
@@ -24,6 +28,8 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
         Public
     }
 
+    // ====== CONSTANTS ======
+
     uint8 internal constant MAX_TOKENS_PER_OG_WALLET = 5;
     uint8 internal constant MAX_TOKENS_PER_COMMUNITY_WALLET = 3;
     uint8 internal constant MAX_TOKENS_PER_PUBLIC_WALLET = 3;
@@ -31,10 +37,43 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
     uint256 internal constant COMMUNITY_SALE_PRICE = 0.05 ether;
     uint256 internal constant PUBLIC_SALE_PRICE = 0.08 ether;
 
+    // ====== STATE VARIABLES ======
+
     Counters.Counter internal _tokenIdCounter;
     ActiveSale internal _currentActiveSale;
     uint256 internal immutable _maxSupply;
     string internal _baseURIString;
+
+    // ====== MODIFIERS ======
+
+    modifier isPublicSaleActive() {
+        require(
+            _currentActiveSale == ActiveSale.Public,
+            "HypeHausAlt: Sale not open to public yet"
+        );
+        _;
+    }
+
+    modifier isCommunitySaleActive() {
+        require(
+            _currentActiveSale == ActiveSale.Community,
+            "HypeHausAlt: Sale not open to community yet"
+        );
+        _;
+    }
+
+    modifier isSupplyAvailable() {
+        uint256 nextTokenId = _tokenIdCounter.current();
+        require(nextTokenId < _maxSupply, "HypeHausAlt: Supply exhausted");
+        _;
+    }
+
+    modifier isCorrectPayment(uint256 price) {
+        require(msg.value >= price, "HypeHausAlt: Not enough ETH sent");
+        _;
+    }
+
+    // ====== CONSTRUCTOR ======
 
     constructor(uint256 maxSupply, string memory baseURIString)
         ERC721("HYPEhaus", "HYPE")
@@ -43,16 +82,17 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
         _baseURIString = baseURIString;
     }
 
-    function mintHypeHaus() external payable returns (uint256) {
-        require(
-            _currentActiveSale == ActiveSale.Public,
-            "HypeHausAlt: Public sale closed"
-        );
+    // ====== PUBLIC MINTING FUNCTIONS ======
 
+    function mintHypeHaus()
+        external
+        payable
+        isPublicSaleActive
+        isSupplyAvailable
+        isCorrectPayment(PUBLIC_SALE_PRICE)
+        returns (uint256)
+    {
         uint256 nextTokenId = _tokenIdCounter.current();
-        require(nextTokenId < _maxSupply, "HypeHausAlt: Supply exhausted");
-        require(msg.value >= _salePrice(), "HypeHausAlt: Not enough ETH");
-
         _safeMint(msg.sender, nextTokenId);
         emit MintHypeHaus(nextTokenId, msg.sender);
         _tokenIdCounter.increment();
@@ -60,15 +100,7 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
         return nextTokenId;
     }
 
-    function setActiveSale(ActiveSale activeSale) external onlyOwner {
-        _currentActiveSale = activeSale;
-    }
-
-    function _salePrice() internal pure returns (uint256) {
-        // TODO: Add logic to determine if a community sale or public sale is on
-        // at the moment.
-        return PUBLIC_SALE_PRICE;
-    }
+    // ====== PUBLIC FUNCTIONS ======
 
     /**
      * @dev Reports the count of all the valid NFTs tracked by this contract.
@@ -106,5 +138,11 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
             string(
                 abi.encodePacked(_baseURIString, tokenId.toString(), ".json")
             );
+    }
+
+    // ====== ONLY-OWNER OPERATIONS ======
+
+    function setActiveSale(ActiveSale activeSale) external onlyOwner {
+        _currentActiveSale = activeSale;
     }
 }
