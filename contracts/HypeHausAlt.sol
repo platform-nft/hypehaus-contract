@@ -39,8 +39,10 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
 
     // ====== STATE VARIABLES ======
 
-    Counters.Counter internal _tokenIdCounter;
     ActiveSale internal _currentActiveSale;
+    Counters.Counter internal _tokenIdCounter;
+
+    address internal immutable _teamWalletAddress;
     uint256 internal immutable _maxSupply;
     string internal _baseURIString;
 
@@ -75,12 +77,15 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
 
     // ====== CONSTRUCTOR ======
 
-    constructor(uint256 maxSupply, string memory baseURIString)
-        ERC721("HYPEhaus", "HYPE")
-    {
+    constructor(
+        uint256 maxSupply,
+        string memory baseURIString,
+        address teamWalletAddress
+    ) ERC721("HYPEhaus", "HYPE") {
         _maxSupply = maxSupply;
         _baseURIString = baseURIString;
         _currentActiveSale = ActiveSale.None;
+        _teamWalletAddress = teamWalletAddress;
     }
 
     // ====== MINTING FUNCTIONS ======
@@ -97,7 +102,6 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
         _tokenIdCounter.increment(); // Checks-Effects-Interactions pattern
         _safeMint(msg.sender, nextTokenId);
         emit MintHypeHaus(nextTokenId, msg.sender);
-
         return nextTokenId;
     }
 
@@ -113,6 +117,11 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
     }
 
     // ====== PUBLIC FUNCTIONS ======
+
+    function withdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        payable(_teamWalletAddress).transfer(balance);
+    }
 
     /**
      * @dev Reports the count of all the valid NFTs tracked by this contract.

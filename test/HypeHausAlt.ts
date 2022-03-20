@@ -1,13 +1,14 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 import { HypeHausAlt } from '../typechain-types/HypeHausAlt';
 
 const MAX_SUPPLY = 10;
 const BASE_URI = 'test://abc123/';
-const COMMUNITY_PRICE = '0.05';
-const PUBLIC_PRICE = '0.08';
+const COMMUNITY_SALE_PRICE = '0.05';
+const PUBLIC_SALE_PRICE = '0.08';
 
 enum ActiveSale {
   None = 0,
@@ -17,19 +18,28 @@ enum ActiveSale {
 
 describe('HypeHausAlt contract', () => {
   let hypeHaus: HypeHausAlt;
-  let signers: Record<'deployer' | 'client1' | 'client2', SignerWithAddress>;
-  const addresses = { deployer: '', client1: '', client2: '' };
+
+  type Signer = 'deployer' | 'team' | 'client1' | 'client2';
+  let signers: Record<Signer, SignerWithAddress>;
+  let addresses: Record<Signer, SignerWithAddress['address']>;
 
   beforeEach(async () => {
-    const [deployer, client1, client2] = await ethers.getSigners();
-    signers = { deployer, client1, client2 };
-    addresses.deployer = deployer.address;
-    addresses.client1 = client1.address;
-    addresses.client2 = client2.address;
+    const [deployer, team, client1, client2] = await ethers.getSigners();
+    signers = { deployer, team, client1, client2 };
+    addresses = {
+      deployer: deployer.address,
+      team: team.address,
+      client1: client1.address,
+      client2: client2.address,
+    };
 
     const factory = await ethers.getContractFactory('HypeHausAlt', deployer);
 
-    hypeHaus = (await factory.deploy(MAX_SUPPLY, BASE_URI)) as HypeHausAlt;
+    hypeHaus = (await factory.deploy(
+      MAX_SUPPLY,
+      BASE_URI,
+      team.address,
+    )) as HypeHausAlt;
     await hypeHaus.deployed();
   });
 
@@ -40,17 +50,22 @@ describe('HypeHausAlt contract', () => {
   });
 
   describe('Minting', () => {
-    it('properly sets current active sale', async () => {
+    it('can change the current active sale', async () => {
       expect(await hypeHaus.getActiveSale()).to.eq(ActiveSale.None);
       await hypeHaus.setActiveSale(ActiveSale.Community);
       expect(await hypeHaus.getActiveSale()).to.eq(ActiveSale.Community);
       await hypeHaus.setActiveSale(ActiveSale.Public);
       expect(await hypeHaus.getActiveSale()).to.eq(ActiveSale.Public);
+      // Test that calling only-owner function as non-owner fails (we don't care
+      // about the error message so we pass an empty string).
+      await expect(
+        hypeHaus.connect(signers.client1).setActiveSale(ActiveSale.None),
+      ).to.be.revertedWith('');
     });
 
     it('mints HYPEhaus tokens when there is sufficient supply', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
-      const overrides = { value: ethers.utils.parseEther(PUBLIC_PRICE) };
+      const overrides = { value: ethers.utils.parseEther(PUBLIC_SALE_PRICE) };
 
       // For loop instead of Promise.all to avoid race conditions
       for (let i = 0; i < MAX_SUPPLY; i++) {
@@ -80,7 +95,7 @@ describe('HypeHausAlt contract', () => {
   describe('Token URI and Owner', () => {
     it('reports the correct URI and owner of a given minted token', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
-      const overrides = { value: ethers.utils.parseEther(PUBLIC_PRICE) };
+      const overrides = { value: ethers.utils.parseEther(PUBLIC_SALE_PRICE) };
       await hypeHaus.connect(signers.client1).mintPublicSale(overrides);
       await hypeHaus.connect(signers.client2).mintPublicSale(overrides);
       expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URI}0.json`);
@@ -96,10 +111,67 @@ describe('HypeHausAlt contract', () => {
   });
 
   describe('Active Sale', () => {
-    it('fails to mint HYPEhaus tokens when public sale closed', async () => {
+    it('fails to mint HYPEhaus tokens when public sale is not open', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
       const errorMsg = 'HH_PUBLIC_SALE_NOT_OPEN';
       await expect(hypeHaus.mintPublicSale()).to.be.revertedWith(errorMsg);
+    });
+
+    it('fails to mint HYPEhaus tokens when community sale is not open', async () => {
+      await hypeHaus.setActiveSale(ActiveSale.None);
+      const errorMsg = 'HH_COMMUNITY_SALE_NOT_OPEN';
+      await expect(hypeHaus.mintCommunitySale()).to.be.revertedWith(errorMsg);
+    });
+  });
+
+  describe('Withdrawing', () => {
+    it("withdraws balance into the team's wallet", async () => {
+      await hypeHaus.setActiveSale(ActiveSale.Public);
+      const value = ethers.utils.parseEther(PUBLIC_SALE_PRICE);
+
+      const getBalance = (signer: Signer) => signers[signer].getBalance();
+      const mintTokenAs = async (signer: SignerWithAddress) => {
+        return await hypeHaus
+          .connect(signer)
+          .mintPublicSale({ value: value })
+          .then((tx) => tx.wait())
+          .then((receipt) => receipt.gasUsed.mul(receipt.effectiveGasPrice));
+      };
+
+      const initialBalances = {
+        client1: await getBalance('client1'),
+        client2: await getBalance('client2'),
+        team: await getBalance('team'),
+      };
+
+      // First, mint one token each token for client1 and client2.
+      const totalGasUsedClient1 = await mintTokenAs(signers.client1);
+      const totalGasUsedClient2 = await mintTokenAs(signers.client2);
+
+      // Next, check that the given client balances is equal to the expected
+      // balances.
+      const givenClient1Balance = await getBalance('client1');
+      const givenClient2Balance = await getBalance('client2');
+      const expectedClient1Balance = initialBalances.client1
+        .sub(value)
+        .sub(totalGasUsedClient1);
+      const expectedClient2Balance = initialBalances.client2
+        .sub(value)
+        .sub(totalGasUsedClient2);
+      expect(givenClient1Balance).to.eq(expectedClient1Balance);
+      expect(givenClient2Balance).to.eq(expectedClient2Balance);
+      expect(await getBalance('team')).to.eq(initialBalances.team);
+
+      // Finally, withdraw the pending balance into the team's wallet and check
+      // that the team's new balance is equal to the initial balance plus the
+      // sum of client1 and client2's payments (0.08 ether each).
+      await hypeHaus.withdraw();
+      const expectedTeamBalance = initialBalances.team.add(value.mul(2));
+      expect(await getBalance('team')).to.eq(expectedTeamBalance);
+
+      // The client balances should not have changed when withdrawing.
+      expect(await getBalance('client1')).to.eq(givenClient1Balance);
+      expect(await getBalance('client2')).to.eq(givenClient2Balance);
     });
   });
 });
