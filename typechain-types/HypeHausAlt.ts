@@ -23,9 +23,11 @@ export interface HypeHausAltInterface extends utils.Interface {
   functions: {
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "getActiveSale()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "mintHypeHaus()": FunctionFragment;
+    "mintCommunitySale()": FunctionFragment;
+    "mintPublicSale()": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
@@ -47,6 +49,10 @@ export interface HypeHausAltInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
   encodeFunctionData(
+    functionFragment: "getActiveSale",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getApproved",
     values: [BigNumberish]
   ): string;
@@ -55,7 +61,11 @@ export interface HypeHausAltInterface extends utils.Interface {
     values: [string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "mintHypeHaus",
+    functionFragment: "mintCommunitySale",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mintPublicSale",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
@@ -105,6 +115,10 @@ export interface HypeHausAltInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "getActiveSale",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getApproved",
     data: BytesLike
   ): Result;
@@ -113,7 +127,11 @@ export interface HypeHausAltInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "mintHypeHaus",
+    functionFragment: "mintCommunitySale",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "mintPublicSale",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -241,6 +259,8 @@ export interface HypeHausAlt extends BaseContract {
 
     balanceOf(owner: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    getActiveSale(overrides?: CallOverrides): Promise<[number]>;
+
     getApproved(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -252,7 +272,11 @@ export interface HypeHausAlt extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    mintHypeHaus(
+    mintCommunitySale(
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    mintPublicSale(
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -330,6 +354,8 @@ export interface HypeHausAlt extends BaseContract {
 
   balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  getActiveSale(overrides?: CallOverrides): Promise<number>;
+
   getApproved(
     tokenId: BigNumberish,
     overrides?: CallOverrides
@@ -341,7 +367,11 @@ export interface HypeHausAlt extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  mintHypeHaus(
+  mintCommunitySale(
+    overrides?: PayableOverrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  mintPublicSale(
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -413,6 +443,8 @@ export interface HypeHausAlt extends BaseContract {
 
     balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    getActiveSale(overrides?: CallOverrides): Promise<number>;
+
     getApproved(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -424,7 +456,9 @@ export interface HypeHausAlt extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    mintHypeHaus(overrides?: CallOverrides): Promise<BigNumber>;
+    mintCommunitySale(overrides?: CallOverrides): Promise<BigNumber>;
+
+    mintPublicSale(overrides?: CallOverrides): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -543,6 +577,8 @@ export interface HypeHausAlt extends BaseContract {
 
     balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    getActiveSale(overrides?: CallOverrides): Promise<BigNumber>;
+
     getApproved(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -554,7 +590,11 @@ export interface HypeHausAlt extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    mintHypeHaus(
+    mintCommunitySale(
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    mintPublicSale(
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -636,6 +676,8 @@ export interface HypeHausAlt extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getActiveSale(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getApproved(
       tokenId: BigNumberish,
       overrides?: CallOverrides
@@ -647,7 +689,11 @@ export interface HypeHausAlt extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    mintHypeHaus(
+    mintCommunitySale(
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    mintPublicSale(
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

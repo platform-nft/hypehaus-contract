@@ -6,7 +6,8 @@ import { HypeHausAlt } from '../typechain-types/HypeHausAlt';
 
 const MAX_SUPPLY = 10;
 const BASE_URI = 'test://abc123/';
-const PRICE = '0.08';
+const COMMUNITY_PRICE = '0.05';
+const PUBLIC_PRICE = '0.08';
 
 enum ActiveSale {
   None = 0,
@@ -30,7 +31,6 @@ describe('HypeHausAlt contract', () => {
 
     hypeHaus = (await factory.deploy(MAX_SUPPLY, BASE_URI)) as HypeHausAlt;
     await hypeHaus.deployed();
-    await hypeHaus.setActiveSale(ActiveSale.Public);
   });
 
   describe('Initialization', () => {
@@ -40,15 +40,24 @@ describe('HypeHausAlt contract', () => {
   });
 
   describe('Minting', () => {
+    it('properly sets current active sale', async () => {
+      expect(await hypeHaus.getActiveSale()).to.eq(ActiveSale.None);
+      await hypeHaus.setActiveSale(ActiveSale.Community);
+      expect(await hypeHaus.getActiveSale()).to.eq(ActiveSale.Community);
+      await hypeHaus.setActiveSale(ActiveSale.Public);
+      expect(await hypeHaus.getActiveSale()).to.eq(ActiveSale.Public);
+    });
+
     it('mints HYPEhaus tokens when there is sufficient supply', async () => {
-      const overrides = { value: ethers.utils.parseEther(PRICE) };
+      await hypeHaus.setActiveSale(ActiveSale.Public);
+      const overrides = { value: ethers.utils.parseEther(PUBLIC_PRICE) };
 
       // For loop instead of Promise.all to avoid race conditions
       for (let i = 0; i < MAX_SUPPLY; i++) {
         const signer = i % 2 === 0 ? signers.client1 : signers.client2;
         expect(await hypeHaus.totalSupply()).to.eq(i);
 
-        await expect(hypeHaus.connect(signer).mintHypeHaus(overrides))
+        await expect(hypeHaus.connect(signer).mintPublicSale(overrides))
           .to.emit(hypeHaus, 'MintHypeHaus')
           .withArgs(i, signer.address);
 
@@ -56,22 +65,24 @@ describe('HypeHausAlt contract', () => {
       }
 
       await expect(
-        hypeHaus.connect(signers.deployer).mintHypeHaus(overrides),
+        hypeHaus.connect(signers.deployer).mintPublicSale(overrides),
       ).to.be.revertedWith('HypeHausAlt: Supply exhausted');
     });
 
     it('fails to mint HYPEhaus tokens with insufficient funds', async () => {
+      await hypeHaus.setActiveSale(ActiveSale.Public);
       await expect(
-        hypeHaus.connect(signers.client1).mintHypeHaus(),
+        hypeHaus.connect(signers.client1).mintPublicSale(),
       ).to.be.revertedWith('HypeHausAlt: Not enough ETH sent');
     });
   });
 
   describe('Token URI and Owner', () => {
     it('reports the correct URI and owner of a given minted token', async () => {
-      const overrides = { value: ethers.utils.parseEther(PRICE) };
-      await hypeHaus.connect(signers.client1).mintHypeHaus(overrides);
-      await hypeHaus.connect(signers.client2).mintHypeHaus(overrides);
+      await hypeHaus.setActiveSale(ActiveSale.Public);
+      const overrides = { value: ethers.utils.parseEther(PUBLIC_PRICE) };
+      await hypeHaus.connect(signers.client1).mintPublicSale(overrides);
+      await hypeHaus.connect(signers.client2).mintPublicSale(overrides);
       expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URI}0.json`);
       expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URI}1.json`);
       expect(await hypeHaus.ownerOf(0)).to.eq(addresses.client1);
@@ -87,8 +98,8 @@ describe('HypeHausAlt contract', () => {
   describe('Active Sale', () => {
     it('fails to mint HYPEhaus tokens when public sale closed', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
-      const errorMsg = 'HypeHausAlt: Sale not open to public yet';
-      await expect(hypeHaus.mintHypeHaus()).to.be.revertedWith(errorMsg);
+      const errorMsg = 'HypeHausAlt: Public sale not open';
+      await expect(hypeHaus.mintPublicSale()).to.be.revertedWith(errorMsg);
     });
   });
 });
