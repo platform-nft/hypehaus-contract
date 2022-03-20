@@ -49,7 +49,7 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
     modifier isPublicSaleActive() {
         require(
             _currentActiveSale == ActiveSale.Public,
-            "HypeHausAlt: Public sale not open"
+            "HH_PUBLIC_SALE_NOT_OPEN"
         );
         _;
     }
@@ -57,19 +57,19 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
     modifier isCommunitySaleActive() {
         require(
             _currentActiveSale == ActiveSale.Community,
-            "HypeHausAlt: Community sale not open"
+            "HH_COMMUNITY_SALE_NOT_OPEN"
         );
         _;
     }
 
     modifier isSupplyAvailable() {
         uint256 nextTokenId = _tokenIdCounter.current();
-        require(nextTokenId < _maxSupply, "HypeHausAlt: Supply exhausted");
+        require(nextTokenId < _maxSupply, "HH_SUPPLY_EXHAUSTED");
         _;
     }
 
     modifier isCorrectPayment(uint256 price) {
-        require(msg.value >= price, "HypeHausAlt: Not enough ETH sent");
+        require(msg.value >= price, "HH_INSUFFICIENT_FUNDS");
         _;
     }
 
@@ -145,7 +145,7 @@ contract HypeHausAlt is ERC721URIStorage, Ownable {
         override
         returns (string memory)
     {
-        require(_exists(tokenId), "HypeHausAlt: Nonexistent token");
+        require(_exists(tokenId), "HH_NONEXISTENT_TOKEN");
         return
             string(
                 abi.encodePacked(_baseURIString, tokenId.toString(), ".json")

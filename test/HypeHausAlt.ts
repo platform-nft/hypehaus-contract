@@ -66,14 +66,14 @@ describe('HypeHausAlt contract', () => {
 
       await expect(
         hypeHaus.connect(signers.deployer).mintPublicSale(overrides),
-      ).to.be.revertedWith('HypeHausAlt: Supply exhausted');
+      ).to.be.revertedWith('HH_SUPPLY_EXHAUSTED');
     });
 
     it('fails to mint HYPEhaus tokens with insufficient funds', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
       await expect(
         hypeHaus.connect(signers.client1).mintPublicSale(),
-      ).to.be.revertedWith('HypeHausAlt: Not enough ETH sent');
+      ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
     });
   });
 
@@ -89,7 +89,7 @@ describe('HypeHausAlt contract', () => {
       expect(await hypeHaus.ownerOf(1)).to.eq(addresses.client2);
 
       // We don't care about the error messages so we leave it blank here
-      const errorMsg = 'HypeHausAlt: Nonexistent token';
+      const errorMsg = 'HH_NONEXISTENT_TOKEN';
       await expect(hypeHaus.tokenURI(2)).to.be.revertedWith(errorMsg);
       await expect(hypeHaus.tokenURI(MAX_SUPPLY)).to.be.revertedWith(errorMsg);
     });
@@ -98,7 +98,7 @@ describe('HypeHausAlt contract', () => {
   describe('Active Sale', () => {
     it('fails to mint HYPEhaus tokens when public sale closed', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
-      const errorMsg = 'HypeHausAlt: Public sale not open';
+      const errorMsg = 'HH_PUBLIC_SALE_NOT_OPEN';
       await expect(hypeHaus.mintPublicSale()).to.be.revertedWith(errorMsg);
     });
   });
