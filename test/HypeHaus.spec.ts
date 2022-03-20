@@ -1,9 +1,8 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-import { HypeHausAlt } from '../typechain-types/HypeHausAlt';
+import { HypeHaus } from '../typechain-types/HypeHaus';
 
 const MAX_SUPPLY = 10;
 const BASE_URI = 'test://abc123/';
@@ -16,8 +15,8 @@ enum ActiveSale {
   Public = 2,
 }
 
-describe('HypeHausAlt contract', () => {
-  let hypeHaus: HypeHausAlt;
+describe('HypeHaus contract', () => {
+  let hypeHaus: HypeHaus;
 
   type Signer = 'deployer' | 'team' | 'client1' | 'client2';
   let signers: Record<Signer, SignerWithAddress>;
@@ -33,13 +32,13 @@ describe('HypeHausAlt contract', () => {
       client2: client2.address,
     };
 
-    const factory = await ethers.getContractFactory('HypeHausAlt', deployer);
+    const factory = await ethers.getContractFactory('HypeHaus', deployer);
 
     hypeHaus = (await factory.deploy(
       MAX_SUPPLY,
       BASE_URI,
       team.address,
-    )) as HypeHausAlt;
+    )) as HypeHaus;
     await hypeHaus.deployed();
   });
 

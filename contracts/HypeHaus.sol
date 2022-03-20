@@ -2,14 +2,33 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract HypeHaus is ERC721URIStorage, Ownable {
+    using Strings for uint256;
+    using Counters for Counters.Counter;
+
+    // ====== EVENTS ======
+
     /**
      * @dev Emitted when a new HYPEhaus token is minted.
      */
     event MintHypeHaus(uint256 tokenId, address receiver);
+
+    // ====== ENUMS ======
+
+    /**
+     * @dev An enumeration of all the possible sales the contract may be in.
+     */
+    enum ActiveSale {
+        None,
+        Community,
+        Public
+    }
+
+    // ====== CONSTANTS ======
 
     uint8 internal constant MAX_TOKENS_PER_OG_WALLET = 5;
     uint8 internal constant MAX_TOKENS_PER_COMMUNITY_WALLET = 3;
@@ -18,105 +37,137 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     uint256 internal constant COMMUNITY_SALE_PRICE = 0.05 ether;
     uint256 internal constant PUBLIC_SALE_PRICE = 0.08 ether;
 
-    // The maximum supply available for the HYPEhaus NFT.
+    // ====== STATE VARIABLES ======
+
+    ActiveSale internal _currentActiveSale;
+    Counters.Counter internal _tokenIdCounter;
+
+    address internal immutable _teamWalletAddress;
     uint256 internal immutable _maxSupply;
-    // The base URI to be prepended to the full token URI.
     string internal _baseURIString;
 
-    // The next available token ID.
-    // TODO: Consider using OpenZeppelin's `Counter` utility and renaming this
-    // to `tokenCount`.
-    uint256 internal _nextTokenId = 0;
+    // ====== MODIFIERS ======
 
-    constructor(uint256 maxSupply_, string memory baseURI_)
-        ERC721("HYPEhaus", "HYPE")
-    {
-        _maxSupply = maxSupply_;
-        _baseURIString = baseURI_;
-    }
-
-    function _salePrice() internal pure returns (uint256) {
-        // TODO: Add logic to determine if a community sale or public sale is on
-        // at the moment.
-        return PUBLIC_SALE_PRICE;
-    }
-
-    function _doMintHypeHausToAddress(address receiver)
-        internal
-        returns (uint256)
-    {
-        require(_nextTokenId < _maxSupply, "HypeHaus: Supply exhausted");
-
-        uint256 newTokenId = _nextTokenId;
-        string memory newTokenURI = string(
-            abi.encodePacked(Strings.toString(newTokenId), ".json")
+    modifier isPublicSaleActive() {
+        require(
+            _currentActiveSale == ActiveSale.Public,
+            "HH_PUBLIC_SALE_NOT_OPEN"
         );
-
-        _safeMint(receiver, newTokenId);
-        _setTokenURI(newTokenId, newTokenURI);
-        emit MintHypeHaus(newTokenId, receiver);
-        _nextTokenId += 1;
-
-        return newTokenId;
+        _;
     }
 
-    function mintHypeHaus() external payable returns (uint256) {
-        require(msg.value >= _salePrice(), "HypeHaus: Not enough ETH");
-        return _doMintHypeHausToAddress(msg.sender);
+    modifier isCommunitySaleActive() {
+        require(
+            _currentActiveSale == ActiveSale.Community,
+            "HH_COMMUNITY_SALE_NOT_OPEN"
+        );
+        _;
     }
 
-    /**
-     * @dev Mints a new HYPEhaus token to the `receiver`.
-     * @return uint256 The ID associated with the newly minted token.
-     *
-     * TODO: Maybe the token URI generation should happen in the front-end
-     * instead? It'll be much more easier and efficient to let JavaScript
-     * generate the URI before passing it to this function.
-     *
-     * TODO: Do we need this function when we already have `mintHypeHaus`?
-     */
-    function mintHypeHausToAddress(address receiver)
-        public
+    modifier isSupplyAvailable() {
+        uint256 nextTokenId = _tokenIdCounter.current();
+        require(nextTokenId < _maxSupply, "HH_SUPPLY_EXHAUSTED");
+        _;
+    }
+
+    modifier isCorrectPayment(uint256 price) {
+        require(msg.value >= price, "HH_INSUFFICIENT_FUNDS");
+        _;
+    }
+
+    // ====== CONSTRUCTOR ======
+
+    constructor(
+        uint256 maxSupply,
+        string memory baseURIString,
+        address teamWalletAddress
+    ) ERC721("HYPEhaus", "HYPE") {
+        _maxSupply = maxSupply;
+        _baseURIString = baseURIString;
+        _currentActiveSale = ActiveSale.None;
+        _teamWalletAddress = teamWalletAddress;
+    }
+
+    // ====== MINTING FUNCTIONS ======
+
+    function mintPublicSale()
+        external
         payable
-        onlyOwner
+        isPublicSaleActive
+        isSupplyAvailable
+        isCorrectPayment(PUBLIC_SALE_PRICE)
         returns (uint256)
     {
-        return _doMintHypeHausToAddress(receiver);
+        uint256 nextTokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment(); // Checks-Effects-Interactions pattern
+        _safeMint(msg.sender, nextTokenId);
+        emit MintHypeHaus(nextTokenId, msg.sender);
+        return nextTokenId;
+    }
+
+    function mintCommunitySale()
+        external
+        payable
+        isCommunitySaleActive
+        isSupplyAvailable
+        isCorrectPayment(COMMUNITY_SALE_PRICE)
+        returns (uint256)
+    {
+        return 0;
+    }
+
+    // ====== PUBLIC FUNCTIONS ======
+
+    function withdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        payable(_teamWalletAddress).transfer(balance);
     }
 
     /**
-     * @dev Returns the maximum supply of HYPEhaus tokens available.
+     * @dev Reports the count of all the valid NFTs tracked by this contract.
      *
-     * @notice This value never changes -- it DOES NOT decrease as the amount of
-     * tokens minted increase. Instead, subtract `maxSupply()` with
-     * `totalMinted()` to calculate how many tokens are available to be minted.
+     * This is a partial conformance to the `ERC721Enumerable` extension.
+     * Although we could inherit that extension, it would complicate the
+     * contract when all we require is this function.
      *
-     * TODO: Should we instead inherit from `IERC721Enumerable` to replace this
-     * with `totalSupply()`?
+     * @return uint256 The count of all the valid NFTs tracked by this contract,
+     * where each one of them has an assigned and queryable owner not equal to
+     * the zero address.
      */
-    function maxSupply() external view returns (uint256) {
-        return _maxSupply;
+    function totalSupply() external view returns (uint256) {
+        // `_tokenIdCounter` returns the next token ID available. This value
+        // will always be one higher than the last minted token's ID. For
+        // example, if there is only one minted token with the ID `0`, this
+        // function will return `1` (i.e. the next available token ID).
+        return _tokenIdCounter.current();
     }
 
     /**
-     * @dev Returns the total amount of HYPEhaus tokens minted.
+     * @dev Returns the URI of a token with the given token ID.
+     *
+     * Throws if the given token ID is not a valid NFT (i.e. it does not point
+     * to a minted HYPEhaus token).
      */
-    function totalMinted() external view returns (uint256) {
-        // It is appropriate to return `_nextTokenId` because it starts at zero
-        // and will always increment by one when a new token is successfully
-        // minted.
-        return _nextTokenId;
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        require(_exists(tokenId), "HH_NONEXISTENT_TOKEN");
+        return
+            string(
+                abi.encodePacked(_baseURIString, tokenId.toString(), ".json")
+            );
     }
 
-    /**
-     * @dev Overrides the inherited `_baseURI` function to return the custom
-     * base URI provided through the constructor.
-     *
-     * The function `tokenURI` will do the magic of prepending the base URI
-     * returned from this function with the file name generated when minting
-     * a HYPEhaus token with `mintHypeHaus`.
-     */
-    function _baseURI() internal view override returns (string memory) {
-        return _baseURIString;
+    // ====== ONLY-OWNER OPERATIONS ======
+
+    function getActiveSale() external view onlyOwner returns (ActiveSale) {
+        return _currentActiveSale;
+    }
+
+    function setActiveSale(ActiveSale activeSale) external onlyOwner {
+        _currentActiveSale = activeSale;
     }
 }

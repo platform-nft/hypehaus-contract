@@ -11,10 +11,6 @@ import 'solidity-coverage';
 
 const { CONTRACT_ADDRESS = '', LOCAL_CONTRACT_ADDRESS = '' } = process.env;
 
-const HH_TOTAL_MINTED = 'hypehaus:total-minted';
-const HH_MINT = 'hypehaus:mint';
-const HH_MINT_TO_ADDRESS = 'hypehaus:mint-to';
-
 const connectToContract = async (
   hre: HardhatRuntimeEnvironment,
   contract: string | undefined,
@@ -43,17 +39,11 @@ const connectToContract = async (
 };
 
 const logTotalMinted = async (contract: HypeHaus) => {
-  const totalMinted = await contract.totalMinted();
+  const totalMinted = await contract.totalSupply();
   console.log('Total minted so far:', totalMinted.toString());
 };
 
-task('accounts', 'Prints the list of accounts', async (_, hre) => {
-  const accounts = await hre.ethers.getSigners();
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
-
+const HH_TOTAL_MINTED = 'hypehaus:total-minted';
 task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEhaus tokens minted')
   .addOptionalParam(
     'contract',
@@ -66,6 +56,7 @@ task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEhaus tokens minted')
     await logTotalMinted(hypeHaus);
   });
 
+const HH_MINT = 'hypehaus:mint';
 task(HH_MINT, 'Mints a HYPEhaus token on behalf of the contract owner')
   .addOptionalParam(
     'contract',
@@ -76,10 +67,14 @@ task(HH_MINT, 'Mints a HYPEhaus token on behalf of the contract owner')
   .setAction(async (params: { contract?: string }, hre) => {
     const hypeHaus = await connectToContract(hre, params.contract);
     await logTotalMinted(hypeHaus);
-    await hypeHaus.mintHypeHaus({ value: hre.ethers.utils.parseEther('0.05') });
+    await hypeHaus.mintPublicSale({
+      value: hre.ethers.utils.parseEther('0.05'),
+    });
     await logTotalMinted(hypeHaus);
   });
 
+/*
+const HH_MINT_TO_ADDRESS = 'hypehaus:mint-to';
 task(HH_MINT_TO_ADDRESS, 'Mints a HYPEhaus token to the given address')
   .addPositionalParam(
     'receiver',
@@ -103,3 +98,4 @@ task(HH_MINT_TO_ADDRESS, 'Mints a HYPEhaus token to the given address')
     // minted value if the contract was not updated in time)
     await logTotalMinted(hypeHaus);
   });
+*/
