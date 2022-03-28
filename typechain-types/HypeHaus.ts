@@ -26,8 +26,8 @@ export interface HypeHausInterface extends utils.Interface {
     "getActiveSale()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "mintCommunitySale()": FunctionFragment;
-    "mintPublicSale()": FunctionFragment;
+    "mintCommunitySale(uint256)": FunctionFragment;
+    "mintPublicSale(uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
@@ -63,11 +63,11 @@ export interface HypeHausInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "mintCommunitySale",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "mintPublicSale",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -276,10 +276,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<[boolean]>;
 
     mintCommunitySale(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     mintPublicSale(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -375,10 +377,12 @@ export interface HypeHaus extends BaseContract {
   ): Promise<boolean>;
 
   mintCommunitySale(
+    amount: BigNumberish,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   mintPublicSale(
+    amount: BigNumberish,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -467,9 +471,15 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    mintCommunitySale(overrides?: CallOverrides): Promise<BigNumber>;
+    mintCommunitySale(
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
-    mintPublicSale(overrides?: CallOverrides): Promise<BigNumber>;
+    mintPublicSale(
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -604,10 +614,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     mintCommunitySale(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     mintPublicSale(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -707,10 +719,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     mintCommunitySale(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     mintPublicSale(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -71,7 +71,7 @@ describe('HypeHaus contract', () => {
         const signer = i % 2 === 0 ? signers.client1 : signers.client2;
         expect(await hypeHaus.totalSupply()).to.eq(i);
 
-        await expect(hypeHaus.connect(signer).mintPublicSale(overrides))
+        await expect(hypeHaus.connect(signer).mintPublicSale(1, overrides))
           .to.emit(hypeHaus, 'MintHypeHaus')
           .withArgs(i, signer.address);
 
@@ -79,14 +79,14 @@ describe('HypeHaus contract', () => {
       }
 
       await expect(
-        hypeHaus.connect(signers.deployer).mintPublicSale(overrides),
+        hypeHaus.connect(signers.deployer).mintPublicSale(1, overrides),
       ).to.be.revertedWith('HH_SUPPLY_EXHAUSTED');
     });
 
     it('fails to mint HYPEhaus tokens with insufficient funds', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
       await expect(
-        hypeHaus.connect(signers.client1).mintPublicSale(),
+        hypeHaus.connect(signers.client1).mintPublicSale(1),
       ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
     });
   });
@@ -95,8 +95,8 @@ describe('HypeHaus contract', () => {
     it('reports the correct URI and owner of a given minted token', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
       const overrides = { value: ethers.utils.parseEther(PUBLIC_SALE_PRICE) };
-      await hypeHaus.connect(signers.client1).mintPublicSale(overrides);
-      await hypeHaus.connect(signers.client2).mintPublicSale(overrides);
+      await hypeHaus.connect(signers.client1).mintPublicSale(1, overrides);
+      await hypeHaus.connect(signers.client2).mintPublicSale(1, overrides);
       expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URI}0.json`);
       expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URI}1.json`);
       expect(await hypeHaus.ownerOf(0)).to.eq(addresses.client1);
@@ -110,16 +110,16 @@ describe('HypeHaus contract', () => {
   });
 
   describe('Active Sale', () => {
-    it('fails to mint HYPEhaus tokens when public sale is not open', async () => {
+    it('fails to mint HYPEhaus tokens when the public sale is not open', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
       const errorMsg = 'HH_PUBLIC_SALE_NOT_OPEN';
-      await expect(hypeHaus.mintPublicSale()).to.be.revertedWith(errorMsg);
+      await expect(hypeHaus.mintPublicSale(1)).to.be.revertedWith(errorMsg);
     });
 
-    it('fails to mint HYPEhaus tokens when community sale is not open', async () => {
+    it('fails to mint HYPEhaus tokens when the community sale is not open', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
       const errorMsg = 'HH_COMMUNITY_SALE_NOT_OPEN';
-      await expect(hypeHaus.mintCommunitySale()).to.be.revertedWith(errorMsg);
+      await expect(hypeHaus.mintCommunitySale(1)).to.be.revertedWith(errorMsg);
     });
   });
 
@@ -128,15 +128,17 @@ describe('HypeHaus contract', () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
       const value = ethers.utils.parseEther(PUBLIC_SALE_PRICE);
 
+      // Helper functions
       const getBalance = (signer: Signer) => signers[signer].getBalance();
       const mintTokenAs = async (signer: SignerWithAddress) => {
         return await hypeHaus
           .connect(signer)
-          .mintPublicSale({ value: value })
+          .mintPublicSale(1, { value })
           .then((tx) => tx.wait())
           .then((receipt) => receipt.gasUsed.mul(receipt.effectiveGasPrice));
       };
 
+      // Initial balance state
       const initialBalances = {
         client1: await getBalance('client1'),
         client2: await getBalance('client2'),
@@ -151,12 +153,14 @@ describe('HypeHaus contract', () => {
       // balances.
       const givenClient1Balance = await getBalance('client1');
       const givenClient2Balance = await getBalance('client2');
+
       const expectedClient1Balance = initialBalances.client1
         .sub(value)
         .sub(totalGasUsedClient1);
       const expectedClient2Balance = initialBalances.client2
         .sub(value)
         .sub(totalGasUsedClient2);
+
       expect(givenClient1Balance).to.eq(expectedClient1Balance);
       expect(givenClient2Balance).to.eq(expectedClient2Balance);
       expect(await getBalance('team')).to.eq(initialBalances.team);

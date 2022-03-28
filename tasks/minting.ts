@@ -28,8 +28,9 @@ task(HH_MINT_PUBLIC, 'Mints a HYPEhaus token in a public sale as the owner')
     const hypeHaus = await utils.connectToContract(hre, contract);
     await hypeHaus.setActiveSale(2); // ActiveSale.Public = 2
     await utils.logTotalMinted(hypeHaus);
-    await hypeHaus.mintPublicSale({
-      value: hre.ethers.utils.parseEther('0.08'),
-    });
+
+    const overrides = { value: hre.ethers.utils.parseEther('0.08') };
+    await hypeHaus.mintPublicSale(1, overrides);
+
     await utils.logTotalMinted(hypeHaus);
   });
