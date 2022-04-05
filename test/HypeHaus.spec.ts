@@ -43,7 +43,7 @@ describe('HypeHaus contract', () => {
   });
 
   describe('Initialization', () => {
-    it('reports the correct total of minted HYPEhaus tokens', async () => {
+    it('reports the correct total of minted HYPEHAUS tokens', async () => {
       expect(await hypeHaus.totalSupply()).to.eq(0);
     });
   });
@@ -62,7 +62,7 @@ describe('HypeHaus contract', () => {
       ).to.be.revertedWith('');
     });
 
-    it('mints HYPEhaus tokens when there is sufficient supply', async () => {
+    it('mints HYPEHAUS tokens when there is sufficient supply', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
       const overrides = { value: ethers.utils.parseEther(PUBLIC_SALE_PRICE) };
 
@@ -83,7 +83,7 @@ describe('HypeHaus contract', () => {
       ).to.be.revertedWith('HH_SUPPLY_EXHAUSTED');
     });
 
-    it('fails to mint HYPEhaus tokens with insufficient funds', async () => {
+    it('fails to mint HYPEHAUS tokens with insufficient funds', async () => {
       await hypeHaus.setActiveSale(ActiveSale.Public);
       await expect(
         hypeHaus.connect(signers.client1).mintPublicSale(1),
@@ -102,7 +102,6 @@ describe('HypeHaus contract', () => {
       expect(await hypeHaus.ownerOf(0)).to.eq(addresses.client1);
       expect(await hypeHaus.ownerOf(1)).to.eq(addresses.client2);
 
-      // We don't care about the error messages so we leave it blank here
       const errorMsg = 'HH_NONEXISTENT_TOKEN';
       await expect(hypeHaus.tokenURI(2)).to.be.revertedWith(errorMsg);
       await expect(hypeHaus.tokenURI(MAX_SUPPLY)).to.be.revertedWith(errorMsg);
@@ -110,13 +109,13 @@ describe('HypeHaus contract', () => {
   });
 
   describe('Active Sale', () => {
-    it('fails to mint HYPEhaus tokens when the public sale is not open', async () => {
+    it('fails to mint HYPEHAUS tokens when the public sale is not open', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
       const errorMsg = 'HH_PUBLIC_SALE_NOT_OPEN';
       await expect(hypeHaus.mintPublicSale(1)).to.be.revertedWith(errorMsg);
     });
 
-    it('fails to mint HYPEhaus tokens when the community sale is not open', async () => {
+    it('fails to mint HYPEHAUS tokens when the community sale is not open', async () => {
       await hypeHaus.setActiveSale(ActiveSale.None);
       const errorMsg = 'HH_COMMUNITY_SALE_NOT_OPEN';
       await expect(hypeHaus.mintCommunitySale(1)).to.be.revertedWith(errorMsg);

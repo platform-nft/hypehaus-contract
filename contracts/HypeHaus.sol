@@ -13,7 +13,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     // ====== EVENTS ======
 
     /**
-     * @dev Emitted when a new *HYPEHAUS token is minted.
+     * @dev Emitted when a new HYPEHAUS token is minted.
      */
     event MintHypeHaus(uint256 tokenId, address receiver);
 
@@ -53,7 +53,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         uint256 maxSupply,
         string memory baseTokenURI,
         address teamWalletAddress
-    ) ERC721("*HYPEHAUS", "HYPE") {
+    ) ERC721("HYPEHAUS", "HYPE") {
         _maxSupply = maxSupply;
         _baseTokenURI = baseTokenURI;
         _teamWalletAddress = teamWalletAddress;
@@ -107,7 +107,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Internal function that mints `amount` number of *HYPEHAUS tokens to
+     * @dev Internal function that mints `amount` number of HYPEHAUS tokens to
      * `receiver`. It emits a `MintHypeHaus` event for every token minted.
      *
      * TODO: Could we do away with emitting an event? It's only used in our unit
@@ -136,7 +136,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     }
 
     /**
-     * @dev Reports the count of all the valid *HYPEHAUS tokens tracked by this
+     * @dev Reports the count of all the valid HYPEHAUS tokens tracked by this
      * contract.
      *
      * @return uint256 The count of all the valid NFTs tracked by this contract,
@@ -151,7 +151,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
      * @dev Returns the URI of a token with the given token ID.
      *
      * Throws if the given token ID is not a valid NFT (i.e. it does not point
-     * to a minted *HYPEHAUS token).
+     * to a minted HYPEHAUS token).
      */
     function tokenURI(uint256 tokenId)
         public
