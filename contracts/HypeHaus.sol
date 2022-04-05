@@ -23,7 +23,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
      * @dev An enumeration of all the possible sales the contract may be in.
      */
     enum ActiveSale {
-        None,
+        Closed,
         Community,
         Public
     }
@@ -40,23 +40,22 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
     // ====== STATE VARIABLES ======
 
-    ActiveSale internal _activeSale;
+    ActiveSale internal _activeSale = ActiveSale.Closed;
     Counters.Counter internal _supply;
 
     address internal immutable _teamWalletAddress;
     uint256 internal immutable _maxSupply;
-    string internal _baseURIString;
+    string internal _baseTokenURI;
 
     // ====== CONSTRUCTOR ======
 
     constructor(
         uint256 maxSupply,
-        string memory baseURIString,
+        string memory baseTokenURI,
         address teamWalletAddress
-    ) ERC721("HYPEhaus", "HYPE") {
+    ) ERC721("*HYPEHAUS", "HYPE") {
         _maxSupply = maxSupply;
-        _baseURIString = baseURIString;
-        _activeSale = ActiveSale.None;
+        _baseTokenURI = baseTokenURI;
         _teamWalletAddress = teamWalletAddress;
     }
 
@@ -110,6 +109,9 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Internal function that mints `amount` number of *HYPEHAUS tokens to
      * `receiver`. It emits a `MintHypeHaus` event for every token minted.
+     *
+     * TODO: Could we do away with emitting an event? It's only used in our unit
+     * tests at the moment.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
         for (uint256 i = 0; i < amount; i++) {
@@ -123,6 +125,10 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
     // ====== PUBLIC FUNCTIONS ======
 
+    /**
+     * @dev Transfers any pending balance available in the contract to the
+     * designated team wallet address.
+     */
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
         (bool success, ) = payable(_teamWalletAddress).call{value: balance}("");
@@ -132,10 +138,6 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Reports the count of all the valid *HYPEHAUS tokens tracked by this
      * contract.
-     *
-     * This is a partial conformance to the `ERC721Enumerable` extension. We
-     * don't want the increased gas usages associated with that extension just
-     * to provide a `totalSupply` function, so we've implemented our own here.
      *
      * @return uint256 The count of all the valid NFTs tracked by this contract,
      * where each one of them has an assigned and queryable owner not equal to
@@ -157,15 +159,14 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         override
         returns (string memory)
     {
-        // TODO: Return URI to placeholder during community sale
         require(_exists(tokenId), "HH_NONEXISTENT_TOKEN");
         return
             string(
-                abi.encodePacked(_baseURIString, tokenId.toString(), ".json")
+                abi.encodePacked(_baseTokenURI, tokenId.toString(), ".json")
             );
     }
 
-    // ====== ONLY-OWNER OPERATIONS ======
+    // ====== ONLY-OWNER FUNCTIONS ======
 
     function getActiveSale() external view onlyOwner returns (ActiveSale) {
         return _activeSale;
@@ -173,5 +174,9 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
     function setActiveSale(ActiveSale activeSale) external onlyOwner {
         _activeSale = activeSale;
+    }
+
+    function setBaseTokenURI(string memory newBaseTokenURI) external onlyOwner {
+        _baseTokenURI = newBaseTokenURI;
     }
 }
