@@ -48,6 +48,10 @@ declare module "hardhat/types/runtime" {
       name: "HypeHaus",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.HypeHaus__factory>;
+    getContractFactory(
+      name: "ERC721A",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC721A__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -94,6 +98,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.HypeHaus>;
+    getContractAt(
+      name: "ERC721A",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC721A>;
 
     // default types
     getContractFactory(

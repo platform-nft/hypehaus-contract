@@ -2,28 +2,24 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "erc721a/contracts/ERC721A.sol";
 
-contract HypeHaus is ERC721URIStorage, Ownable {
+contract HypeHaus is ERC721A, Ownable {
     using Strings for uint256;
-    using Counters for Counters.Counter;
-
-    // ====== EVENTS ======
-
-    /**
-     * @dev Emitted when a new HYPEHAUS token is minted.
-     */
-    event MintHypeHaus(uint256 tokenId, address receiver);
 
     // ====== ENUMS ======
 
     /**
      * @dev An enumeration of all the possible sales the contract may be in.
+
+     * An `Inactive` sale indicates that the contract has not begun the pre-sale
+     * (i.e. `Community` sale) or that it has finished the `Public` sale. As a
+     * result, the contract will not accept any mints if `_activeSale` is set to
+     * `Inactive`.
      */
-    enum ActiveSale {
-        Closed,
+    enum Sale {
+        Inactive,
         Community,
         Public
     }
@@ -40,9 +36,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
     // ====== STATE VARIABLES ======
 
-    ActiveSale internal _activeSale = ActiveSale.Closed;
-    Counters.Counter internal _supply;
-
+    Sale internal _activeSale = Sale.Inactive;
     address internal immutable _teamWalletAddress;
     uint256 internal immutable _maxSupply;
     string internal _baseTokenURI;
@@ -53,7 +47,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
         uint256 maxSupply,
         string memory baseTokenURI,
         address teamWalletAddress
-    ) ERC721("HYPEHAUS", "HYPE") {
+    ) ERC721A("HYPEHAUS", "HYPE") {
         _maxSupply = maxSupply;
         _baseTokenURI = baseTokenURI;
         _teamWalletAddress = teamWalletAddress;
@@ -61,21 +55,23 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
     // ====== MODIFIERS ======
 
-    modifier isPublicSaleActive() {
-        require(_activeSale == ActiveSale.Public, "HH_PUBLIC_SALE_NOT_OPEN");
+    modifier isSaleActive() {
+        require(_activeSale != Sale.Inactive, "HH_SALE_NOT_ACTIVE");
         _;
     }
 
     modifier isCommunitySaleActive() {
-        require(
-            _activeSale == ActiveSale.Community,
-            "HH_COMMUNITY_SALE_NOT_OPEN"
-        );
+        require(_activeSale == Sale.Community, "HH_COMMUNITY_SALE_NOT_ACTIVE");
+        _;
+    }
+
+    modifier isPublicSaleActive() {
+        require(_activeSale == Sale.Public, "HH_PUBLIC_SALE_NOT_ACTIVE");
         _;
     }
 
     modifier isSupplyAvailable() {
-        require(_supply.current() < _maxSupply, "HH_SUPPLY_EXHAUSTED");
+        require(_totalMinted() < _maxSupply, "HH_SUPPLY_EXHAUSTED");
         _;
     }
 
@@ -89,6 +85,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     function mintCommunitySale(uint256 amount)
         external
         payable
+        isSaleActive
         isCommunitySaleActive
         isSupplyAvailable
         isCorrectPayment(COMMUNITY_SALE_PRICE)
@@ -99,6 +96,7 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     function mintPublicSale(uint256 amount)
         external
         payable
+        isSaleActive
         isPublicSaleActive
         isSupplyAvailable
         isCorrectPayment(PUBLIC_SALE_PRICE)
@@ -109,18 +107,9 @@ contract HypeHaus is ERC721URIStorage, Ownable {
     /**
      * @dev Internal function that mints `amount` number of HYPEHAUS tokens to
      * `receiver`. It emits a `MintHypeHaus` event for every token minted.
-     *
-     * TODO: Could we do away with emitting an event? It's only used in our unit
-     * tests at the moment.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
-        for (uint256 i = 0; i < amount; i++) {
-            // Checks-Effects-Interactions pattern
-            uint256 nextTokenId = _supply.current();
-            _supply.increment();
-            emit MintHypeHaus(nextTokenId, receiver);
-            _safeMint(receiver, nextTokenId);
-        }
+        _safeMint(receiver, amount);
     }
 
     // ====== PUBLIC FUNCTIONS ======
@@ -143,8 +132,8 @@ contract HypeHaus is ERC721URIStorage, Ownable {
      * where each one of them has an assigned and queryable owner not equal to
      * the zero address.
      */
-    function totalSupply() external view returns (uint256) {
-        return _supply.current();
+    function totalMinted() external view returns (uint256) {
+        return _totalMinted();
     }
 
     /**
@@ -168,11 +157,11 @@ contract HypeHaus is ERC721URIStorage, Ownable {
 
     // ====== ONLY-OWNER FUNCTIONS ======
 
-    function getActiveSale() external view onlyOwner returns (ActiveSale) {
+    function getActiveSale() external view onlyOwner returns (Sale) {
         return _activeSale;
     }
 
-    function setActiveSale(ActiveSale activeSale) external onlyOwner {
+    function setActiveSale(Sale activeSale) external onlyOwner {
         _activeSale = activeSale;
     }
 

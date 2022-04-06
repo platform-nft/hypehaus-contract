@@ -10,6 +10,7 @@ export type { IERC721Receiver } from "./IERC721Receiver";
 export type { ERC165 } from "./ERC165";
 export type { IERC165 } from "./IERC165";
 export type { HypeHaus } from "./HypeHaus";
+export type { ERC721A } from "./ERC721A";
 
 export { Ownable__factory } from "./factories/Ownable__factory";
 export { ERC721__factory } from "./factories/ERC721__factory";
@@ -20,3 +21,4 @@ export { IERC721Receiver__factory } from "./factories/IERC721Receiver__factory";
 export { ERC165__factory } from "./factories/ERC165__factory";
 export { IERC165__factory } from "./factories/IERC165__factory";
 export { HypeHaus__factory } from "./factories/HypeHaus__factory";
+export { ERC721A__factory } from "./factories/ERC721A__factory";
