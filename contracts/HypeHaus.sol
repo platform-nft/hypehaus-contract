@@ -46,8 +46,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     bytes32 internal alphaTierMerkleRoot;
     bytes32 internal hypelistTierMerkleRoot;
     bytes32 internal hypememberTierMerkleRoot;
-    mapping(address => bool) internal _claimedDuringCommunitySale;
-    mapping(address => bool) internal _claimedDuringPublicSale;
+    // A mapping of addresses and the last sale they have claimed a HYPEHAUS.
+    mapping(address => Sale) internal _claimed;
 
     // ====== CONSTRUCTOR ======
 
@@ -88,19 +88,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         _;
     }
 
-    modifier hasNotClaimedDuringCommunitySale() {
-        require(
-            !_claimedDuringCommunitySale[msg.sender],
-            "HH_ADDRESS_ALREADY_CLAIMED"
-        );
-        _;
-    }
-
-    modifier hasNotClaimedDuringPublicSale() {
-        require(
-            !_claimedDuringPublicSale[msg.sender],
-            "HH_ADDRESS_ALREADY_CLAIMED"
-        );
+    modifier hasNotClaimedDuringSale(Sale sale) {
+        require(_claimed[msg.sender] != sale, "HH_ADDRESS_ALREADY_CLAIMED");
         _;
     }
 
@@ -155,14 +144,14 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         nonReentrant
         isCommunitySaleActive
         isSupplyAvailable
-        hasNotClaimedDuringCommunitySale
+        hasNotClaimedDuringSale(Sale.Community)
         isValidAmount(MAX_TOKENS_PER_ALPHA_WALLET, amount)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
         isValidMerkleProof(merkleProof, amount)
     {
         // Accounts may only claim once. They will not be able to mint any
         // remaining HYPEHAUSes during community sale.
-        _claimedDuringCommunitySale[msg.sender] = true;
+        _claimed[msg.sender] = Sale.Community;
         _mintToAddress(msg.sender, amount);
     }
 
@@ -187,10 +176,10 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         nonReentrant
         isPublicSaleActive
         isSupplyAvailable
-        hasNotClaimedDuringPublicSale
+        hasNotClaimedDuringSale(Sale.Public)
         isCorrectPayment(PUBLIC_SALE_PRICE, 1)
     {
-        _claimedDuringPublicSale[msg.sender] = true;
+        _claimed[msg.sender] = Sale.Public;
         _mintToAddress(msg.sender, 1);
     }
 
