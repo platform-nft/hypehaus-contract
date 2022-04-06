@@ -30,7 +30,7 @@ task(HH_MINT_PUBLIC, 'Mints a HYPEhaus token in a public sale as the owner')
     await utils.logTotalMinted(hypeHaus);
 
     const overrides = { value: hre.ethers.utils.parseEther('0.08') };
-    await hypeHaus.mintPublicSale(1, overrides);
+    await hypeHaus.mintPublicSale(overrides);
 
     await utils.logTotalMinted(hypeHaus);
   });

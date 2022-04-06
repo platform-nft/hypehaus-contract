@@ -26,16 +26,19 @@ export interface HypeHausInterface extends utils.Interface {
     "getActiveSale()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "mintCommunitySale(uint256)": FunctionFragment;
-    "mintPublicSale(uint256)": FunctionFragment;
+    "mintCommunitySale(uint256,bytes32[])": FunctionFragment;
+    "mintPublicSale()": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "setActiveSale(uint8)": FunctionFragment;
+    "setAlphaTierMerkleRoot(bytes32)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
     "setBaseTokenURI(string)": FunctionFragment;
+    "setHypelistTierMerkleRoot(bytes32)": FunctionFragment;
+    "setHypememberTierMerkleRoot(bytes32)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
@@ -65,11 +68,11 @@ export interface HypeHausInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "mintCommunitySale",
-    values: [BigNumberish]
+    values: [BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "mintPublicSale",
-    values: [BigNumberish]
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -90,12 +93,24 @@ export interface HypeHausInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "setAlphaTierMerkleRoot",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setApprovalForAll",
     values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setBaseTokenURI",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setHypelistTierMerkleRoot",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setHypememberTierMerkleRoot",
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
@@ -162,11 +177,23 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setAlphaTierMerkleRoot",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setApprovalForAll",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "setBaseTokenURI",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setHypelistTierMerkleRoot",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setHypememberTierMerkleRoot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -286,11 +313,11 @@ export interface HypeHaus extends BaseContract {
 
     mintCommunitySale(
       amount: BigNumberish,
+      merkleProof: BytesLike[],
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     mintPublicSale(
-      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -327,6 +354,11 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setAlphaTierMerkleRoot(
+      root: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setApprovalForAll(
       operator: string,
       approved: boolean,
@@ -335,6 +367,16 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newBaseTokenURI: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setHypelistTierMerkleRoot(
+      root: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setHypememberTierMerkleRoot(
+      root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -394,11 +436,11 @@ export interface HypeHaus extends BaseContract {
 
   mintCommunitySale(
     amount: BigNumberish,
+    merkleProof: BytesLike[],
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   mintPublicSale(
-    amount: BigNumberish,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -432,6 +474,11 @@ export interface HypeHaus extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setAlphaTierMerkleRoot(
+    root: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setApprovalForAll(
     operator: string,
     approved: boolean,
@@ -440,6 +487,16 @@ export interface HypeHaus extends BaseContract {
 
   setBaseTokenURI(
     newBaseTokenURI: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setHypelistTierMerkleRoot(
+    root: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setHypememberTierMerkleRoot(
+    root: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -496,13 +553,11 @@ export interface HypeHaus extends BaseContract {
 
     mintCommunitySale(
       amount: BigNumberish,
+      merkleProof: BytesLike[],
       overrides?: CallOverrides
     ): Promise<void>;
 
-    mintPublicSale(
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    mintPublicSale(overrides?: CallOverrides): Promise<void>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -532,6 +587,11 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setAlphaTierMerkleRoot(
+      root: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setApprovalForAll(
       operator: string,
       approved: boolean,
@@ -540,6 +600,16 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newBaseTokenURI: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setHypelistTierMerkleRoot(
+      root: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setHypememberTierMerkleRoot(
+      root: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -639,11 +709,11 @@ export interface HypeHaus extends BaseContract {
 
     mintCommunitySale(
       amount: BigNumberish,
+      merkleProof: BytesLike[],
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     mintPublicSale(
-      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -680,6 +750,11 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setAlphaTierMerkleRoot(
+      root: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setApprovalForAll(
       operator: string,
       approved: boolean,
@@ -688,6 +763,16 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newBaseTokenURI: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setHypelistTierMerkleRoot(
+      root: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setHypememberTierMerkleRoot(
+      root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -751,11 +836,11 @@ export interface HypeHaus extends BaseContract {
 
     mintCommunitySale(
       amount: BigNumberish,
+      merkleProof: BytesLike[],
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     mintPublicSale(
-      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -792,6 +877,11 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    setAlphaTierMerkleRoot(
+      root: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     setApprovalForAll(
       operator: string,
       approved: boolean,
@@ -800,6 +890,16 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newBaseTokenURI: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setHypelistTierMerkleRoot(
+      root: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setHypememberTierMerkleRoot(
+      root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
