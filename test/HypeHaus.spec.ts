@@ -5,7 +5,7 @@ import { ethers } from 'hardhat';
 import { HypeHaus } from '../typechain-types/HypeHaus';
 
 const MAX_SUPPLY = 10;
-const BASE_URI = 'test://abc123/';
+const BASE_TOKEN_URI = 'test://abc123/';
 const COMMUNITY_SALE_PRICE = ethers.utils.parseEther('0.05');
 const PUBLIC_SALE_PRICE = ethers.utils.parseEther('0.08');
 
@@ -15,7 +15,7 @@ enum Sale {
   Public = 2,
 }
 
-describe('HypeHaus contract', () => {
+describe('HypeHaus Contract', () => {
   let hypeHaus: HypeHaus;
 
   type Signer = 'deployer' | 'team' | 'client1' | 'client2';
@@ -36,7 +36,7 @@ describe('HypeHaus contract', () => {
 
     hypeHaus = (await factory.deploy(
       MAX_SUPPLY,
-      BASE_URI,
+      BASE_TOKEN_URI,
       team.address,
     )) as HypeHaus;
     await hypeHaus.deployed();
@@ -123,7 +123,7 @@ describe('HypeHaus contract', () => {
     });
   });
 
-  describe('Active Sale', () => {
+  describe('Changing Active Sale', () => {
     it('fails to mint HYPEHAUS tokens when no sale is active', async () => {
       await hypeHaus.setActiveSale(Sale.Inactive);
       const errorMsg = 'HH_SALE_NOT_ACTIVE';
@@ -148,16 +148,39 @@ describe('HypeHaus contract', () => {
     it('reports the correct URI and owner of a given minted token', async () => {
       await hypeHaus.setActiveSale(Sale.Public);
       const overrides = { value: PUBLIC_SALE_PRICE };
-      await hypeHaus.connect(signers.client1).mintPublicSale(1, overrides);
+      await hypeHaus.connect(signers.client1).mintPublicSale(3, overrides);
       await hypeHaus.connect(signers.client2).mintPublicSale(1, overrides);
-      expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_URI}0.json`);
-      expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_URI}1.json`);
+
+      await Promise.all(
+        [...Array(4)].map(async (_, i) => {
+          expect(await hypeHaus.tokenURI(i)).to.eq(
+            `${BASE_TOKEN_URI}${i}.json`,
+          );
+        }),
+      );
+
       expect(await hypeHaus.ownerOf(0)).to.eq(addresses.client1);
-      expect(await hypeHaus.ownerOf(1)).to.eq(addresses.client2);
+      expect(await hypeHaus.ownerOf(1)).to.eq(addresses.client1);
+      expect(await hypeHaus.ownerOf(2)).to.eq(addresses.client1);
+      expect(await hypeHaus.ownerOf(3)).to.eq(addresses.client2);
 
       const errorMsg = 'HH_NONEXISTENT_TOKEN';
-      await expect(hypeHaus.tokenURI(2)).to.be.revertedWith(errorMsg);
+      await expect(hypeHaus.tokenURI(4)).to.be.revertedWith(errorMsg);
       await expect(hypeHaus.tokenURI(MAX_SUPPLY)).to.be.revertedWith(errorMsg);
+    });
+
+    it('can change the base URI for all minted tokens', async () => {
+      const newBaseTokenURI = 'test://xyz789/';
+      const overrides = { value: PUBLIC_SALE_PRICE };
+
+      await hypeHaus.setActiveSale(Sale.Public);
+      await hypeHaus.mintPublicSale(2, overrides);
+      expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_TOKEN_URI}0.json`);
+      expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_TOKEN_URI}1.json`);
+
+      await hypeHaus.setBaseTokenURI(newBaseTokenURI);
+      expect(await hypeHaus.tokenURI(0)).to.eq(`${newBaseTokenURI}0.json`);
+      expect(await hypeHaus.tokenURI(1)).to.eq(`${newBaseTokenURI}1.json`);
     });
   });
 
