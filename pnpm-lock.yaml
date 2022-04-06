@@ -1,6 +1,9 @@
 lockfileVersion: 5.3
 
 specifiers:
+  '@ethersproject/abi': ^5.0.0
+  '@ethersproject/bytes': ^5.0.0
+  '@ethersproject/providers': ^5.0.0
   '@nomiclabs/hardhat-ethers': ^2.0.4
   '@nomiclabs/hardhat-etherscan': ^3.0.0
   '@nomiclabs/hardhat-waffle': ^2.0.2
@@ -26,6 +29,7 @@ specifiers:
   ethers: ^5.5.4
   hardhat: ^2.8.3
   hardhat-gas-reporter: ^1.0.7
+  lodash: ^4.17.15
   prettier: ^2.5.1
   prettier-plugin-solidity: ^1.0.0-beta.19
   solhint: ^3.3.6
@@ -35,12 +39,15 @@ specifiers:
   typescript: ^4.5.5
 
 devDependencies:
+  '@ethersproject/abi': 5.5.0
+  '@ethersproject/bytes': 5.5.0
+  '@ethersproject/providers': 5.5.3
   '@nomiclabs/hardhat-ethers': 2.0.4_ethers@5.5.4+hardhat@2.8.3
   '@nomiclabs/hardhat-etherscan': 3.0.0_hardhat@2.8.3
   '@nomiclabs/hardhat-waffle': 2.0.2_f3b1a635adc17d77c17deb2f21ac329f
   '@openzeppelin/contracts': 4.5.0
-  '@typechain/ethers-v5': 9.0.0_7aa9a0a803afbf5a4c1287302ba53b8a
-  '@typechain/hardhat': 4.0.0_hardhat@2.8.3+typechain@7.0.0
+  '@typechain/ethers-v5': 9.0.0_de7f5b4cc9c653e97637defc449fb243
+  '@typechain/hardhat': 4.0.0_fef7ba8e66642bacc56989096cfcad82
   '@types/chai': 4.3.0
   '@types/mocha': 9.1.0
   '@types/node': 17.0.16
@@ -60,6 +67,7 @@ devDependencies:
   ethers: 5.5.4
   hardhat: 2.8.3
   hardhat-gas-reporter: 1.0.7_hardhat@2.8.3
+  lodash: 4.17.21
   prettier: 2.5.1
   prettier-plugin-solidity: 1.0.0-beta.19_prettier@2.5.1
   solhint: 3.3.6
@@ -873,7 +881,7 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@typechain/ethers-v5/9.0.0_7aa9a0a803afbf5a4c1287302ba53b8a:
+  /@typechain/ethers-v5/9.0.0_de7f5b4cc9c653e97637defc449fb243:
     resolution: {integrity: sha512-bAanuPl1L2itaUdMvor/QvwnIH+TM/CmG00q17Ilv3ZZMeJ2j8HcarhgJUZ9pBY1teBb85P8cC03dz3mSSx+tQ==}
     peerDependencies:
       '@ethersproject/abi': ^5.0.0
@@ -883,6 +891,9 @@ packages:
       typechain: ^7.0.0
       typescript: '>=4.0.0'
     dependencies:
+      '@ethersproject/abi': 5.5.0
+      '@ethersproject/bytes': 5.5.0
+      '@ethersproject/providers': 5.5.3
       ethers: 5.5.4
       lodash: 4.17.21
       ts-essentials: 7.0.3_typescript@4.5.5
@@ -890,7 +901,7 @@ packages:
       typescript: 4.5.5
     dev: true
 
-  /@typechain/hardhat/4.0.0_hardhat@2.8.3+typechain@7.0.0:
+  /@typechain/hardhat/4.0.0_fef7ba8e66642bacc56989096cfcad82:
     resolution: {integrity: sha512-SeEKtiHu4Io3LHhE8VV3orJbsj7dwJZX8pzSTv7WQR38P18vOLm2M52GrykVinMpkLK0uVc88ICT58emvfn74w==}
     peerDependencies:
       hardhat: ^2.0.10
@@ -899,6 +910,7 @@ packages:
     dependencies:
       fs-extra: 9.1.0
       hardhat: 2.8.3
+      lodash: 4.17.21
       typechain: 7.0.0_typescript@4.5.5
     dev: true
 
@@ -1557,7 +1569,7 @@ packages:
   /async/2.6.2:
     resolution: {integrity: sha512-H1qVYh1MYhEEFLsP97cVKqCGo7KfCyTt6uEWqsTBr9SO84oK9Uwbyd/yCW+6rKJLHksBNUVWZDAjfS+Ccx0Bbg==}
     dependencies:
-      lodash: 4.17.20
+      lodash: 4.17.21
     dev: true
 
   /async/2.6.3:
@@ -1618,7 +1630,7 @@ packages:
       convert-source-map: 1.8.0
       debug: 2.6.9
       json5: 0.5.1
-      lodash: 4.17.20
+      lodash: 4.17.21
       minimatch: 3.0.5
       path-is-absolute: 1.0.1
       private: 0.1.8
@@ -1634,7 +1646,7 @@ packages:
       babel-types: 6.26.0
       detect-indent: 4.0.0
       jsesc: 1.3.0
-      lodash: 4.17.20
+      lodash: 4.17.21
       source-map: 0.5.7
       trim-right: 1.0.1
     dev: true
@@ -1662,7 +1674,7 @@ packages:
       babel-helper-function-name: 6.24.1
       babel-runtime: 6.26.0
       babel-types: 6.26.0
-      lodash: 4.17.20
+      lodash: 4.17.21
     dev: true
 
   /babel-helper-explode-assignable-expression/6.24.1:
@@ -1709,7 +1721,7 @@ packages:
     dependencies:
       babel-runtime: 6.26.0
       babel-types: 6.26.0
-      lodash: 4.17.20
+      lodash: 4.17.21
     dev: true
 
   /babel-helper-remap-async-to-generator/6.24.1:
@@ -1791,7 +1803,7 @@ packages:
       babel-template: 6.26.0
       babel-traverse: 6.26.0
       babel-types: 6.26.0
-      lodash: 4.17.20
+      lodash: 4.17.21
     dev: true
 
   /babel-plugin-transform-es2015-classes/6.24.1:
@@ -2003,7 +2015,7 @@ packages:
       babel-runtime: 6.26.0
       core-js: 2.6.12
       home-or-tmp: 2.0.0
-      lodash: 4.17.20
+      lodash: 4.17.21
       mkdirp: 0.5.5
       source-map-support: 0.4.18
     dev: true
@@ -2022,7 +2034,7 @@ packages:
       babel-traverse: 6.26.0
       babel-types: 6.26.0
       babylon: 6.18.0
-      lodash: 4.17.20
+      lodash: 4.17.21
     dev: true
 
   /babel-traverse/6.26.0:
@@ -2036,7 +2048,7 @@ packages:
       debug: 2.6.9
       globals: 9.18.0
       invariant: 2.2.4
-      lodash: 4.17.20
+      lodash: 4.17.21
     dev: true
 
   /babel-types/6.26.0:
@@ -2044,7 +2056,7 @@ packages:
     dependencies:
       babel-runtime: 6.26.0
       esutils: 2.0.3
-      lodash: 4.17.20
+      lodash: 4.17.21
       to-fast-properties: 1.0.3
     dev: true
 
