@@ -107,7 +107,7 @@ describe('HypeHaus Contract', () => {
         hypeHaus.connect(signers[signerName]).mintCommunitySale(amount, proof, {
           value: COMMUNITY_SALE_PRICE.mul(amount),
         }),
-      ).to.be.revertedWith('HH_MERKLE_PROOF_FAILURE');
+      ).to.be.revertedWith('HH_VERIFICATION_FAILURE');
     }
 
     describe('Community Sale - Alpha', () => {

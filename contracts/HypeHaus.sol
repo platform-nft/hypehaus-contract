@@ -39,9 +39,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // ====== STATE VARIABLES ======
 
     Sale internal _activeSale = Sale.Inactive;
-    address internal immutable _teamWalletAddress;
-    uint256 internal immutable _maxSupply;
     string internal _baseTokenURI;
+    uint256 internal immutable _maxSupply;
+    address internal immutable _teamWalletAddress;
 
     bytes32 internal _alphaTierMerkleRoot;
     bytes32 internal _hypelistTierMerkleRoot;
@@ -117,7 +117,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
                 root,
                 keccak256(abi.encodePacked(msg.sender))
             ),
-            "HH_MERKLE_PROOF_FAILURE"
+            "HH_VERIFICATION_FAILURE"
         );
 
         _;
