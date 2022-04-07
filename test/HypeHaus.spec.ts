@@ -201,7 +201,9 @@ describe('HypeHaus Contract', () => {
           expect(await hypeHaus.totalMinted()).to.eq(index);
 
           // After minting
-          await hypeHaus.connect(signer).mintPublicSale(overrides);
+          await expect(hypeHaus.connect(signer).mintPublicSale(overrides))
+            .to.emit(hypeHaus, 'Transfer')
+            .withArgs(ethers.constants.AddressZero, signer.address, index);
           expect(await hypeHaus.totalMinted()).to.eq(index + 1);
 
           // This signer can't mint anymore
@@ -319,7 +321,7 @@ describe('HypeHaus Contract', () => {
       expect(await hypeHaus.ownerOf(6)).to.eq(addresses.u1);
       expect(await hypeHaus.ownerOf(7)).to.eq(addresses.u4);
 
-      // Expect all token URIs to have changed
+      // Expect all token URIs to have changed when setting a new base token URI
       const newBaseTokenURI = 'test://zyx987/';
       await hypeHaus.setBaseTokenURI(newBaseTokenURI);
       await Promise.all(

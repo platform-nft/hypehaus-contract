@@ -43,9 +43,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     uint256 internal immutable _maxSupply;
     string internal _baseTokenURI;
 
-    bytes32 internal alphaTierMerkleRoot;
-    bytes32 internal hypelistTierMerkleRoot;
-    bytes32 internal hypememberTierMerkleRoot;
+    bytes32 internal _alphaTierMerkleRoot;
+    bytes32 internal _hypelistTierMerkleRoot;
+    bytes32 internal _hypememberTierMerkleRoot;
     // A mapping of addresses and the last sale they have claimed a HYPEHAUS.
     mapping(address => Sale) internal _claimed;
 
@@ -74,11 +74,16 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     }
 
     modifier isSupplyAvailable() {
+        // TODO: Originally we had a counter to indicate the number of tokens
+        // minted, but since `_totalMinted` is already provided by `ERC721A`,
+        // we'll use it instead.
         require(_totalMinted() < _maxSupply, "HH_SUPPLY_EXHAUSTED");
         _;
     }
 
-    modifier isValidAmount(uint256 maximum, uint256 amount) {
+    modifier isValidMintAmount(uint256 amount, uint256 maximum) {
+        // The front-end will ensure that `amount` is between 1 and `maximum`,
+        // but we'll do a check anyway.
         require(amount >= 1 && amount <= maximum, "HH_INVALID_MINT_AMOUNT");
         _;
     }
@@ -99,11 +104,11 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     ) {
         bytes32 root;
         if (amount == MAX_TOKENS_PER_ALPHA_WALLET) {
-            root = alphaTierMerkleRoot;
+            root = _alphaTierMerkleRoot;
         } else if (amount == MAX_TOKENS_PER_HYPELIST_WALLET) {
-            root = hypelistTierMerkleRoot;
+            root = _hypelistTierMerkleRoot;
         } else {
-            root = hypememberTierMerkleRoot;
+            root = _hypememberTierMerkleRoot;
         }
 
         require(
@@ -121,15 +126,15 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // ====== MINTING FUNCTIONS ======
 
     /**
-     * @dev Mints `amount` number of HYPEHAUS tokens during the community sale.
+     * @dev Mints `amount` number of HYPEHAUSes during the community sale.
      *
-     * This function requires several prerequisites in order to for `msg.sender`
-     * to successfully mint HYPEHAUS tokens during the community sale:
+     * This function requires several prerequisites in order for `msg.sender` to
+     * successfully mint HYPEHAUSes during the community sale:
      *
-     *   - The community sale is active;
-     *   - There is enough supply available to mint `amount` tokens;
-     *   - `msg.sender` has not already claimed any amount of HYPEHAUS tokens
-     *     during the community sale;
+     *   - The community sale is currently active;
+     *   - There is enough supply available to mint `amount` HYPEHAUSes;
+     *   - `msg.sender` has not already claimed any amount of HYPEHAUSes during
+     *     the community sale;
      *   - The provided `amount` is a value between 1 and 3 (inclusive);
      *   - Sufficient amount of ETH is provided to purchase `amount` number of
      *     HYPEHAUSes at a discounted price; and
@@ -145,26 +150,26 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable
         hasNotClaimedDuringSale(Sale.Community)
-        isValidAmount(MAX_TOKENS_PER_ALPHA_WALLET, amount)
+        isValidMintAmount(amount, MAX_TOKENS_PER_ALPHA_WALLET)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
         isValidMerkleProof(merkleProof, amount)
     {
-        // Accounts may only claim once. They will not be able to mint any
-        // remaining HYPEHAUSes during community sale.
+        // Accounts may only mint once during the community sale, even if they
+        // have remaining HYPEHAUSes they can mint.
         _claimed[msg.sender] = Sale.Community;
         _mintToAddress(msg.sender, amount);
     }
 
     /**
-     * @dev Mints `amount` number of HYPEHAUS tokens during the public sale.
+     * @dev Mints one HYPEHAUS during the public sale.
      *
      * Like `mintCommunitySale`, this function has several prerequisites to
-     * successfully mint HYPEHAUS tokens:
+     * successfully mint one HYPEHAUS:
      *
-     *   - The public sale is active;
-     *   - There is enough supply available to mint one HYPEHAUS token;
-     *   - `msg.sender` has not already claimed a HYPEHAUS token during the
-     *     public sale; and
+     *   - The public sale is currently active;
+     *   - There is enough supply available to mint one HYPEHAUS;
+     *   - `msg.sender` has not already claimed a HYPEHAUS during the public
+     *     sale; and
      *   - Sufficient amount of ETH is provided to purchase one HYPEHAUS at full
      *     price.
      *
@@ -179,15 +184,20 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         hasNotClaimedDuringSale(Sale.Public)
         isCorrectPayment(PUBLIC_SALE_PRICE, 1)
     {
+        // All accounts may only mint one HYPEHAUS during the public sale.
+        // However, any previous HYPEHAUSes minted during the community sale
+        // will still be available to them.
         _claimed[msg.sender] = Sale.Public;
         _mintToAddress(msg.sender, 1);
     }
 
     /**
-     * @dev Internal function that mints `amount` number of HYPEHAUS tokens to
-     * `receiver`. It emits a `MintHypeHaus` event for every token minted.
+     * @dev Internal function that mints `amount` number of HYPEHAUSes to
+     * `receiver`.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
+        // The second argument of `_safeMint` in AZUKI's `ERC721A` contract
+        // expects the amount to mint, not the token ID.
         _safeMint(receiver, amount);
     }
 
@@ -204,10 +214,10 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Reports the count of all the valid HYPEHAUS tokens tracked by this
+     * @dev Reports the count of all the valid HYPEHAUSes tracked by this
      * contract.
      *
-     * @return uint256 The count of all the valid NFTs tracked by this contract,
+     * @return uint256 The count minted HYPEHAUSes tracked by this contract,
      * where each one of them has an assigned and queryable owner not equal to
      * the zero address.
      */
@@ -216,10 +226,10 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns the URI of a token with the given token ID.
+     * @dev Returns the URI of a HYPEHAUS with the given token ID.
      *
-     * Throws if the given token ID is not a valid NFT (i.e. it does not point
-     * to a minted HYPEHAUS token).
+     * Throws if the given token ID is not a valid (i.e. it does not point to a
+     * minted HYPEHAUS).
      */
     function tokenURI(uint256 tokenId)
         public
@@ -249,14 +259,14 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     }
 
     function setAlphaTierMerkleRoot(bytes32 root) external onlyOwner {
-        alphaTierMerkleRoot = root;
+        _alphaTierMerkleRoot = root;
     }
 
     function setHypelistTierMerkleRoot(bytes32 root) external onlyOwner {
-        hypelistTierMerkleRoot = root;
+        _hypelistTierMerkleRoot = root;
     }
 
     function setHypememberTierMerkleRoot(bytes32 root) external onlyOwner {
-        hypememberTierMerkleRoot = root;
+        _hypememberTierMerkleRoot = root;
     }
 }
