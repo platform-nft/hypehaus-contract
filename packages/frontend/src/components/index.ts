@@ -1,2 +1,2 @@
 export { default as Button } from './Button';
-export { default as ConnectWalletDialog } from './ConnectWalletDialog';
+export { default as ConnectWalletPage } from './ConnectWalletPage';

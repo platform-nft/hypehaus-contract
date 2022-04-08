@@ -7,7 +7,7 @@ import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
 
 declare let window: any;
 
-export default function ConnectWalletDialog() {
+export default function ConnectWalletPage() {
   return (
     <div className="flex-col m-auto max-w-lg px-16 py-12 text-center space-y-4 rounded-xl border-2 border-primary-100">
       <img
