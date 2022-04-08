@@ -5,7 +5,7 @@ import * as utils from './utils';
 const HH_TOTAL_MINTED = 'hypehaus:total-minted';
 const HH_MINT_PUBLIC = 'hypehaus:mint-public';
 
-task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEhaus tokens minted')
+task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEHAUS NFTs minted')
   .addOptionalParam(
     'contract',
     'The address of the contract to connect to',
@@ -17,7 +17,7 @@ task(HH_TOTAL_MINTED, 'Reports the total amount of HYPEhaus tokens minted')
     await utils.logTotalMinted(hypeHaus);
   });
 
-task(HH_MINT_PUBLIC, 'Mints a HYPEhaus token in a public sale as the owner')
+task(HH_MINT_PUBLIC, 'Mints a HYPEHAUS NFT in a public sale as the owner')
   .addOptionalParam(
     'contract',
     'The address of the contract to connect to',
