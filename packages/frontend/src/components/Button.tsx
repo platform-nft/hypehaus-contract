@@ -15,6 +15,7 @@ export default function Button(props: ButtonProps) {
         'border-2',
         'rounded-xl',
         'font-medium',
+        'select-none',
         'text-primary-500',
         'border-primary-500',
         'bg-transparent',
