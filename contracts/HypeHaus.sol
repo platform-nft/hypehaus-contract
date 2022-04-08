@@ -73,11 +73,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         _;
     }
 
-    modifier isSupplyAvailable() {
-        // TODO: Originally we had a counter to indicate the number of tokens
-        // minted, but since `_totalMinted` is already provided by `ERC721A`,
-        // we'll use it instead.
-        require(_totalMinted() < _maxSupply, "HH_SUPPLY_EXHAUSTED");
+    modifier isSupplyAvailable(uint256 amount) {
+        require((_totalMinted() + amount) <= _maxSupply, "HH_SUPPLY_EXHAUSTED");
         _;
     }
 
@@ -148,7 +145,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         payable
         nonReentrant
         isCommunitySaleActive
-        isSupplyAvailable
+        isSupplyAvailable(amount)
         hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, MAX_TOKENS_PER_ALPHA_WALLET)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
@@ -180,7 +177,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         payable
         nonReentrant
         isPublicSaleActive
-        isSupplyAvailable
+        isSupplyAvailable(1)
         hasNotClaimedDuringSale(Sale.Public)
         isCorrectPayment(PUBLIC_SALE_PRICE, 1)
     {
@@ -197,7 +194,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
         // The second argument of `_safeMint` in AZUKI's `ERC721A` contract
-        // expects the amount to mint, not the token ID.
+        // expects the amount to mint, not a token ID.
         _safeMint(receiver, amount);
     }
 
@@ -217,7 +214,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
      * @dev Reports the count of all the valid HYPEHAUSes tracked by this
      * contract.
      *
-     * @return uint256 The count minted HYPEHAUSes tracked by this contract,
+     * @return uint256 The count of minted HYPEHAUSes tracked by this contract,
      * where each one of them has an assigned and queryable owner not equal to
      * the zero address.
      */
