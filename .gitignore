@@ -1,13 +1,7 @@
+# PNPM
 node_modules
 .env
 .env.*
-coverage
-coverage.json
-typechain
-
-# Hardhat files
-cache
-artifacts
 
 # macOS
 .DS_Store

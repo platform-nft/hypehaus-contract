@@ -1,6 +1,8 @@
 node_modules
-artifacts
-cache
-coverage*
-gasReporterOutput.json
-typechain-types
+
+# Backend
+packages/backend/artifacts
+packages/backend/cache
+packages/backend/coverage*
+packages/backend/gasReporterOutput.json
+packages/backend/typechain-types

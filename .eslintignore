@@ -1,4 +1,6 @@
 node_modules
-artifacts
-cache
-coverage
+
+# Backend
+packages/backend/artifacts
+packages/backend/cache
+packages/backend/coverage

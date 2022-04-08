@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-project",
+  "name": "@platform/backend",
   "devDependencies": {
     "@ethersproject/abi": "^5.0.0",
     "@ethersproject/bytes": "^5.0.0",
