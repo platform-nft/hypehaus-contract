@@ -22,7 +22,7 @@ export default function Button(props: ButtonProps) {
         'disabled:text-gray-300',
         'disabled:border-gray-300',
         'disabled:bg-transparent',
-        'hover:bg-primary-100',
+        'hover:bg-primary-50',
       ].join(' ')}>
       {children}
     </button>

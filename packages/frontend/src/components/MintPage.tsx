@@ -3,6 +3,9 @@ import Button from './Button';
 
 import hero from '../assets/hero.png';
 
+const MIN_MINT_AMOUNT = 1;
+const MAX_MINT_AMOUNT = 3;
+
 export default function MintPage() {
   return (
     <div className="space-y-4">
@@ -13,7 +16,7 @@ export default function MintPage() {
       />
       <p>How many *HYPEHAUSes would you like to mint?</p>
       <div className="flex">
-        <PriceInfo price="0.05" caption="ALLOW LIST" />
+        <PriceInfo price="0.05" caption="PRESALE" />
         <PriceInfo price="0.08" caption="PUBLIC" />
       </div>
       <NumberInput />
@@ -30,7 +33,7 @@ type PriceInfoProps = {
 function PriceInfo(props: PriceInfoProps) {
   return (
     <div className="flex-col flex-1 space-y-1 first:border-r-2">
-      <p className="text-3xl font-bold">{props.price} Ξ</p>
+      <p className="text-4xl font-bold">{props.price} Ξ</p>
       <p className="text-xs text-gray-600">{props.caption}</p>
     </div>
   );
@@ -38,28 +41,60 @@ function PriceInfo(props: PriceInfoProps) {
 
 type NumberInputProps = {};
 
-function NumberInput(props: NumberInputProps) {
+function NumberInput(_: NumberInputProps) {
+  const [value, setValue] = React.useState(1);
+
+  const handleChange = (input: string) => {
+    try {
+      const number = Number.parseInt(input);
+      setValue(Math.max(MIN_MINT_AMOUNT, Math.min(number, MAX_MINT_AMOUNT)));
+    } catch (error) {
+      console.error('Failed to parse integer:', error);
+    }
+  };
+
+  const handleClickDecrement = () => {
+    setValue((prev) => Math.max(MIN_MINT_AMOUNT, prev - 1));
+  };
+
+  const handleClickIncrement = () => {
+    setValue((prev) => Math.min(MAX_MINT_AMOUNT, prev + 1));
+  };
+
   return (
     <div className="flex justify-center">
-      <NumberInputButton>-</NumberInputButton>
+      <NumberInputButton
+        disabled={value === MIN_MINT_AMOUNT}
+        onClick={handleClickDecrement}>
+        -
+      </NumberInputButton>
       <input
         className="w-12 text-center border-y-2"
         type="number"
-        value={1}
-        min={1}
-        max={3}
         step={1}
+        min={MIN_MINT_AMOUNT}
+        max={MAX_MINT_AMOUNT}
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
       />
-      <NumberInputButton>+</NumberInputButton>
+      <NumberInputButton
+        disabled={value === MAX_MINT_AMOUNT}
+        onClick={handleClickIncrement}>
+        +
+      </NumberInputButton>
     </div>
   );
 }
 
-type NumberInputButtonProps = React.PropsWithChildren<{}>;
+type NumberInputButtonProps = React.PropsWithChildren<{
+  disabled?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+}>;
 
 function NumberInputButton(props: NumberInputButtonProps) {
   return (
     <button
+      {...props}
       className={[
         'w-12',
         'h-12',
@@ -70,6 +105,9 @@ function NumberInputButton(props: NumberInputButtonProps) {
         'last:rounded-r-md',
         'border-primary-200',
         'bg-primary-100',
+        'disabled:text-gray-400',
+        'disabled:border-gray-200',
+        'disabled:bg-gray-100',
       ].join(' ')}>
       {props.children}
     </button>
