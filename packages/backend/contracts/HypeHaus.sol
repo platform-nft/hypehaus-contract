@@ -125,8 +125,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Mints `amount` number of HYPEHAUSes as an ALPHA.
      *
-     * This function requires several prerequisites to be met in order for
-     * `msg.sender` to successfully mint HYPEHAUSes as an ALPHA:
+     * This function requires several prerequisites to be met for `msg.sender`
+     * to successfully mint HYPEHAUSes as an ALPHA:
      *
      *   - The community sale is currently active;
      *   - There is enough supply available to mint `amount` HYPEHAUSes;
@@ -159,9 +159,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Mints `amount` number of HYPEHAUSes as a HYPELISTER.
      *
-     * This function has almost identical prerequisites to `mintAlpha` to be
-     * met in order for `msg.sender` to successfully mint HYPEHAUSes as a
-     * HYPELISTER. The only difference(s) are the following:
+     * This function has identical prerequisites to `mintAlpha` to be met for
+     * `msg.sender` to successfully mint HYPEHAUSes as a HYPELISTER, with the
+     * exception of the following:
      *
      *   - The provided `amount` is a value within the inclusive range of 1 and
      *     the maximum mint amount for HYPELISTERs (2 by default)
@@ -186,9 +186,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Mints `amount` number of HYPEHAUSes as a HYPEMEMBER.
      *
-     * This function has almost identical prerequisites to `mintAlpha` to be
-     * met in order for `msg.sender` to successfully mint HYPEHAUSes as a
-     * HYPEMEMBER. The only difference(s) are the following:
+     * This function has identical prerequisites to `mintAlpha` to be met for
+     * `msg.sender` to successfully mint HYPEHAUSes as a HYPEMEMBER, with the
+     * exception of the following:
      *
      *   - The provided `amount` is a value within the inclusive range of 1 and
      *     the maximum mint amount for HYPEMEMBERs (1 by default)
@@ -213,8 +213,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Mints `amount` number of HYPEHAUSes as a member of the public.
      *
-     * This function requires several prerequisites to be met in order for
-     * `msg.sender` to successfully mint HYPEHAUSes as a member of the public:
+     * This function requires several prerequisites to be met for `msg.sender`
+     * to successfully mint HYPEHAUSes as a member of the public:
      *
      *   - The public sale is currently active;
      *   - There is enough supply available to mint `amount` HYPEHAUSes;
