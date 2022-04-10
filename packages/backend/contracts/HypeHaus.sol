@@ -15,37 +15,34 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev An enumeration of all the possible sales the contract may be in.
      *
-     * An `Inactive` sale indicates that the contract has not begun the pre-sale
-     * (i.e. `Community` sale) or that it has finished the `Public` sale. As a
-     * result, the contract will not accept any mints if `_activeSale` is set to
-     * `Inactive`.
+     * A `Closed` sale state indicates that the contract has either not begun
+     * the pre-sale (i.e. `Community` sale) or has finished the `Public` sale.
+     * As a result, the contract will not accept any mints if `activeSale` is
+     * set to `Closed`.
      */
     enum Sale {
-        Inactive,
+        Closed,
         Community,
         Public
     }
 
-    // ====== CONSTANTS ======
+    // ====== PUBLIC STATE VARIABLES ======
 
-    // TODO: Make these mutable
-    uint8 internal constant MAX_TOKENS_PER_ALPHA_WALLET = 3;
-    uint8 internal constant MAX_TOKENS_PER_HYPELISTER_WALLET = 2;
-    uint8 internal constant MAX_TOKENS_PER_HYPEMEMBER_WALLET = 1;
-    uint8 internal constant MAX_TOKENS_PER_PUBLIC_WALLET = 2;
+    uint8 public maxMintAlpha = 3;
+    uint8 public maxMintHypelister = 2;
+    uint8 public maxMintHypemember = 1;
+    uint8 public maxMintPublic = 2;
 
-    // TODO: Make these mutable
-    uint256 internal constant COMMUNITY_SALE_PRICE = 0.05 ether;
-    uint256 internal constant PUBLIC_SALE_PRICE = 0.08 ether;
+    uint256 public communitySalePrice = 0.05 ether;
+    uint256 public publicSalePrice = 0.08 ether;
 
-    // ====== STATE VARIABLES ======
+    Sale public activeSale = Sale.Closed;
+    uint256 public maxSupply;
 
-    Sale internal _activeSale = Sale.Inactive;
+    // ====== INTERNAL STATE VARIABLES ======
+
     string internal _baseTokenURI;
-    // TODO: Make this mutable
-    uint256 internal immutable _maxSupply;
-    // TODO: Make this mutable
-    address internal immutable _teamWalletAddress;
+    address internal _teamWalletAddress;
 
     bytes32 internal _alphaMerkleRoot;
     bytes32 internal _hypelisterMerkleRoot;
@@ -56,11 +53,11 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // ====== CONSTRUCTOR ======
 
     constructor(
-        uint256 maxSupply,
+        uint256 maxSupply_,
         string memory baseTokenURI,
         address teamWalletAddress
     ) ERC721A("HYPEHAUS", "HYPE") {
-        _maxSupply = maxSupply;
+        maxSupply = maxSupply_;
         _baseTokenURI = baseTokenURI;
         _teamWalletAddress = teamWalletAddress;
     }
@@ -68,17 +65,17 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // ====== MODIFIERS ======
 
     modifier isCommunitySaleActive() {
-        require(_activeSale == Sale.Community, "HH_COMMUNITY_SALE_NOT_ACTIVE");
+        require(activeSale == Sale.Community, "HH_COMMUNITY_SALE_NOT_ACTIVE");
         _;
     }
 
     modifier isPublicSaleActive() {
-        require(_activeSale == Sale.Public, "HH_PUBLIC_SALE_NOT_ACTIVE");
+        require(activeSale == Sale.Public, "HH_PUBLIC_SALE_NOT_ACTIVE");
         _;
     }
 
     modifier isSupplyAvailable(uint256 amount) {
-        require((_totalMinted() + amount) <= _maxSupply, "HH_SUPPLY_EXHAUSTED");
+        require((_totalMinted() + amount) <= maxSupply, "HH_SUPPLY_EXHAUSTED");
         _;
     }
 
@@ -116,14 +113,13 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
 
     // ====== MINTING FUNCTIONS ======
 
-    // TODO: Consider using a different role
+    // TODO: Consider using a different role here.
     function mintAdmin(address receiver, uint256 amount)
         external
         onlyOwner
         isSupplyAvailable(amount)
     {
-        // TODO: Should we set `_claimed[receiver] = _activeSale`?
-        _safeMint(receiver, amount);
+        _mintToAddress(receiver, amount);
     }
 
     /**
@@ -153,8 +149,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         hasNotClaimedDuringSale(Sale.Community)
-        isValidMintAmount(amount, MAX_TOKENS_PER_ALPHA_WALLET)
-        isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
+        isValidMintAmount(amount, maxMintAlpha)
+        isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _alphaMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -180,8 +176,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         hasNotClaimedDuringSale(Sale.Community)
-        isValidMintAmount(amount, MAX_TOKENS_PER_HYPELISTER_WALLET)
-        isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
+        isValidMintAmount(amount, maxMintHypelister)
+        isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _hypelisterMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -207,8 +203,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         hasNotClaimedDuringSale(Sale.Community)
-        isValidMintAmount(amount, MAX_TOKENS_PER_HYPEMEMBER_WALLET)
-        isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
+        isValidMintAmount(amount, maxMintHypemember)
+        isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _hypememberMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -238,8 +234,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         isPublicSaleActive
         isSupplyAvailable(amount)
         hasNotClaimedDuringSale(Sale.Public)
-        isValidMintAmount(amount, MAX_TOKENS_PER_PUBLIC_WALLET)
-        isCorrectPayment(PUBLIC_SALE_PRICE, 1)
+        isValidMintAmount(amount, maxMintPublic)
+        isCorrectPayment(publicSalePrice, amount)
     {
         _mintToAddress(msg.sender, amount);
     }
@@ -249,9 +245,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
      * `receiver`.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
-        // An account may only mint once during the current `_activeSale`. Here,
-        // we record the last `_activeSale` an account has minted.
-        _claimed[receiver] = _activeSale;
+        // An address may only mint once during the current `activeSale`. Here,
+        // we record the last `activeSale` the receiver has minted.
+        _claimed[receiver] = activeSale;
         // The second argument of `_safeMint` in AZUKI's `ERC721A` contract
         // expects the amount to mint, not a token ID.
         _safeMint(receiver, amount);
@@ -302,29 +298,46 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
             );
     }
 
-    // ====== ONLY-OWNER FUNCTIONS ======
+    // ====== ONLY-OWNER SETTERS ======
 
-    function getActiveSale() external view onlyOwner returns (Sale) {
-        return _activeSale;
+    // TODO: Consider using a different role here.
+    function setCommunitySalePrice(uint256 newPrice) external onlyOwner {
+        communitySalePrice = newPrice;
     }
 
-    function setActiveSale(Sale activeSale) external onlyOwner {
-        _activeSale = activeSale;
+    // TODO: Consider using a different role here.
+    function setPublicSalePrice(uint256 newPrice) external onlyOwner {
+        publicSalePrice = newPrice;
+    }
+
+    // TODO: Consider using a different role here.
+    function setActiveSale(Sale newActiveSale) external onlyOwner {
+        activeSale = newActiveSale;
+    }
+
+    // TODO: Consider using a different role here.
+    function setMaxSupply(uint256 newMaxSupply) external onlyOwner {
+        maxSupply = newMaxSupply;
     }
 
     function setBaseTokenURI(string memory newBaseTokenURI) external onlyOwner {
         _baseTokenURI = newBaseTokenURI;
     }
 
-    function setAlphaMerkleRoot(bytes32 root) external onlyOwner {
-        _alphaMerkleRoot = root;
+    // TODO: Consider using a different role here.
+    function setTeamWalletAddress(address newAddress) external onlyOwner {
+        _teamWalletAddress = newAddress;
     }
 
-    function setHypelisterMerkleRoot(bytes32 root) external onlyOwner {
-        _hypelisterMerkleRoot = root;
+    function setAlphaMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
+        _alphaMerkleRoot = newMerkleRoot;
     }
 
-    function setHypememberMerkleRoot(bytes32 root) external onlyOwner {
-        _hypememberMerkleRoot = root;
+    function setHypelisterMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
+        _hypelisterMerkleRoot = newMerkleRoot;
+    }
+
+    function setHypememberMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
+        _hypememberMerkleRoot = newMerkleRoot;
     }
 }
