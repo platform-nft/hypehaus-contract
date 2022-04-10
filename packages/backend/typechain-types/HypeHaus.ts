@@ -24,6 +24,7 @@ export interface HypeHausInterface extends utils.Interface {
     "activeSale()": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "burn(uint256)": FunctionFragment;
     "communitySalePrice()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
@@ -72,6 +73,7 @@ export interface HypeHausInterface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
+  encodeFunctionData(functionFragment: "burn", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "communitySalePrice",
     values?: undefined
@@ -209,6 +211,7 @@ export interface HypeHausInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "activeSale", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "communitySalePrice",
     data: BytesLike
@@ -408,6 +411,11 @@ export interface HypeHaus extends BaseContract {
 
     balanceOf(owner: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    burn(
+      tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     communitySalePrice(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getApproved(
@@ -584,6 +592,11 @@ export interface HypeHaus extends BaseContract {
 
   balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  burn(
+    tokenId: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   communitySalePrice(overrides?: CallOverrides): Promise<BigNumber>;
 
   getApproved(
@@ -753,6 +766,8 @@ export interface HypeHaus extends BaseContract {
     ): Promise<void>;
 
     balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+    burn(tokenId: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     communitySalePrice(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -962,6 +977,11 @@ export interface HypeHaus extends BaseContract {
 
     balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    burn(
+      tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     communitySalePrice(overrides?: CallOverrides): Promise<BigNumber>;
 
     getApproved(
@@ -1140,6 +1160,11 @@ export interface HypeHaus extends BaseContract {
     balanceOf(
       owner: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    burn(
+      tokenId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     communitySalePrice(

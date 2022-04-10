@@ -243,6 +243,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Internal function that mints `amount` number of HYPEHAUSes to
      * `receiver`.
+     *
+     * TODO: Consider adding `require(tx.origin == msg.sender)` call.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
         // An address may only mint once during the current `activeSale`. Here,
@@ -253,19 +255,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         _safeMint(receiver, amount);
     }
 
-    // ====== PUBLIC FUNCTIONS ======
-
-    /**
-     * @dev Transfers any pending balance available in the contract to the
-     * designated team wallet address.
-     *
-     * TODO: Consider using a different role here.
-     */
-    function withdraw() external onlyOwner {
-        uint256 balance = address(this).balance;
-        (bool success, ) = payable(_teamWalletAddress).call{value: balance}("");
-        require(success, "HH_TRANSFER_FAILURE");
-    }
+    // ====== EXTERNAL/PUBLIC FUNCTIONS ======
 
     /**
      * @dev Reports the count of all the valid HYPEHAUSes tracked by this
@@ -296,6 +286,25 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
             string(
                 abi.encodePacked(_baseTokenURI, tokenId.toString(), ".json")
             );
+    }
+
+    // ====== ONLY-OWNER OPERATIONS ======
+
+    /**
+     * @dev Transfers any pending balance available in the contract to the
+     * designated team wallet address.
+     *
+     * TODO: Consider using a different role here.
+     */
+    function withdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        (bool success, ) = payable(_teamWalletAddress).call{value: balance}("");
+        require(success, "HH_TRANSFER_FAILURE");
+    }
+
+    // TODO: Consider using a different role here.
+    function burn(uint256 tokenId) external onlyOwner {
+        _burn(tokenId);
     }
 
     // ====== ONLY-OWNER SETTERS ======
