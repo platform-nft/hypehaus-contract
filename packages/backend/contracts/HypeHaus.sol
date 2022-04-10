@@ -29,9 +29,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // ====== CONSTANTS ======
 
     uint8 internal constant MAX_TOKENS_PER_ALPHA_WALLET = 3;
-    uint8 internal constant MAX_TOKENS_PER_HYPELIST_WALLET = 2;
+    uint8 internal constant MAX_TOKENS_PER_HYPELISTER_WALLET = 2;
     uint8 internal constant MAX_TOKENS_PER_HYPEMEMBER_WALLET = 1;
-    uint8 internal constant MAX_TOKENS_PER_PUBLIC_WALLET = 1;
+    uint8 internal constant MAX_TOKENS_PER_PUBLIC_WALLET = 2;
 
     uint256 internal constant COMMUNITY_SALE_PRICE = 0.05 ether;
     uint256 internal constant PUBLIC_SALE_PRICE = 0.08 ether;
@@ -44,7 +44,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     address internal immutable _teamWalletAddress;
 
     bytes32 internal _alphaTierMerkleRoot;
-    bytes32 internal _hypelistTierMerkleRoot;
+    bytes32 internal _hypelisterTierMerkleRoot;
     bytes32 internal _hypememberTierMerkleRoot;
     // A mapping of addresses and the last sale they have claimed a HYPEHAUS.
     mapping(address => Sale) internal _claimed;
@@ -97,50 +97,48 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
 
     modifier isValidMerkleProof(
         bytes32[] calldata merkleProof,
-        uint256 amount
+        bytes32 merkleRoot
     ) {
-        bytes32 root;
-        if (amount == MAX_TOKENS_PER_ALPHA_WALLET) {
-            root = _alphaTierMerkleRoot;
-        } else if (amount == MAX_TOKENS_PER_HYPELIST_WALLET) {
-            root = _hypelistTierMerkleRoot;
-        } else {
-            root = _hypememberTierMerkleRoot;
-        }
-
         require(
             MerkleProof.verify(
                 merkleProof,
-                root,
+                merkleRoot,
                 keccak256(abi.encodePacked(msg.sender))
             ),
             "HH_VERIFICATION_FAILURE"
         );
-
         _;
     }
 
     // ====== MINTING FUNCTIONS ======
 
+    // TODO: Consider using a different role
+    function mintAdmin(address receiver, uint256 amount) external onlyOwner {
+        // TODO: Should we set `_claimed[receiver] = _activeSale`?
+        _safeMint(receiver, amount);
+    }
+
     /**
-     * @dev Mints `amount` number of HYPEHAUSes during the community sale.
+     * @dev Mints `amount` number of HYPEHAUSes as an ALPHA.
      *
-     * This function requires several prerequisites in order for `msg.sender` to
-     * successfully mint HYPEHAUSes during the community sale:
+     * This function requires several prerequisites to be met in order for
+     * `msg.sender` to successfully mint HYPEHAUSes as an ALPHA:
      *
      *   - The community sale is currently active;
      *   - There is enough supply available to mint `amount` HYPEHAUSes;
      *   - `msg.sender` has not already claimed any amount of HYPEHAUSes during
      *     the community sale;
-     *   - The provided `amount` is a value between 1 and 3 (inclusive);
+     *   - The provided `amount` is a value within the inclusive range of 1 and
+     *     the maximum mint amount for ALPHAs (3 by default);
      *   - Sufficient amount of ETH is provided to purchase `amount` number of
      *     HYPEHAUSes at a discounted price; and
-     *   - It can be verified that `msg.sender` is either an Alpha, Hypelister
-     *     or Hypemember using the provided `merkleProof`.
+     *   - It can be verified that `msg.sender` is an ALPHA using the provided
+     *     `merkleProof`.
      *
-     * If any of the above is not met, this function will throw an error.
+     * If any of the above prerequisites are not met, this function will reject
+     * the mint and throw an error.
      */
-    function mintCommunitySale(uint256 amount, bytes32[] calldata merkleProof)
+    function mintAlpha(uint256 amount, bytes32[] calldata merkleProof)
         external
         payable
         nonReentrant
@@ -149,43 +147,93 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, MAX_TOKENS_PER_ALPHA_WALLET)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
-        isValidMerkleProof(merkleProof, amount)
+        isValidMerkleProof(merkleProof, _alphaTierMerkleRoot)
     {
-        // Accounts may only mint once during the community sale, even if they
-        // have remaining HYPEHAUSes they can mint.
-        _claimed[msg.sender] = Sale.Community;
         _mintToAddress(msg.sender, amount);
     }
 
     /**
-     * @dev Mints one HYPEHAUS during the public sale.
+     * @dev Mints `amount` number of HYPEHAUSes as a HYPELISTER.
      *
-     * Like `mintCommunitySale`, this function has several prerequisites to
-     * successfully mint one HYPEHAUS:
+     * This function has almost identical prerequisites to `mintAlpha` to be
+     * met in order for `msg.sender` to successfully mint HYPEHAUSes as a
+     * HYPELISTER. The only difference(s) are the following:
+     *
+     *   - The provided `amount` is a value within the inclusive range of 1 and
+     *     the maximum mint amount for HYPELISTERs (2 by default)
+     *
+     * If any of the prerequisites are not met, this function will reject the
+     * mint and throw an error.
+     */
+    function mintHypelister(uint256 amount, bytes32[] calldata merkleProof)
+        external
+        payable
+        nonReentrant
+        isCommunitySaleActive
+        isSupplyAvailable(amount)
+        hasNotClaimedDuringSale(Sale.Community)
+        isValidMintAmount(amount, MAX_TOKENS_PER_HYPELISTER_WALLET)
+        isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
+        isValidMerkleProof(merkleProof, _hypelisterTierMerkleRoot)
+    {
+        _mintToAddress(msg.sender, amount);
+    }
+
+    /**
+     * @dev Mints `amount` number of HYPEHAUSes as a HYPEMEMBER.
+     *
+     * This function has almost identical prerequisites to `mintAlpha` to be
+     * met in order for `msg.sender` to successfully mint HYPEHAUSes as a
+     * HYPEMEMBER. The only difference(s) are the following:
+     *
+     *   - The provided `amount` is a value within the inclusive range of 1 and
+     *     the maximum mint amount for HYPEMEMBERs (1 by default)
+     *
+     * If any of the prerequisites are not met, this function will reject the
+     * mint and throw an error.
+     */
+    function mintHypemember(uint256 amount, bytes32[] calldata merkleProof)
+        external
+        payable
+        nonReentrant
+        isCommunitySaleActive
+        isSupplyAvailable(amount)
+        hasNotClaimedDuringSale(Sale.Community)
+        isValidMintAmount(amount, MAX_TOKENS_PER_HYPEMEMBER_WALLET)
+        isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
+        isValidMerkleProof(merkleProof, _hypememberTierMerkleRoot)
+    {
+        _mintToAddress(msg.sender, amount);
+    }
+
+    /**
+     * @dev Mints `amount` number of HYPEHAUSes as a member of the public.
+     *
+     * This function requires several prerequisites to be met in order for
+     * `msg.sender` to successfully mint HYPEHAUSes as a member of the public:
      *
      *   - The public sale is currently active;
-     *   - There is enough supply available to mint one HYPEHAUS;
-     *   - `msg.sender` has not already claimed a HYPEHAUS during the public
-     *     sale; and
-     *   - Sufficient amount of ETH is provided to purchase one HYPEHAUS at full
-     *     price.
+     *   - There is enough supply available to mint `amount` HYPEHAUSes;
+     *   - `msg.sender` has not already claimed any amount of HYPEHAUSes during
+     *     the public sale;
+     *   - The provided `amount` is a value within the inclusive range of 1 and
+     *     the maximum mint amount for members of the public (2 by default); and
+     *   - Sufficient amount of ETH is provided to purchase `amount` number of
+     *     HYPEHAUSes at full price.
      *
      * If any of the above is not met, this function will throw an error.
      */
-    function mintPublicSale()
+    function mintPublic(uint256 amount)
         external
         payable
         nonReentrant
         isPublicSaleActive
-        isSupplyAvailable(1)
+        isSupplyAvailable(amount)
         hasNotClaimedDuringSale(Sale.Public)
+        isValidMintAmount(amount, MAX_TOKENS_PER_PUBLIC_WALLET)
         isCorrectPayment(PUBLIC_SALE_PRICE, 1)
     {
-        // All accounts may only mint one HYPEHAUS during the public sale.
-        // However, any previous HYPEHAUSes minted during the community sale
-        // will still be available to them.
-        _claimed[msg.sender] = Sale.Public;
-        _mintToAddress(msg.sender, 1);
+        _mintToAddress(msg.sender, amount);
     }
 
     /**
@@ -193,6 +241,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
      * `receiver`.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
+        // An account may only mint once during the current `_activeSale`. Here,
+        // we record the last `_activeSale` an account has minted.
+        _claimed[receiver] = _activeSale;
         // The second argument of `_safeMint` in AZUKI's `ERC721A` contract
         // expects the amount to mint, not a token ID.
         _safeMint(receiver, amount);
@@ -203,6 +254,8 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Transfers any pending balance available in the contract to the
      * designated team wallet address.
+     *
+     * TODO: Consider using a different role here.
      */
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
@@ -260,7 +313,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     }
 
     function setHypelistTierMerkleRoot(bytes32 root) external onlyOwner {
-        _hypelistTierMerkleRoot = root;
+        _hypelisterTierMerkleRoot = root;
     }
 
     function setHypememberTierMerkleRoot(bytes32 root) external onlyOwner {
