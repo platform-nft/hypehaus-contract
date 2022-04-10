@@ -26,8 +26,11 @@ export interface HypeHausInterface extends utils.Interface {
     "getActiveSale()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "mintCommunitySale(uint256,bytes32[])": FunctionFragment;
-    "mintPublicSale()": FunctionFragment;
+    "mintAdmin(address,uint256)": FunctionFragment;
+    "mintAlpha(uint256,bytes32[])": FunctionFragment;
+    "mintHypelister(uint256,bytes32[])": FunctionFragment;
+    "mintHypemember(uint256,bytes32[])": FunctionFragment;
+    "mintPublic(uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
@@ -67,12 +70,24 @@ export interface HypeHausInterface extends utils.Interface {
     values: [string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "mintCommunitySale",
+    functionFragment: "mintAdmin",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mintAlpha",
     values: [BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
-    functionFragment: "mintPublicSale",
-    values?: undefined
+    functionFragment: "mintHypelister",
+    values: [BigNumberish, BytesLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mintHypemember",
+    values: [BigNumberish, BytesLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mintPublic",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -153,14 +168,17 @@ export interface HypeHausInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "mintAdmin", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mintAlpha", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "mintCommunitySale",
+    functionFragment: "mintHypelister",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "mintPublicSale",
+    functionFragment: "mintHypemember",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "mintPublic", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
@@ -311,13 +329,32 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    mintCommunitySale(
+    mintAdmin(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    mintAlpha(
       amount: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    mintPublicSale(
+    mintHypelister(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    mintHypemember(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    mintPublic(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -434,13 +471,32 @@ export interface HypeHaus extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  mintCommunitySale(
+  mintAdmin(
+    receiver: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  mintAlpha(
     amount: BigNumberish,
     merkleProof: BytesLike[],
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  mintPublicSale(
+  mintHypelister(
+    amount: BigNumberish,
+    merkleProof: BytesLike[],
+    overrides?: PayableOverrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  mintHypemember(
+    amount: BigNumberish,
+    merkleProof: BytesLike[],
+    overrides?: PayableOverrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  mintPublic(
+    amount: BigNumberish,
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -551,13 +607,31 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    mintCommunitySale(
+    mintAdmin(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    mintAlpha(
       amount: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: CallOverrides
     ): Promise<void>;
 
-    mintPublicSale(overrides?: CallOverrides): Promise<void>;
+    mintHypelister(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    mintHypemember(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    mintPublic(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -707,13 +781,32 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    mintCommunitySale(
+    mintAdmin(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    mintAlpha(
       amount: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    mintPublicSale(
+    mintHypelister(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    mintHypemember(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    mintPublic(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -834,13 +927,32 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    mintCommunitySale(
+    mintAdmin(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    mintAlpha(
       amount: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    mintPublicSale(
+    mintHypelister(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    mintHypemember(
+      amount: BigNumberish,
+      merkleProof: BytesLike[],
+      overrides?: PayableOverrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    mintPublic(
+      amount: BigNumberish,
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

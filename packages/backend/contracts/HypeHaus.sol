@@ -28,11 +28,13 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
 
     // ====== CONSTANTS ======
 
+    // TODO: Make these mutable
     uint8 internal constant MAX_TOKENS_PER_ALPHA_WALLET = 3;
     uint8 internal constant MAX_TOKENS_PER_HYPELISTER_WALLET = 2;
     uint8 internal constant MAX_TOKENS_PER_HYPEMEMBER_WALLET = 1;
     uint8 internal constant MAX_TOKENS_PER_PUBLIC_WALLET = 2;
 
+    // TODO: Make these mutable
     uint256 internal constant COMMUNITY_SALE_PRICE = 0.05 ether;
     uint256 internal constant PUBLIC_SALE_PRICE = 0.08 ether;
 
@@ -40,7 +42,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
 
     Sale internal _activeSale = Sale.Inactive;
     string internal _baseTokenURI;
+    // TODO: Make this mutable
     uint256 internal immutable _maxSupply;
+    // TODO: Make this mutable
     address internal immutable _teamWalletAddress;
 
     bytes32 internal _alphaTierMerkleRoot;
