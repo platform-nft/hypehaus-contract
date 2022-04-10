@@ -47,9 +47,9 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // TODO: Make this mutable
     address internal immutable _teamWalletAddress;
 
-    bytes32 internal _alphaTierMerkleRoot;
-    bytes32 internal _hypelisterTierMerkleRoot;
-    bytes32 internal _hypememberTierMerkleRoot;
+    bytes32 internal _alphaMerkleRoot;
+    bytes32 internal _hypelisterMerkleRoot;
+    bytes32 internal _hypememberMerkleRoot;
     // A mapping of addresses and the last sale they have claimed a HYPEHAUS.
     mapping(address => Sale) internal _claimed;
 
@@ -155,7 +155,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, MAX_TOKENS_PER_ALPHA_WALLET)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
-        isValidMerkleProof(merkleProof, _alphaTierMerkleRoot)
+        isValidMerkleProof(merkleProof, _alphaMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
     }
@@ -182,7 +182,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, MAX_TOKENS_PER_HYPELISTER_WALLET)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
-        isValidMerkleProof(merkleProof, _hypelisterTierMerkleRoot)
+        isValidMerkleProof(merkleProof, _hypelisterMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
     }
@@ -209,7 +209,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, MAX_TOKENS_PER_HYPEMEMBER_WALLET)
         isCorrectPayment(COMMUNITY_SALE_PRICE, amount)
-        isValidMerkleProof(merkleProof, _hypememberTierMerkleRoot)
+        isValidMerkleProof(merkleProof, _hypememberMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
     }
@@ -316,15 +316,15 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
         _baseTokenURI = newBaseTokenURI;
     }
 
-    function setAlphaTierMerkleRoot(bytes32 root) external onlyOwner {
-        _alphaTierMerkleRoot = root;
+    function setAlphaMerkleRoot(bytes32 root) external onlyOwner {
+        _alphaMerkleRoot = root;
     }
 
-    function setHypelistTierMerkleRoot(bytes32 root) external onlyOwner {
-        _hypelisterTierMerkleRoot = root;
+    function setHypelisterMerkleRoot(bytes32 root) external onlyOwner {
+        _hypelisterMerkleRoot = root;
     }
 
-    function setHypememberTierMerkleRoot(bytes32 root) external onlyOwner {
-        _hypememberTierMerkleRoot = root;
+    function setHypememberMerkleRoot(bytes32 root) external onlyOwner {
+        _hypememberMerkleRoot = root;
     }
 }

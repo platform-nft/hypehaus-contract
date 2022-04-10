@@ -37,11 +37,11 @@ export interface HypeHausInterface extends utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "setActiveSale(uint8)": FunctionFragment;
-    "setAlphaTierMerkleRoot(bytes32)": FunctionFragment;
+    "setAlphaMerkleRoot(bytes32)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
     "setBaseTokenURI(string)": FunctionFragment;
-    "setHypelistTierMerkleRoot(bytes32)": FunctionFragment;
-    "setHypememberTierMerkleRoot(bytes32)": FunctionFragment;
+    "setHypelisterMerkleRoot(bytes32)": FunctionFragment;
+    "setHypememberMerkleRoot(bytes32)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
@@ -108,7 +108,7 @@ export interface HypeHausInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setAlphaTierMerkleRoot",
+    functionFragment: "setAlphaMerkleRoot",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
@@ -120,11 +120,11 @@ export interface HypeHausInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "setHypelistTierMerkleRoot",
+    functionFragment: "setHypelisterMerkleRoot",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "setHypememberTierMerkleRoot",
+    functionFragment: "setHypememberMerkleRoot",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
@@ -195,7 +195,7 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setAlphaTierMerkleRoot",
+    functionFragment: "setAlphaMerkleRoot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -207,11 +207,11 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setHypelistTierMerkleRoot",
+    functionFragment: "setHypelisterMerkleRoot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setHypememberTierMerkleRoot",
+    functionFragment: "setHypememberMerkleRoot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -391,7 +391,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setAlphaTierMerkleRoot(
+    setAlphaMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -407,12 +407,12 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setHypelistTierMerkleRoot(
+    setHypelisterMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setHypememberTierMerkleRoot(
+    setHypememberMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -530,7 +530,7 @@ export interface HypeHaus extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setAlphaTierMerkleRoot(
+  setAlphaMerkleRoot(
     root: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -546,12 +546,12 @@ export interface HypeHaus extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setHypelistTierMerkleRoot(
+  setHypelisterMerkleRoot(
     root: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setHypememberTierMerkleRoot(
+  setHypememberMerkleRoot(
     root: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -661,7 +661,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setAlphaTierMerkleRoot(
+    setAlphaMerkleRoot(
       root: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -677,12 +677,12 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setHypelistTierMerkleRoot(
+    setHypelisterMerkleRoot(
       root: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setHypememberTierMerkleRoot(
+    setHypememberMerkleRoot(
       root: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -843,7 +843,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setAlphaTierMerkleRoot(
+    setAlphaMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -859,12 +859,12 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setHypelistTierMerkleRoot(
+    setHypelisterMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setHypememberTierMerkleRoot(
+    setHypememberMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -989,7 +989,7 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setAlphaTierMerkleRoot(
+    setAlphaMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -1005,12 +1005,12 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setHypelistTierMerkleRoot(
+    setHypelisterMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setHypememberTierMerkleRoot(
+    setHypememberMerkleRoot(
       root: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;

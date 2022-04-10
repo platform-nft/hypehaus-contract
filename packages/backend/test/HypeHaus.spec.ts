@@ -39,7 +39,7 @@ enum Sale {
 describe('HypeHaus Contract', () => {
   let hypeHaus: HypeHaus;
 
-  type SignerName = 'deployer' | 'team' | `u${'1' | '2' | '3' | '4' | '5'}`;
+  type SignerName = 'deployer' | 'team' | 'u1' | 'u2' | 'u3' | 'u4' | 'u5';
   let signers: Record<SignerName, SignerWithAddress>;
   let addresses: Record<SignerName, SignerWithAddress['address']>;
 
@@ -94,9 +94,9 @@ describe('HypeHaus Contract', () => {
         const proof = tree.getHexProof(leaves[0]);
 
         // Set the same root for all tiers for testing purposes
-        await hypeHaus.setAlphaTierMerkleRoot(root);
-        await hypeHaus.setHypelistTierMerkleRoot(root);
-        await hypeHaus.setHypememberTierMerkleRoot(root);
+        await hypeHaus.setAlphaMerkleRoot(root);
+        await hypeHaus.setHypelisterMerkleRoot(root);
+        await hypeHaus.setHypememberMerkleRoot(root);
 
         const expectFailedCommunityMints = async () => {
           await expect(hypeHaus.mintAlpha(1, proof)).to.be.revertedWith(
@@ -144,9 +144,9 @@ describe('HypeHaus Contract', () => {
         const root = tree.getHexRoot();
 
         await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaTierMerkleRoot(root);
-        await hypeHaus.setHypelistTierMerkleRoot(root);
-        await hypeHaus.setHypememberTierMerkleRoot(root);
+        await hypeHaus.setAlphaMerkleRoot(root);
+        await hypeHaus.setHypelisterMerkleRoot(root);
+        await hypeHaus.setHypememberMerkleRoot(root);
 
         const almostMaxAlpha = getAlmostMax(MAX_TOKENS_PER_ALPHA_WALLET);
         await Promise.all(
@@ -187,9 +187,9 @@ describe('HypeHaus Contract', () => {
         const getProof = (index: number) => tree.getHexProof(leaves[index]);
 
         await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaTierMerkleRoot(root);
-        await hypeHaus.setHypelistTierMerkleRoot(root);
-        await hypeHaus.setHypememberTierMerkleRoot(root);
+        await hypeHaus.setAlphaMerkleRoot(root);
+        await hypeHaus.setHypelisterMerkleRoot(root);
+        await hypeHaus.setHypememberMerkleRoot(root);
 
         await expect(
           hypeHaus
@@ -305,9 +305,9 @@ describe('HypeHaus Contract', () => {
         proofs = leaves.map((l) => tree.getHexProof(l));
 
         await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
-        await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
-        await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setAlphaMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypelisterMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypememberMerkleRoot(tree.getHexRoot());
       });
 
       it('fails to mint an invalid amount as an Alpha', async () => {
@@ -367,9 +367,9 @@ describe('HypeHaus Contract', () => {
 
       beforeEach(async () => {
         await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
-        await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
-        await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setAlphaMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypelisterMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypememberMerkleRoot(tree.getHexRoot());
       });
 
       it('fails to mint with insufficient funds as an Alpha', async () => {
@@ -472,9 +472,9 @@ describe('HypeHaus Contract', () => {
         };
 
         await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaTierMerkleRoot(aTree.getHexRoot());
-        await hypeHaus.setHypelistTierMerkleRoot(hlTree.getHexRoot());
-        await hypeHaus.setHypememberTierMerkleRoot(hmTree.getHexRoot());
+        await hypeHaus.setAlphaMerkleRoot(aTree.getHexRoot());
+        await hypeHaus.setHypelisterMerkleRoot(hlTree.getHexRoot());
+        await hypeHaus.setHypememberMerkleRoot(hmTree.getHexRoot());
       });
 
       it('fails to mint when the signer cannot be proved to be an Alpha', async () => {
@@ -584,9 +584,9 @@ describe('HypeHaus Contract', () => {
     describe('Community Sale', () => {
       beforeEach(async () => {
         await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
-        await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
-        await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setAlphaMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypelisterMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypememberMerkleRoot(tree.getHexRoot());
       });
 
       it('mints a valid amount as an Alpha', async () => {
@@ -667,21 +667,21 @@ describe('HypeHaus Contract', () => {
       const alphaTree = new MerkleTree(alphas, keccak256, { sortPairs: true });
       const alphaRoot = alphaTree.getHexRoot();
       const alphaProof = alphaTree.getHexProof(alphas[0]);
-      await hypeHaus.setAlphaTierMerkleRoot(alphaRoot);
+      await hypeHaus.setAlphaMerkleRoot(alphaRoot);
 
       // Hypelist Merkle Tree
       const hlLeaves = [addresses.u2].map(keccak256);
       const hlTree = new MerkleTree(hlLeaves, keccak256, { sortPairs: true });
       const hlRoot = hlTree.getHexRoot();
       const hlProof = hlTree.getHexProof(hlLeaves[0]);
-      await hypeHaus.setHypelistTierMerkleRoot(hlRoot);
+      await hypeHaus.setHypelisterMerkleRoot(hlRoot);
 
       // Hypemember Merkle Tree
       const hmLeaves = [addresses.u3].map(keccak256);
       const hmTree = new MerkleTree(hmLeaves, keccak256, { sortPairs: true });
       const hmRoot = hmTree.getHexRoot();
       const hmProof = hmTree.getHexProof(hmLeaves[0]);
-      await hypeHaus.setHypememberTierMerkleRoot(hmRoot);
+      await hypeHaus.setHypememberMerkleRoot(hmRoot);
 
       // Overrides
       const publicMintOverrides = { value: PUBLIC_SALE_PRICE };
