@@ -22,11 +22,13 @@ const MAX_TOKENS_PER_PUBLIC_WALLET = 2;
 
 const keccak256 = ethers.utils.keccak256;
 
-const ERR_INVALID_MINT_AMOUNT = 'HH_INVALID_MINT_AMOUNT';
-const ERR_VERIFICATION_FAILURE = 'HH_VERIFICATION_FAILURE';
-const ERR_PUBLIC_SALE_NOT_ACTIVE = 'HH_PUBLIC_SALE_NOT_ACTIVE';
 const ERR_COMMUNITY_SALE_NOT_ACTIVE = 'HH_COMMUNITY_SALE_NOT_ACTIVE';
+const ERR_PUBLIC_SALE_NOT_ACTIVE = 'HH_PUBLIC_SALE_NOT_ACTIVE';
 const ERR_SUPPLY_EXHAUSTED = 'HH_SUPPLY_EXHAUSTED';
+const ERR_INVALID_MINT_AMOUNT = 'HH_INVALID_MINT_AMOUNT';
+const ERR_INSUFFICIENT_FUNDS = 'HH_INSUFFICIENT_FUNDS';
+const ERR_ADDRESS_ALREADY_CLAIMED = 'HH_ADDRESS_ALREADY_CLAIMED';
+const ERR_VERIFICATION_FAILURE = 'HH_VERIFICATION_FAILURE';
 
 enum Sale {
   Inactive = 0,
@@ -71,6 +73,353 @@ describe('HypeHaus Contract', () => {
   });
 
   describe('Prerequisites', () => {
+    describe('Active Sale', () => {
+      it('can change the current active sale', async () => {
+        expect(await hypeHaus.getActiveSale()).to.eq(Sale.Inactive);
+        await hypeHaus.setActiveSale(Sale.Community);
+        expect(await hypeHaus.getActiveSale()).to.eq(Sale.Community);
+        await hypeHaus.setActiveSale(Sale.Public);
+        expect(await hypeHaus.getActiveSale()).to.eq(Sale.Public);
+        // Test that calling only-owner function as non-owner fails (we don't care
+        // about the error message so we pass an empty string).
+        await expect(
+          hypeHaus.connect(signers.u1).setActiveSale(Sale.Inactive),
+        ).to.be.revertedWith('');
+      });
+
+      it('fails to mint when the community sale is not active', async () => {
+        const leaves = [addresses.u1].map(keccak256);
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const root = tree.getHexRoot();
+        const proof = tree.getHexProof(leaves[0]);
+
+        // Set the same root for all tiers for testing purposes
+        await hypeHaus.setAlphaTierMerkleRoot(root);
+        await hypeHaus.setHypelistTierMerkleRoot(root);
+        await hypeHaus.setHypememberTierMerkleRoot(root);
+
+        const expectFailedCommunityMints = async () => {
+          await expect(hypeHaus.mintAlpha(1, proof)).to.be.revertedWith(
+            ERR_COMMUNITY_SALE_NOT_ACTIVE,
+          );
+          await expect(hypeHaus.mintHypelister(1, proof)).to.be.revertedWith(
+            ERR_COMMUNITY_SALE_NOT_ACTIVE,
+          );
+          await expect(hypeHaus.mintHypemember(1, proof)).to.be.revertedWith(
+            ERR_COMMUNITY_SALE_NOT_ACTIVE,
+          );
+        };
+
+        await hypeHaus.setActiveSale(Sale.Inactive);
+        await expectFailedCommunityMints();
+
+        await hypeHaus.setActiveSale(Sale.Public);
+        await expectFailedCommunityMints();
+      });
+
+      it('fails to mint when the public sale is not active', async () => {
+        await hypeHaus.setActiveSale(Sale.Inactive);
+        await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
+          ERR_PUBLIC_SALE_NOT_ACTIVE,
+        );
+
+        await hypeHaus.setActiveSale(Sale.Community);
+        await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
+          ERR_PUBLIC_SALE_NOT_ACTIVE,
+        );
+      });
+    });
+
+    describe('Sufficient Supply', () => {
+      function getAlmostMax(mintAmount: number) {
+        return MAX_SUPPLY % mintAmount === 0
+          ? Math.floor((MAX_SUPPLY - 1) / mintAmount)
+          : Math.floor(MAX_SUPPLY / mintAmount);
+      }
+
+      it('fails to mint when supply has run out', async () => {
+        const [_d, _t, ...restSigners] = await ethers.getSigners();
+        const leaves = restSigners.map((s) => keccak256(s.address));
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const root = tree.getHexRoot();
+
+        await hypeHaus.setActiveSale(Sale.Community);
+        await hypeHaus.setAlphaTierMerkleRoot(root);
+        await hypeHaus.setHypelistTierMerkleRoot(root);
+        await hypeHaus.setHypememberTierMerkleRoot(root);
+
+        const almostMaxAlpha = getAlmostMax(MAX_TOKENS_PER_ALPHA_WALLET);
+        await Promise.all(
+          [...Array(getAlmostMax(almostMaxAlpha))].map(async (_, i) => {
+            await expect(
+              hypeHaus
+                .connect(restSigners[i])
+                .mintAlpha(
+                  MAX_TOKENS_PER_ALPHA_WALLET,
+                  tree.getHexProof(leaves[i]),
+                  {
+                    value: COMMUNITY_SALE_PRICE.mul(
+                      MAX_TOKENS_PER_ALPHA_WALLET,
+                    ),
+                  },
+                ),
+            ).to.not.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+          }),
+        );
+
+        await hypeHaus.setActiveSale(Sale.Community);
+        await expect(
+          hypeHaus
+            .connect(restSigners[almostMaxAlpha])
+            .mintHypelister(2, tree.getHexProof(leaves[almostMaxAlpha]), {
+              value: COMMUNITY_SALE_PRICE,
+            }),
+        ).to.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+      });
+    });
+
+    describe('Unique Claim', () => {
+      it('fails to mint when the signer has already minted in the community sale', async () => {
+        const cohort = [signers.u1, signers.u2, signers.u3];
+        const leaves = cohort.map((signer) => keccak256(signer.address));
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const root = tree.getHexRoot();
+        const getProof = (index: number) => tree.getHexProof(leaves[index]);
+
+        await hypeHaus.setActiveSale(Sale.Community);
+        await hypeHaus.setAlphaTierMerkleRoot(root);
+        await hypeHaus.setHypelistTierMerkleRoot(root);
+        await hypeHaus.setHypememberTierMerkleRoot(root);
+
+        await expect(
+          hypeHaus
+            .connect(signers.u1)
+            .mintAlpha(1, getProof(0), { value: COMMUNITY_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u2)
+            .mintHypelister(1, getProof(1), { value: COMMUNITY_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u3)
+            .mintHypemember(1, getProof(2), { value: COMMUNITY_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await Promise.all(
+          cohort.map(async (signer, index) => {
+            await expect(
+              hypeHaus
+                .connect(signer)
+                .mintAlpha(1, getProof(index), { value: COMMUNITY_SALE_PRICE }),
+            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            await expect(
+              hypeHaus.connect(signer).mintHypelister(1, getProof(index), {
+                value: COMMUNITY_SALE_PRICE,
+              }),
+            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            await expect(
+              hypeHaus.connect(signer).mintHypemember(1, getProof(index), {
+                value: COMMUNITY_SALE_PRICE,
+              }),
+            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+          }),
+        );
+      });
+
+      it('fails to mint when the signer has already minted in the public sale', async () => {
+        const cohort = [signers.u1, signers.u2, signers.u3];
+        await hypeHaus.setActiveSale(Sale.Public);
+
+        await expect(
+          hypeHaus
+            .connect(signers.u1)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u2)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u3)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await Promise.all(
+          cohort.map(async (signer) => {
+            await expect(
+              hypeHaus
+                .connect(signer)
+                .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            await expect(
+              hypeHaus
+                .connect(signer)
+                .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            await expect(
+              hypeHaus
+                .connect(signer)
+                .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+          }),
+        );
+      });
+    });
+
+    describe('Mint Amount', () => {
+      let tree: MerkleTree;
+      let leaves: MerkleTreeLeaf[];
+      let proofs: MerkleTreeProof[];
+      let signers: SignerWithAddress[];
+
+      async function expectFailedCommunityMint(
+        signer: SignerWithAddress,
+        proof: MerkleTreeProof,
+        maxMintAmount: number,
+        mintFn: (
+          contract: HypeHaus,
+          amount: number,
+          proof: MerkleTreeProof,
+        ) => Promise<any>,
+      ) {
+        await expect(
+          mintFn(hypeHaus.connect(signer), 0, proof),
+        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
+        await expect(
+          mintFn(hypeHaus.connect(signer), maxMintAmount + 1, proof),
+        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
+      }
+
+      beforeEach(async () => {
+        signers = await ethers.getSigners().then((signers) => signers.slice(2));
+        leaves = signers.slice(0, -1).map((s) => keccak256(s.address));
+        tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        proofs = leaves.map((l) => tree.getHexProof(l));
+
+        await hypeHaus.setActiveSale(Sale.Community);
+        await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
+      });
+
+      it('fails to mint an invalid amount as an Alpha', async () => {
+        await expectFailedCommunityMint(
+          signers[0],
+          proofs[0],
+          MAX_TOKENS_PER_ALPHA_WALLET,
+          (hypeHaus, amount, proof) => hypeHaus.mintAlpha(amount, proof),
+        );
+      });
+
+      it('fails to mint an invalid amount as a Hypelister', async () => {
+        await expectFailedCommunityMint(
+          signers[0],
+          proofs[0],
+          MAX_TOKENS_PER_HYPELIST_WALLET,
+          (hypeHaus, amount, proof) => hypeHaus.mintHypelister(amount, proof),
+        );
+      });
+
+      it('fails to mint an invalid amount as a Hypemember', async () => {
+        await expectFailedCommunityMint(
+          signers[0],
+          proofs[0],
+          MAX_TOKENS_PER_HYPELIST_WALLET,
+          (hypeHaus, amount, proof) => hypeHaus.mintHypemember(amount, proof),
+        );
+      });
+
+      it('fails to mint an invalid amount as a public member', async () => {
+        await hypeHaus.setActiveSale(Sale.Public);
+        await expect(hypeHaus.mintPublic(0)).to.be.revertedWith(
+          ERR_INVALID_MINT_AMOUNT,
+        );
+        await expect(
+          hypeHaus.mintPublic(MAX_TOKENS_PER_PUBLIC_WALLET + 1),
+        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
+      });
+    });
+
+    describe('Sufficient Funds', () => {
+      let tree: MerkleTree;
+      let leaves: MerkleTreeLeaf[];
+      let proofs: MerkleTreeProof[];
+      let signers: SignerWithAddress[];
+
+      beforeEach(async () => {
+        signers = await ethers.getSigners().then((signers) => signers.slice(2));
+        leaves = signers.slice(0, -1).map((s) => keccak256(s.address));
+        tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        proofs = leaves.map((l) => tree.getHexProof(l));
+      });
+
+      beforeEach(async () => {
+        signers = await ethers.getSigners().then((signers) => signers.slice(2));
+      });
+
+      beforeEach(async () => {
+        await hypeHaus.setActiveSale(Sale.Community);
+        await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
+      });
+
+      it('fails to mint with insufficient funds as an Alpha', async () => {
+        for (
+          let amount = 1, i = 0;
+          amount < MAX_TOKENS_PER_ALPHA_WALLET;
+          amount++, i++
+        ) {
+          await expect(
+            hypeHaus.connect(signers[i]).mintAlpha(amount, proofs[i]),
+          ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+        }
+      });
+
+      it('fails to mint with insufficient funds as a Hypelister', async () => {
+        for (
+          let amount = 1, i = 0;
+          amount < MAX_TOKENS_PER_HYPELIST_WALLET;
+          amount++, i++
+        ) {
+          await expect(
+            hypeHaus.connect(signers[i]).mintHypelister(amount, proofs[i]),
+          ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+        }
+      });
+
+      it('fails to mint with insufficient funds as a Hypemember', async () => {
+        for (
+          let amount = 1, i = 0;
+          amount < MAX_TOKENS_PER_HYPELIST_WALLET;
+          amount++, i++
+        ) {
+          await expect(
+            hypeHaus.connect(signers[i]).mintHypemember(amount, proofs[i]),
+          ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+        }
+      });
+
+      it('fails to mint with insufficient funds as a public member', async () => {
+        await hypeHaus.setActiveSale(Sale.Public);
+        await expect(
+          hypeHaus.connect(signers[0]).mintPublic(1),
+        ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+
+        await expect(
+          hypeHaus.connect(signers[0]).mintPublic(MAX_TOKENS_PER_PUBLIC_WALLET),
+        ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+      });
+    });
+
     describe('Verification', () => {
       type Tier = {
         tree: MerkleTree;
@@ -128,7 +477,7 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setHypememberTierMerkleRoot(hmTree.getHexRoot());
       });
 
-      it('fails to mint when signer cannot be proved to be an Alpha', async () => {
+      it('fails to mint when the signer cannot be proved to be an Alpha', async () => {
         for (const [index, signer] of alphaTier.verifiedSigners.entries()) {
           expect(
             hypeHaus.connect(signer).mintAlpha(1, alphaTier.proofs[index], {
@@ -146,7 +495,7 @@ describe('HypeHaus Contract', () => {
         ).to.be.revertedWith(ERR_VERIFICATION_FAILURE);
       });
 
-      it('fails to mint when signer cannot be proved to be a Hypelister', async () => {
+      it('fails to mint when the signer cannot be proved to be a Hypelister', async () => {
         for (const [
           index,
           signer,
@@ -169,7 +518,7 @@ describe('HypeHaus Contract', () => {
         ).to.be.revertedWith(ERR_VERIFICATION_FAILURE);
       });
 
-      it('fails to mint when signer cannot be proved to be a Hypemember', async () => {
+      it('fails to mint when the signer cannot be proved to be a Hypemember', async () => {
         for (const [
           index,
           signer,
@@ -192,63 +541,6 @@ describe('HypeHaus Contract', () => {
         ).to.be.revertedWith(ERR_VERIFICATION_FAILURE);
       });
     });
-
-    describe('Active Sale', () => {
-      it('can change the current active sale', async () => {
-        expect(await hypeHaus.getActiveSale()).to.eq(Sale.Inactive);
-        await hypeHaus.setActiveSale(Sale.Community);
-        expect(await hypeHaus.getActiveSale()).to.eq(Sale.Community);
-        await hypeHaus.setActiveSale(Sale.Public);
-        expect(await hypeHaus.getActiveSale()).to.eq(Sale.Public);
-        // Test that calling only-owner function as non-owner fails (we don't care
-        // about the error message so we pass an empty string).
-        await expect(
-          hypeHaus.connect(signers.u1).setActiveSale(Sale.Inactive),
-        ).to.be.revertedWith('');
-      });
-
-      it('fails to mint when the community sale is not active', async () => {
-        const leaves = [addresses.u1].map(keccak256);
-        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-        const root = tree.getHexRoot();
-        const proof = tree.getHexProof(leaves[0]);
-
-        // Set the same root for all tiers for testing purposes
-        await hypeHaus.setAlphaTierMerkleRoot(root);
-        await hypeHaus.setHypelistTierMerkleRoot(root);
-        await hypeHaus.setHypememberTierMerkleRoot(root);
-
-        const expectFailedCommunityMints = async () => {
-          await expect(hypeHaus.mintAlpha(1, proof)).to.be.revertedWith(
-            ERR_COMMUNITY_SALE_NOT_ACTIVE,
-          );
-          await expect(hypeHaus.mintHypelister(1, proof)).to.be.revertedWith(
-            ERR_COMMUNITY_SALE_NOT_ACTIVE,
-          );
-          await expect(hypeHaus.mintHypemember(1, proof)).to.be.revertedWith(
-            ERR_COMMUNITY_SALE_NOT_ACTIVE,
-          );
-        };
-
-        await hypeHaus.setActiveSale(Sale.Inactive);
-        await expectFailedCommunityMints();
-
-        await hypeHaus.setActiveSale(Sale.Public);
-        await expectFailedCommunityMints();
-      });
-
-      it('fails to mint when the public sale is not active', async () => {
-        await hypeHaus.setActiveSale(Sale.Inactive);
-        await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
-          ERR_PUBLIC_SALE_NOT_ACTIVE,
-        );
-
-        await hypeHaus.setActiveSale(Sale.Community);
-        await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
-          ERR_PUBLIC_SALE_NOT_ACTIVE,
-        );
-      });
-    });
   });
 
   describe('Minting', () => {
@@ -262,288 +554,109 @@ describe('HypeHaus Contract', () => {
       leaves = signers.slice(0, -1).map((s) => keccak256(s.address));
       tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
       proofs = leaves.map((l) => tree.getHexProof(l));
+      expect(await hypeHaus.totalMinted()).to.eq(0);
     });
 
-    describe('Valid Mints', () => {
-      let signers: SignerWithAddress[];
-
-      beforeEach(async () => {
-        signers = await ethers.getSigners().then((signers) => signers.slice(2));
-        expect(await hypeHaus.totalMinted()).to.eq(0);
-      });
-
-      async function expectSuccessfulCommunityMint(
-        index: number,
-        maxMintAmount: number,
-        mintFn: (
-          contract: HypeHaus,
-          amount: number,
-          proof: MerkleTreeProof,
-          overrides: any,
-        ) => Promise<ContractTransaction>,
-      ) {
-        const signer = signers[index];
-        const proof = proofs[index];
-        const previousTotal = await hypeHaus.totalMinted();
-
-        const overrides = { value: COMMUNITY_SALE_PRICE.mul(maxMintAmount) };
-        await expect(
-          mintFn(hypeHaus.connect(signer), maxMintAmount, proof, overrides),
-        ).to.emit(hypeHaus, 'Transfer');
-
-        const currentTotal = await hypeHaus.totalMinted();
-        const expectedTotal = previousTotal.add(maxMintAmount);
-        expect(currentTotal).to.eq(expectedTotal);
-      }
-
-      describe('Community Sale', () => {
-        beforeEach(async () => {
-          await hypeHaus.setActiveSale(Sale.Community);
-          await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
-          await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
-          await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
-        });
-
-        it('mints a valid amount as an Alpha', async () => {
-          for (
-            let amount = 1, index = 0;
-            amount <= MAX_TOKENS_PER_ALPHA_WALLET;
-            amount++, index++
-          ) {
-            await expectSuccessfulCommunityMint(
-              index,
-              amount,
-              (hypeHaus, amount, proof, overrides) =>
-                hypeHaus.mintAlpha(amount, proof, overrides),
-            );
-          }
-        });
-
-        it('mints a valid amount as a Hypelister', async () => {
-          for (
-            let amount = 1, index = 0;
-            amount <= MAX_TOKENS_PER_HYPELIST_WALLET;
-            amount++, index++
-          ) {
-            await expectSuccessfulCommunityMint(
-              index,
-              amount,
-              (hypeHaus, amount, proof, overrides) =>
-                hypeHaus.mintHypelister(amount, proof, overrides),
-            );
-          }
-        });
-
-        it('mints a valid amount as a Hypemember', async () => {
-          for (
-            let amount = 1, index = 0;
-            amount <= MAX_TOKENS_PER_HYPEMEMBER_WALLET;
-            amount++, index++
-          ) {
-            await expectSuccessfulCommunityMint(
-              index,
-              amount,
-              (hypeHaus, amount, proof, overrides) =>
-                hypeHaus.mintHypemember(amount, proof, overrides),
-            );
-          }
-        });
-      });
-
-      describe('Public Sale', () => {
-        beforeEach(async () => {
-          await hypeHaus.setActiveSale(Sale.Public);
-        });
-
-        it('mints a valid amount as a public member', async () => {
-          for (
-            let amount = 1, i = 0;
-            amount <= MAX_TOKENS_PER_PUBLIC_WALLET;
-            amount++, i++
-          ) {
-            const signer = signers[i];
-            const previousTotal = await hypeHaus.totalMinted();
-            const overrides = { value: PUBLIC_SALE_PRICE.mul(amount) };
-            await expect(hypeHaus.connect(signer).mintPublic(amount, overrides))
-              .to.emit(hypeHaus, 'Transfer')
-              .withArgs(ethers.constants.AddressZero, signer.address, i);
-            const currentTotal = await hypeHaus.totalMinted();
-            const expectedTotal = previousTotal.add(amount);
-            expect(currentTotal).to.eq(expectedTotal);
-          }
-        });
-      });
-    });
-
-    describe('Invalid Mints', () => {
-      let signers: SignerWithAddress[];
-
-      beforeEach(async () => {
-        signers = await ethers.getSigners().then((signers) => signers.slice(2));
-      });
-
-      async function expectFailedCommunityMint(
-        signer: SignerWithAddress,
+    async function expectSuccessfulCommunityMint(
+      index: number,
+      maxMintAmount: number,
+      mintFn: (
+        contract: HypeHaus,
+        amount: number,
         proof: MerkleTreeProof,
-        maxMintAmount: number,
-        mintFn: (
-          contract: HypeHaus,
-          amount: number,
-          proof: MerkleTreeProof,
-        ) => Promise<any>,
-      ) {
-        await expect(
-          mintFn(hypeHaus.connect(signer), 0, proof),
-        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
-        await expect(
-          mintFn(hypeHaus.connect(signer), maxMintAmount + 1, proof),
-        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
-      }
+        overrides: any,
+      ) => Promise<ContractTransaction>,
+    ) {
+      const signer = signers[index];
+      const proof = proofs[index];
+      const previousTotal = await hypeHaus.totalMinted();
 
-      describe('Community Sale', () => {
-        beforeEach(async () => {
-          await hypeHaus.setActiveSale(Sale.Community);
-          await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
-          await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
-          await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
-        });
+      const overrides = { value: COMMUNITY_SALE_PRICE.mul(maxMintAmount) };
+      await expect(
+        mintFn(hypeHaus.connect(signer), maxMintAmount, proof, overrides),
+      ).to.emit(hypeHaus, 'Transfer');
 
-        it('fails to mint an invalid amount as an Alpha', async () => {
-          await expectFailedCommunityMint(
-            signers[0],
-            proofs[0],
-            MAX_TOKENS_PER_ALPHA_WALLET,
-            (hypeHaus, amount, proof) => hypeHaus.mintAlpha(amount, proof),
-          );
-        });
-
-        it('fails to mint an invalid amount as a Hypelister', async () => {
-          await expectFailedCommunityMint(
-            signers[0],
-            proofs[0],
-            MAX_TOKENS_PER_HYPELIST_WALLET,
-            (hypeHaus, amount, proof) => hypeHaus.mintHypelister(amount, proof),
-          );
-        });
-
-        it('fails to mint an invalid amount as a Hypemember', async () => {
-          await expectFailedCommunityMint(
-            signers[0],
-            proofs[0],
-            MAX_TOKENS_PER_HYPELIST_WALLET,
-            (hypeHaus, amount, proof) => hypeHaus.mintHypemember(amount, proof),
-          );
-        });
-
-        it('fails to mint with insufficient funds as an Alpha', async () => {
-          for (
-            let amount = 1, i = 0;
-            amount < MAX_TOKENS_PER_ALPHA_WALLET;
-            amount++, i++
-          ) {
-            await expect(
-              hypeHaus.connect(signers[i]).mintAlpha(amount, proofs[i]),
-            ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
-          }
-        });
-
-        it('fails to mint with insufficient funds as a Hypelister', async () => {
-          for (
-            let amount = 1, i = 0;
-            amount < MAX_TOKENS_PER_HYPELIST_WALLET;
-            amount++, i++
-          ) {
-            await expect(
-              hypeHaus.connect(signers[i]).mintHypelister(amount, proofs[i]),
-            ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
-          }
-        });
-
-        it('fails to mint with insufficient funds as a Hypemember', async () => {
-          for (
-            let amount = 1, i = 0;
-            amount < MAX_TOKENS_PER_HYPELIST_WALLET;
-            amount++, i++
-          ) {
-            await expect(
-              hypeHaus.connect(signers[i]).mintHypemember(amount, proofs[i]),
-            ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
-          }
-        });
-      });
-
-      describe('Public Sale', () => {
-        beforeEach(async () => {
-          await hypeHaus.setActiveSale(Sale.Public);
-        });
-
-        it('fails to mint an invalid amount as a public member', async () => {
-          await expect(hypeHaus.mintPublic(0)).to.be.revertedWith(
-            ERR_INVALID_MINT_AMOUNT,
-          );
-          await expect(
-            hypeHaus.mintPublic(MAX_TOKENS_PER_PUBLIC_WALLET + 1),
-          ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
-        });
-
-        it('fails to mint with insufficient funds as a public member', async () => {
-          await expect(
-            hypeHaus.connect(signers[0]).mintPublic(1),
-          ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
-
-          await expect(
-            hypeHaus
-              .connect(signers[0])
-              .mintPublic(MAX_TOKENS_PER_PUBLIC_WALLET),
-          ).to.be.revertedWith('HH_INSUFFICIENT_FUNDS');
-        });
-      });
-    });
-  });
-
-  describe('Supply', () => {
-    function getAlmostMax(mintAmount: number) {
-      return MAX_SUPPLY % mintAmount === 0
-        ? Math.floor((MAX_SUPPLY - 1) / mintAmount)
-        : Math.floor(MAX_SUPPLY / mintAmount);
+      const currentTotal = await hypeHaus.totalMinted();
+      const expectedTotal = previousTotal.add(maxMintAmount);
+      expect(currentTotal).to.eq(expectedTotal);
     }
 
-    it('fails to mint when supply runs out', async () => {
-      const [_d, _t, ...restSigners] = await ethers.getSigners();
-      const leaves = restSigners.map((s) => keccak256(s.address));
-      const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-      const root = tree.getHexRoot();
+    describe('Community Sale', () => {
+      beforeEach(async () => {
+        await hypeHaus.setActiveSale(Sale.Community);
+        await hypeHaus.setAlphaTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypelistTierMerkleRoot(tree.getHexRoot());
+        await hypeHaus.setHypememberTierMerkleRoot(tree.getHexRoot());
+      });
 
-      await hypeHaus.setActiveSale(Sale.Community);
-      await hypeHaus.setAlphaTierMerkleRoot(root);
-      await hypeHaus.setHypelistTierMerkleRoot(root);
-      await hypeHaus.setHypememberTierMerkleRoot(root);
+      it('mints a valid amount as an Alpha', async () => {
+        for (
+          let amount = 1, index = 0;
+          amount <= MAX_TOKENS_PER_ALPHA_WALLET;
+          amount++, index++
+        ) {
+          await expectSuccessfulCommunityMint(
+            index,
+            amount,
+            (hypeHaus, amount, proof, overrides) =>
+              hypeHaus.mintAlpha(amount, proof, overrides),
+          );
+        }
+      });
 
-      const almostMaxAlpha = getAlmostMax(MAX_TOKENS_PER_ALPHA_WALLET);
-      await Promise.all(
-        [...Array(getAlmostMax(almostMaxAlpha))].map(async (_, i) => {
-          await expect(
-            hypeHaus
-              .connect(restSigners[i])
-              .mintAlpha(
-                MAX_TOKENS_PER_ALPHA_WALLET,
-                tree.getHexProof(leaves[i]),
-                {
-                  value: COMMUNITY_SALE_PRICE.mul(MAX_TOKENS_PER_ALPHA_WALLET),
-                },
-              ),
-          ).to.not.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
-        }),
-      );
+      it('mints a valid amount as a Hypelister', async () => {
+        for (
+          let amount = 1, index = 0;
+          amount <= MAX_TOKENS_PER_HYPELIST_WALLET;
+          amount++, index++
+        ) {
+          await expectSuccessfulCommunityMint(
+            index,
+            amount,
+            (hypeHaus, amount, proof, overrides) =>
+              hypeHaus.mintHypelister(amount, proof, overrides),
+          );
+        }
+      });
 
-      await hypeHaus.setActiveSale(Sale.Community);
-      await expect(
-        hypeHaus
-          .connect(restSigners[almostMaxAlpha])
-          .mintHypelister(2, tree.getHexProof(leaves[almostMaxAlpha]), {
-            value: COMMUNITY_SALE_PRICE,
-          }),
-      ).to.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+      it('mints a valid amount as a Hypemember', async () => {
+        for (
+          let amount = 1, index = 0;
+          amount <= MAX_TOKENS_PER_HYPEMEMBER_WALLET;
+          amount++, index++
+        ) {
+          await expectSuccessfulCommunityMint(
+            index,
+            amount,
+            (hypeHaus, amount, proof, overrides) =>
+              hypeHaus.mintHypemember(amount, proof, overrides),
+          );
+        }
+      });
+    });
+
+    describe('Public Sale', () => {
+      beforeEach(async () => {
+        await hypeHaus.setActiveSale(Sale.Public);
+      });
+
+      it('mints a valid amount as a public member', async () => {
+        for (
+          let amount = 1, i = 0;
+          amount <= MAX_TOKENS_PER_PUBLIC_WALLET;
+          amount++, i++
+        ) {
+          const signer = signers[i];
+          const previousTotal = await hypeHaus.totalMinted();
+          const overrides = { value: PUBLIC_SALE_PRICE.mul(amount) };
+          await expect(hypeHaus.connect(signer).mintPublic(amount, overrides))
+            .to.emit(hypeHaus, 'Transfer')
+            .withArgs(ethers.constants.AddressZero, signer.address, i);
+          const currentTotal = await hypeHaus.totalMinted();
+          const expectedTotal = previousTotal.add(amount);
+          expect(currentTotal).to.eq(expectedTotal);
+        }
+      });
     });
   });
 

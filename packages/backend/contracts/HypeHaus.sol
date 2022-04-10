@@ -117,7 +117,11 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     // ====== MINTING FUNCTIONS ======
 
     // TODO: Consider using a different role
-    function mintAdmin(address receiver, uint256 amount) external onlyOwner {
+    function mintAdmin(address receiver, uint256 amount)
+        external
+        onlyOwner
+        isSupplyAvailable(amount)
+    {
         // TODO: Should we set `_claimed[receiver] = _activeSale`?
         _safeMint(receiver, amount);
     }
