@@ -26,6 +26,7 @@ const ERR_INVALID_MINT_AMOUNT = 'HH_INVALID_MINT_AMOUNT';
 const ERR_VERIFICATION_FAILURE = 'HH_VERIFICATION_FAILURE';
 const ERR_PUBLIC_SALE_NOT_ACTIVE = 'HH_PUBLIC_SALE_NOT_ACTIVE';
 const ERR_COMMUNITY_SALE_NOT_ACTIVE = 'HH_COMMUNITY_SALE_NOT_ACTIVE';
+const ERR_SUPPLY_EXHAUSTED = 'HH_SUPPLY_EXHAUSTED';
 
 enum Sale {
   Inactive = 0,
@@ -507,7 +508,43 @@ describe('HypeHaus Contract', () => {
         : Math.floor(MAX_SUPPLY / mintAmount);
     }
 
-    it('fails to mint when supply runs out', async () => {});
+    it('fails to mint when supply runs out', async () => {
+      const [_d, _t, ...restSigners] = await ethers.getSigners();
+      const leaves = restSigners.map((s) => keccak256(s.address));
+      const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+      const root = tree.getHexRoot();
+
+      await hypeHaus.setActiveSale(Sale.Community);
+      await hypeHaus.setAlphaTierMerkleRoot(root);
+      await hypeHaus.setHypelistTierMerkleRoot(root);
+      await hypeHaus.setHypememberTierMerkleRoot(root);
+
+      const almostMaxAlpha = getAlmostMax(MAX_TOKENS_PER_ALPHA_WALLET);
+      await Promise.all(
+        [...Array(getAlmostMax(almostMaxAlpha))].map(async (_, i) => {
+          await expect(
+            hypeHaus
+              .connect(restSigners[i])
+              .mintAlpha(
+                MAX_TOKENS_PER_ALPHA_WALLET,
+                tree.getHexProof(leaves[i]),
+                {
+                  value: COMMUNITY_SALE_PRICE.mul(MAX_TOKENS_PER_ALPHA_WALLET),
+                },
+              ),
+          ).to.not.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+        }),
+      );
+
+      await hypeHaus.setActiveSale(Sale.Community);
+      await expect(
+        hypeHaus
+          .connect(restSigners[almostMaxAlpha])
+          .mintHypelister(2, tree.getHexProof(leaves[almostMaxAlpha]), {
+            value: COMMUNITY_SALE_PRICE,
+          }),
+      ).to.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+    });
   });
 
   describe('Token URI and Owner', () => {
