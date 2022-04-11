@@ -1,7 +1,7 @@
 import React from 'react';
 import { ethers } from 'ethers';
 
-import { AuthAccount } from '../models';
+import { AsyncStatus, AuthAccount } from '../models';
 import hero from '../assets/hero.png';
 import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
 
@@ -13,7 +13,7 @@ export default function ConnectWalletPage() {
     <div className="space-y-4">
       <img
         src={hero}
-        alt="Hero image"
+        alt="*HYPEHAUS"
         className="mx-auto aspect-square w-2/3 rounded-2xl"
       />
       <h1 className="text-3xl font-bold">Mint *HYPEHAUS</h1>
@@ -23,11 +23,7 @@ export default function ConnectWalletPage() {
   );
 }
 
-type Connection =
-  | { status: 'idle' }
-  | { status: 'pending' }
-  | { status: 'success'; account: AuthAccount }
-  | { status: 'failed'; reason: string };
+type Connection = AsyncStatus<AuthAccount>;
 
 function ConnectWalletButton() {
   const { setAuthAccount } = React.useContext(AuthAccountContext);
@@ -60,7 +56,7 @@ function ConnectWalletButton() {
         throw new Error(`Invalid address provided: '${address}'`);
       }
 
-      setConnection({ status: 'success', account: authAccount });
+      setConnection({ status: 'success', payload: authAccount });
       setAuthAccount(authAccount);
     } catch (error: any) {
       // User cancelled request

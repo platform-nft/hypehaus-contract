@@ -5,6 +5,7 @@ import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
 
 import { HypeHaus } from '../typechain-types/HypeHaus';
+import { HypeHausErrorCode } from '../shared';
 
 type MerkleTreeLeaf = ReturnType<typeof keccak256>;
 type MerkleTreeProof = ReturnType<MerkleTree['getHexProof']>;
@@ -13,14 +14,6 @@ const MAX_SUPPLY = 10;
 const BASE_TOKEN_URI = 'test://abc123/';
 
 const keccak256 = ethers.utils.keccak256;
-
-const ERR_COMMUNITY_SALE_NOT_ACTIVE = 'HH_COMMUNITY_SALE_NOT_ACTIVE';
-const ERR_PUBLIC_SALE_NOT_ACTIVE = 'HH_PUBLIC_SALE_NOT_ACTIVE';
-const ERR_SUPPLY_EXHAUSTED = 'HH_SUPPLY_EXHAUSTED';
-const ERR_INVALID_MINT_AMOUNT = 'HH_INVALID_MINT_AMOUNT';
-const ERR_INSUFFICIENT_FUNDS = 'HH_INSUFFICIENT_FUNDS';
-const ERR_ADDRESS_ALREADY_CLAIMED = 'HH_ADDRESS_ALREADY_CLAIMED';
-const ERR_VERIFICATION_FAILURE = 'HH_VERIFICATION_FAILURE';
 
 enum Sale {
   Closed = 0,
@@ -114,13 +107,13 @@ describe('HypeHaus Contract', () => {
 
         const expectFailedCommunityMints = async () => {
           await expect(hypeHaus.mintAlpha(1, proof)).to.be.revertedWith(
-            ERR_COMMUNITY_SALE_NOT_ACTIVE,
+            HypeHausErrorCode.CommunitySaleNotActive,
           );
           await expect(hypeHaus.mintHypelister(1, proof)).to.be.revertedWith(
-            ERR_COMMUNITY_SALE_NOT_ACTIVE,
+            HypeHausErrorCode.CommunitySaleNotActive,
           );
           await expect(hypeHaus.mintHypemember(1, proof)).to.be.revertedWith(
-            ERR_COMMUNITY_SALE_NOT_ACTIVE,
+            HypeHausErrorCode.CommunitySaleNotActive,
           );
         };
 
@@ -134,12 +127,12 @@ describe('HypeHaus Contract', () => {
       it('fails to mint when the public sale is not active', async () => {
         await hypeHaus.setActiveSale(Sale.Closed);
         await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
-          ERR_PUBLIC_SALE_NOT_ACTIVE,
+          HypeHausErrorCode.PublicSaleNotActive,
         );
 
         await hypeHaus.setActiveSale(Sale.Community);
         await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
-          ERR_PUBLIC_SALE_NOT_ACTIVE,
+          HypeHausErrorCode.PublicSaleNotActive,
         );
       });
     });
@@ -171,7 +164,7 @@ describe('HypeHaus Contract', () => {
                 .mintAlpha(MAX_MINT_ALPHA, tree.getHexProof(leaves[i]), {
                   value: COMMUNITY_SALE_PRICE.mul(MAX_MINT_ALPHA),
                 }),
-            ).to.not.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+            ).to.not.be.revertedWith(HypeHausErrorCode.SupplyExhausted);
           }),
         );
 
@@ -182,7 +175,7 @@ describe('HypeHaus Contract', () => {
             .mintHypelister(2, tree.getHexProof(leaves[almostMaxAlpha]), {
               value: COMMUNITY_SALE_PRICE,
             }),
-        ).to.be.revertedWith(ERR_SUPPLY_EXHAUSTED);
+        ).to.be.revertedWith(HypeHausErrorCode.SupplyExhausted);
       });
     });
 
@@ -223,17 +216,17 @@ describe('HypeHaus Contract', () => {
               hypeHaus
                 .connect(signer)
                 .mintAlpha(1, getProof(index), { value: COMMUNITY_SALE_PRICE }),
-            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
             await expect(
               hypeHaus.connect(signer).mintHypelister(1, getProof(index), {
                 value: COMMUNITY_SALE_PRICE,
               }),
-            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
             await expect(
               hypeHaus.connect(signer).mintHypemember(1, getProof(index), {
                 value: COMMUNITY_SALE_PRICE,
               }),
-            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
           }),
         );
       });
@@ -266,17 +259,17 @@ describe('HypeHaus Contract', () => {
               hypeHaus
                 .connect(signer)
                 .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
             await expect(
               hypeHaus
                 .connect(signer)
                 .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
             await expect(
               hypeHaus
                 .connect(signer)
                 .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(ERR_ADDRESS_ALREADY_CLAIMED);
+            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
           }),
         );
       });
@@ -300,10 +293,10 @@ describe('HypeHaus Contract', () => {
       ) {
         await expect(
           mintFn(hypeHaus.connect(signer), 0, proof),
-        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
+        ).to.be.revertedWith(HypeHausErrorCode.InvalidMintAmount);
         await expect(
           mintFn(hypeHaus.connect(signer), maxMintAmount + 1, proof),
-        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
+        ).to.be.revertedWith(HypeHausErrorCode.InvalidMintAmount);
       }
 
       beforeEach(async () => {
@@ -348,11 +341,11 @@ describe('HypeHaus Contract', () => {
       it('fails to mint an invalid amount as a public member', async () => {
         await hypeHaus.setActiveSale(Sale.Public);
         await expect(hypeHaus.mintPublic(0)).to.be.revertedWith(
-          ERR_INVALID_MINT_AMOUNT,
+          HypeHausErrorCode.InvalidMintAmount,
         );
         await expect(
           hypeHaus.mintPublic(MAX_MINT_PUBLIC + 1),
-        ).to.be.revertedWith(ERR_INVALID_MINT_AMOUNT);
+        ).to.be.revertedWith(HypeHausErrorCode.InvalidMintAmount);
       });
     });
 
@@ -377,7 +370,7 @@ describe('HypeHaus Contract', () => {
         for (let amount = 1, i = 0; amount < MAX_MINT_ALPHA; amount++, i++) {
           await expect(
             hypeHaus.connect(signers[i]).mintAlpha(amount, proofs[i]),
-          ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+          ).to.be.revertedWith(HypeHausErrorCode.InsufficientFunds);
         }
       });
 
@@ -389,7 +382,7 @@ describe('HypeHaus Contract', () => {
         ) {
           await expect(
             hypeHaus.connect(signers[i]).mintHypelister(amount, proofs[i]),
-          ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+          ).to.be.revertedWith(HypeHausErrorCode.InsufficientFunds);
         }
       });
 
@@ -401,7 +394,7 @@ describe('HypeHaus Contract', () => {
         ) {
           await expect(
             hypeHaus.connect(signers[i]).mintHypemember(amount, proofs[i]),
-          ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+          ).to.be.revertedWith(HypeHausErrorCode.InsufficientFunds);
         }
       });
 
@@ -409,11 +402,11 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setActiveSale(Sale.Public);
         await expect(
           hypeHaus.connect(signers[0]).mintPublic(1),
-        ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+        ).to.be.revertedWith(HypeHausErrorCode.InsufficientFunds);
 
         await expect(
           hypeHaus.connect(signers[0]).mintPublic(MAX_MINT_PUBLIC),
-        ).to.be.revertedWith(ERR_INSUFFICIENT_FUNDS);
+        ).to.be.revertedWith(HypeHausErrorCode.InsufficientFunds);
       });
     });
 
@@ -480,7 +473,7 @@ describe('HypeHaus Contract', () => {
             hypeHaus.connect(signer).mintAlpha(1, alphaTier.proofs[index], {
               value: COMMUNITY_SALE_PRICE,
             }),
-          ).to.not.be.revertedWith(ERR_VERIFICATION_FAILURE);
+          ).to.not.be.revertedWith(HypeHausErrorCode.VerificationFailure);
         }
 
         expect(
@@ -489,7 +482,7 @@ describe('HypeHaus Contract', () => {
             .mintAlpha(1, alphaTier.proofs[0], {
               value: COMMUNITY_SALE_PRICE,
             }),
-        ).to.be.revertedWith(ERR_VERIFICATION_FAILURE);
+        ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
 
       it('fails to mint when the signer cannot be proved to be a Hypelister', async () => {
@@ -503,7 +496,7 @@ describe('HypeHaus Contract', () => {
               .mintHypelister(1, hypelisterTier.proofs[index], {
                 value: COMMUNITY_SALE_PRICE,
               }),
-          ).to.not.be.revertedWith(ERR_VERIFICATION_FAILURE);
+          ).to.not.be.revertedWith(HypeHausErrorCode.VerificationFailure);
         }
 
         expect(
@@ -512,7 +505,7 @@ describe('HypeHaus Contract', () => {
             .mintHypelister(1, hypelisterTier.proofs[0], {
               value: COMMUNITY_SALE_PRICE,
             }),
-        ).to.be.revertedWith(ERR_VERIFICATION_FAILURE);
+        ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
 
       it('fails to mint when the signer cannot be proved to be a Hypemember', async () => {
@@ -526,7 +519,7 @@ describe('HypeHaus Contract', () => {
               .mintHypemember(1, hypememberTier.proofs[index], {
                 value: COMMUNITY_SALE_PRICE,
               }),
-          ).to.not.be.revertedWith(ERR_VERIFICATION_FAILURE);
+          ).to.not.be.revertedWith(HypeHausErrorCode.VerificationFailure);
         }
 
         expect(
@@ -535,7 +528,7 @@ describe('HypeHaus Contract', () => {
             .mintHypemember(1, hypememberTier.proofs[0], {
               value: COMMUNITY_SALE_PRICE,
             }),
-        ).to.be.revertedWith(ERR_VERIFICATION_FAILURE);
+        ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
     });
   });

@@ -1,5 +1,11 @@
 import { ethers } from 'ethers';
 
+export type AsyncStatus<T> =
+  | { status: 'idle' }
+  | { status: 'pending' }
+  | { status: 'success'; payload: T }
+  | { status: 'failed'; reason: string };
+
 export type AuthAccount = {
   address: string;
   balance: ethers.BigNumber;
