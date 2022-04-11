@@ -3,6 +3,12 @@ import React from 'react';
 import { AuthAccountContext, ConnectWalletPage, MintPage } from './components';
 import { MaybeAuthAccount } from './models';
 
+declare global {
+  interface Window {
+    ethereum: any;
+  }
+}
+
 export default function App() {
   const [authAccount, setAuthAccount] = React.useState<MaybeAuthAccount>();
 

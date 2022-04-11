@@ -8,8 +8,6 @@ import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
 import Button from './Button';
 import AuthAccountContext from './AuthAccountContext';
 
-declare let window: any;
-
 export default function ConnectWalletPage() {
   return (
     <div className="space-y-4">
@@ -43,19 +41,25 @@ function ConnectWalletButton() {
     if (!window.ethereum) {
       setConnection({
         status: 'failed',
-        reason: 'Your browser does not support Web3',
+        reason: 'Please install the MetaMask extension on your browser',
       });
       return;
     }
 
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const [account] = await provider.send('eth_requestAccounts', []);
+      const [address] = await provider.send('eth_requestAccounts', []);
       const authAccount: AuthAccount = {
-        address: account,
-        balance: await provider.getBalance(account),
+        address,
+        provider,
+        balance: await provider.getBalance(address),
         network: await provider.getNetwork(),
       };
+
+      if (!ethers.utils.isAddress(address)) {
+        throw new Error(`Invalid address provided: '${address}'`);
+      }
+
       setConnection({ status: 'success', account: authAccount });
       setAuthAccount(authAccount);
     } catch (error: any) {

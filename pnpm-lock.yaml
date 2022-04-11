@@ -86,6 +86,7 @@ importers:
       '@babel/core': ^7.17.9
       '@babel/plugin-syntax-flow': ^7.14.5
       '@babel/plugin-transform-react-jsx': ^7.14.9
+      '@platform/backend': workspace:^0.1.0
       '@testing-library/dom': '>=7.21.4'
       '@testing-library/jest-dom': ^5.16.4
       '@testing-library/react': ^12.1.4
@@ -105,6 +106,7 @@ importers:
       typescript: ^4.6.3
       web-vitals: ^2.1.4
     dependencies:
+      '@platform/backend': link:../backend
       '@testing-library/jest-dom': 5.16.4
       '@testing-library/react': 12.1.4_react-dom@18.0.0+react@18.0.0
       '@testing-library/user-event': 13.5.0_@testing-library+dom@8.13.0

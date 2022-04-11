@@ -1,9 +1,14 @@
 import React from 'react';
+import { ethers } from 'ethers';
+import { HypeHaus } from '@platform/backend/typechain-types/HypeHaus';
+import HypeHausJson from '@platform/backend/artifacts/contracts/HypeHaus.sol/HypeHaus.json';
 
 import Button from './Button';
 import hero from '../assets/hero.png';
 import { AuthAccount } from '../models';
 import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
+
+const { REACT_APP_CONTRACT_ADDRESS } = process.env;
 
 const MIN_MINT_AMOUNT = 1;
 const MAX_MINT_AMOUNT = 3;
@@ -13,9 +18,36 @@ type MintPageProps = {
 };
 
 export default function MintPage({ authAccount }: MintPageProps) {
-  // React.useEffect(() => {
-  //   console.log(authAccount);
-  // }, [authAccount]);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    console.log({ REACT_APP_CONTRACT_ADDRESS });
+  }, []);
+
+  const handleClickMint = async () => {
+    try {
+      if (!REACT_APP_CONTRACT_ADDRESS) {
+        throw new Error('Internal error: Contract address is undefined');
+      }
+
+      const signer = authAccount.provider.getSigner(authAccount.address);
+
+      const hypeHaus = new ethers.Contract(
+        REACT_APP_CONTRACT_ADDRESS,
+        HypeHausJson.abi,
+        signer,
+      ) as HypeHaus;
+
+      const activeSale = await hypeHaus.activeSale();
+      console.log({ activeSale });
+
+      await hypeHaus.mintPublic(1);
+    } catch (error: any) {
+      console.log(error.code);
+      console.log(error.message);
+      console.log(error.data);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -36,7 +68,10 @@ export default function MintPage({ authAccount }: MintPageProps) {
         <PriceInfo price="0.08" caption="PUBLIC" />
       </div>
       <NumberInput />
-      <Button>Mint *HYPEHAUS</Button>
+      <Button onClick={handleClickMint}>Mint *HYPEHAUS</Button>
+      {error && (
+        <p className="text-sm text-error-500">Failed to mint: {error}</p>
+      )}
     </div>
   );
 }
@@ -117,6 +152,7 @@ function NumberInputButton(props: NumberInputButtonProps) {
         'font-bold',
         'border-2',
         'text-center',
+        'select-none',
         'first:rounded-l-md',
         'last:rounded-r-md',
         'border-primary-200',
