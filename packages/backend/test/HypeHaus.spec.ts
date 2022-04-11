@@ -803,4 +803,67 @@ describe('HypeHaus Contract', () => {
       expect(await getBalance('u2')).to.eq(givenClient2Balance);
     });
   });
+
+  describe('Access Control', () => {
+    let adminRole: string;
+    let operatorRole: string;
+    let withdrawerRole: string;
+    let burnerRole: string;
+
+    beforeEach(async () => {
+      adminRole = await hypeHaus.DEFAULT_ADMIN_ROLE();
+      operatorRole = await hypeHaus.OPERATOR_ROLE();
+      withdrawerRole = await hypeHaus.WITHDRAWER_ROLE();
+      burnerRole = await hypeHaus.BURNER_ROLE();
+    });
+
+    it('reports that the deployer has admin role', async () => {
+      const deployer = addresses.deployer;
+      expect(await hypeHaus.hasGivenOrAdminRole(adminRole, deployer));
+      expect(await hypeHaus.hasGivenOrAdminRole(operatorRole, deployer));
+      expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, deployer));
+      expect(await hypeHaus.hasGivenOrAdminRole(burnerRole, deployer));
+    });
+
+    it('can grant and revoke roles for accounts', async () => {
+      const { deployer, u1: user1, u2: user2 } = addresses;
+
+      await hypeHaus.revokeRole(burnerRole, deployer);
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+
+      expect(!(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+
+      await hypeHaus.grantRole(operatorRole, user1);
+      expect(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+
+      await hypeHaus.grantRole(withdrawerRole, user1);
+      expect(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1));
+      expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+
+      await hypeHaus.revokeRole(operatorRole, user1);
+      expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+
+      expect(!(await hypeHaus.hasGivenOrAdminRole(operatorRole, user2)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user2)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user2)));
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user2)));
+
+      await hypeHaus.grantRole(burnerRole, user2);
+      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user2)));
+
+      await hypeHaus.grantRole(withdrawerRole, user2);
+      expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user2)));
+    });
+  });
 });

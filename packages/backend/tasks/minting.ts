@@ -72,7 +72,7 @@ task(HH_MINT_ADMIN, 'Mints some number of HYPEHAUSes to the receiver as admin')
     async ({ receiver, amount, contract }: MintAdminActionType, hre) => {
       const hypeHaus = await utils.connectToContract(hre, contract);
       await utils.logTotalMinted(hypeHaus);
-      await hypeHaus.mintAdmin(receiver, amount);
+      await hypeHaus.mintUnchecked(receiver, amount);
       await utils.logTotalMinted(hypeHaus);
     },
   );

@@ -21,28 +21,36 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface HypeHausInterface extends utils.Interface {
   contractName: "HypeHaus";
   functions: {
+    "BURNER_ROLE()": FunctionFragment;
+    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
+    "OPERATOR_ROLE()": FunctionFragment;
+    "WITHDRAWER_ROLE()": FunctionFragment;
     "activeSale()": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(uint256)": FunctionFragment;
     "communitySalePrice()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
+    "getRoleAdmin(bytes32)": FunctionFragment;
+    "grantRole(bytes32,address)": FunctionFragment;
+    "hasGivenOrAdminRole(bytes32,address)": FunctionFragment;
+    "hasRole(bytes32,address)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "maxMintAlpha()": FunctionFragment;
     "maxMintHypelister()": FunctionFragment;
     "maxMintHypemember()": FunctionFragment;
     "maxMintPublic()": FunctionFragment;
     "maxSupply()": FunctionFragment;
-    "mintAdmin(address,uint256)": FunctionFragment;
     "mintAlpha(uint256,bytes32[])": FunctionFragment;
     "mintHypelister(uint256,bytes32[])": FunctionFragment;
     "mintHypemember(uint256,bytes32[])": FunctionFragment;
     "mintPublic(uint256)": FunctionFragment;
+    "mintUnchecked(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
-    "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "publicSalePrice()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
+    "renounceRole(bytes32,address)": FunctionFragment;
+    "revokeRole(bytes32,address)": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "setActiveSale(uint8)": FunctionFragment;
     "setAlphaMerkleRoot(bytes32)": FunctionFragment;
@@ -60,10 +68,25 @@ export interface HypeHausInterface extends utils.Interface {
     "totalMinted()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
     "withdraw()": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "BURNER_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "DEFAULT_ADMIN_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "OPERATOR_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "WITHDRAWER_ROLE",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "activeSale",
     values?: undefined
@@ -81,6 +104,22 @@ export interface HypeHausInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getApproved",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRoleAdmin",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "grantRole",
+    values: [BytesLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasGivenOrAdminRole",
+    values: [BytesLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasRole",
+    values: [BytesLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
@@ -104,10 +143,6 @@ export interface HypeHausInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "maxSupply", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "mintAdmin",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "mintAlpha",
     values: [BigNumberish, BytesLike[]]
   ): string;
@@ -123,8 +158,11 @@ export interface HypeHausInterface extends utils.Interface {
     functionFragment: "mintPublic",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "mintUnchecked",
+    values: [string, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "ownerOf",
     values: [BigNumberish]
@@ -134,8 +172,12 @@ export interface HypeHausInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
+    functionFragment: "renounceRole",
+    values: [BytesLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "revokeRole",
+    values: [BytesLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom",
@@ -202,12 +244,24 @@ export interface HypeHausInterface extends utils.Interface {
     functionFragment: "transferFrom",
     values: [string, string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
-  ): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
+  decodeFunctionResult(
+    functionFragment: "BURNER_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "DEFAULT_ADMIN_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "OPERATOR_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "WITHDRAWER_ROLE",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "activeSale", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
@@ -220,6 +274,16 @@ export interface HypeHausInterface extends utils.Interface {
     functionFragment: "getApproved",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRoleAdmin",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "hasGivenOrAdminRole",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
     data: BytesLike
@@ -241,7 +305,6 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "maxSupply", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mintAdmin", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mintAlpha", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "mintHypelister",
@@ -252,17 +315,21 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "mintPublic", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "mintUnchecked",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "publicSalePrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "renounceOwnership",
+    functionFragment: "renounceRole",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "safeTransferFrom",
     data: BytesLike
@@ -325,22 +392,22 @@ export interface HypeHausInterface extends utils.Interface {
     functionFragment: "transferFrom",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
+    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
+    "RoleGranted(bytes32,address,address)": EventFragment;
+    "RoleRevoked(bytes32,address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
 
@@ -358,13 +425,27 @@ export type ApprovalForAllEvent = TypedEvent<
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  { previousOwner: string; newOwner: string }
+export type RoleAdminChangedEvent = TypedEvent<
+  [string, string, string],
+  { role: string; previousAdminRole: string; newAdminRole: string }
 >;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
+export type RoleAdminChangedEventFilter =
+  TypedEventFilter<RoleAdminChangedEvent>;
+
+export type RoleGrantedEvent = TypedEvent<
+  [string, string, string],
+  { role: string; account: string; sender: string }
+>;
+
+export type RoleGrantedEventFilter = TypedEventFilter<RoleGrantedEvent>;
+
+export type RoleRevokedEvent = TypedEvent<
+  [string, string, string],
+  { role: string; account: string; sender: string }
+>;
+
+export type RoleRevokedEventFilter = TypedEventFilter<RoleRevokedEvent>;
 
 export type TransferEvent = TypedEvent<
   [string, string, BigNumber],
@@ -401,6 +482,14 @@ export interface HypeHaus extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    BURNER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+
+    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
+
+    OPERATOR_ROLE(overrides?: CallOverrides): Promise<[string]>;
+
+    WITHDRAWER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+
     activeSale(overrides?: CallOverrides): Promise<[number]>;
 
     approve(
@@ -423,6 +512,26 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<[string]>;
+
+    grantRole(
+      role: BytesLike,
+      account: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    hasGivenOrAdminRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
+    hasRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -438,12 +547,6 @@ export interface HypeHaus extends BaseContract {
     maxMintPublic(overrides?: CallOverrides): Promise<[number]>;
 
     maxSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    mintAdmin(
-      receiver: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     mintAlpha(
       amount: BigNumberish,
@@ -468,9 +571,13 @@ export interface HypeHaus extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    name(overrides?: CallOverrides): Promise<[string]>;
+    mintUnchecked(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
+    name(overrides?: CallOverrides): Promise<[string]>;
 
     ownerOf(
       tokenId: BigNumberish,
@@ -479,7 +586,15 @@ export interface HypeHaus extends BaseContract {
 
     publicSalePrice(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    renounceOwnership(
+    renounceRole(
+      role: BytesLike,
+      account: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    revokeRole(
+      role: BytesLike,
+      account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -499,12 +614,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setActiveSale(
-      newActiveSale: BigNumberish,
+      newSale: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     setAlphaMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -515,7 +630,7 @@ export interface HypeHaus extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setBaseTokenURI(
-      newBaseTokenURI: string,
+      newTokenURI: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -525,17 +640,17 @@ export interface HypeHaus extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setHypelisterMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     setHypememberMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     setMaxSupply(
-      newMaxSupply: BigNumberish,
+      newSupply: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -572,15 +687,18 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     withdraw(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
+
+  BURNER_ROLE(overrides?: CallOverrides): Promise<string>;
+
+  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
+
+  OPERATOR_ROLE(overrides?: CallOverrides): Promise<string>;
+
+  WITHDRAWER_ROLE(overrides?: CallOverrides): Promise<string>;
 
   activeSale(overrides?: CallOverrides): Promise<number>;
 
@@ -604,6 +722,26 @@ export interface HypeHaus extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
+
+  grantRole(
+    role: BytesLike,
+    account: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  hasGivenOrAdminRole(
+    role: BytesLike,
+    account: string,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
+  hasRole(
+    role: BytesLike,
+    account: string,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   isApprovedForAll(
     owner: string,
     operator: string,
@@ -619,12 +757,6 @@ export interface HypeHaus extends BaseContract {
   maxMintPublic(overrides?: CallOverrides): Promise<number>;
 
   maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mintAdmin(
-    receiver: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   mintAlpha(
     amount: BigNumberish,
@@ -649,15 +781,27 @@ export interface HypeHaus extends BaseContract {
     overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  name(overrides?: CallOverrides): Promise<string>;
+  mintUnchecked(
+    receiver: string,
+    amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
+  name(overrides?: CallOverrides): Promise<string>;
 
   ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
   publicSalePrice(overrides?: CallOverrides): Promise<BigNumber>;
 
-  renounceOwnership(
+  renounceRole(
+    role: BytesLike,
+    account: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  revokeRole(
+    role: BytesLike,
+    account: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -677,12 +821,12 @@ export interface HypeHaus extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setActiveSale(
-    newActiveSale: BigNumberish,
+    newSale: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   setAlphaMerkleRoot(
-    newMerkleRoot: BytesLike,
+    newRoot: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -693,7 +837,7 @@ export interface HypeHaus extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setBaseTokenURI(
-    newBaseTokenURI: string,
+    newTokenURI: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -703,17 +847,17 @@ export interface HypeHaus extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setHypelisterMerkleRoot(
-    newMerkleRoot: BytesLike,
+    newRoot: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   setHypememberMerkleRoot(
-    newMerkleRoot: BytesLike,
+    newRoot: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   setMaxSupply(
-    newMaxSupply: BigNumberish,
+    newSupply: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -747,16 +891,19 @@ export interface HypeHaus extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   withdraw(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    BURNER_ROLE(overrides?: CallOverrides): Promise<string>;
+
+    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
+
+    OPERATOR_ROLE(overrides?: CallOverrides): Promise<string>;
+
+    WITHDRAWER_ROLE(overrides?: CallOverrides): Promise<string>;
+
     activeSale(overrides?: CallOverrides): Promise<number>;
 
     approve(
@@ -776,6 +923,26 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
+
+    grantRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    hasGivenOrAdminRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    hasRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -791,12 +958,6 @@ export interface HypeHaus extends BaseContract {
     maxMintPublic(overrides?: CallOverrides): Promise<number>;
 
     maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintAdmin(
-      receiver: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     mintAlpha(
       amount: BigNumberish,
@@ -818,15 +979,29 @@ export interface HypeHaus extends BaseContract {
 
     mintPublic(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    name(overrides?: CallOverrides): Promise<string>;
+    mintUnchecked(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+    name(overrides?: CallOverrides): Promise<string>;
 
     ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
     publicSalePrice(overrides?: CallOverrides): Promise<BigNumber>;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+    renounceRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    revokeRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: string,
@@ -844,12 +1019,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<void>;
 
     setActiveSale(
-      newActiveSale: BigNumberish,
+      newSale: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     setAlphaMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -860,7 +1035,7 @@ export interface HypeHaus extends BaseContract {
     ): Promise<void>;
 
     setBaseTokenURI(
-      newBaseTokenURI: string,
+      newTokenURI: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -870,17 +1045,17 @@ export interface HypeHaus extends BaseContract {
     ): Promise<void>;
 
     setHypelisterMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
     setHypememberMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
     setMaxSupply(
-      newMaxSupply: BigNumberish,
+      newSupply: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -914,11 +1089,6 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     withdraw(overrides?: CallOverrides): Promise<void>;
   };
 
@@ -945,14 +1115,38 @@ export interface HypeHaus extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
+    "RoleAdminChanged(bytes32,bytes32,bytes32)"(
+      role?: BytesLike | null,
+      previousAdminRole?: BytesLike | null,
+      newAdminRole?: BytesLike | null
+    ): RoleAdminChangedEventFilter;
+    RoleAdminChanged(
+      role?: BytesLike | null,
+      previousAdminRole?: BytesLike | null,
+      newAdminRole?: BytesLike | null
+    ): RoleAdminChangedEventFilter;
+
+    "RoleGranted(bytes32,address,address)"(
+      role?: BytesLike | null,
+      account?: string | null,
+      sender?: string | null
+    ): RoleGrantedEventFilter;
+    RoleGranted(
+      role?: BytesLike | null,
+      account?: string | null,
+      sender?: string | null
+    ): RoleGrantedEventFilter;
+
+    "RoleRevoked(bytes32,address,address)"(
+      role?: BytesLike | null,
+      account?: string | null,
+      sender?: string | null
+    ): RoleRevokedEventFilter;
+    RoleRevoked(
+      role?: BytesLike | null,
+      account?: string | null,
+      sender?: string | null
+    ): RoleRevokedEventFilter;
 
     "Transfer(address,address,uint256)"(
       from?: string | null,
@@ -967,6 +1161,14 @@ export interface HypeHaus extends BaseContract {
   };
 
   estimateGas: {
+    BURNER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+
+    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+
+    OPERATOR_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+
+    WITHDRAWER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+
     activeSale(overrides?: CallOverrides): Promise<BigNumber>;
 
     approve(
@@ -989,6 +1191,29 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getRoleAdmin(
+      role: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    grantRole(
+      role: BytesLike,
+      account: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    hasGivenOrAdminRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    hasRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -1004,12 +1229,6 @@ export interface HypeHaus extends BaseContract {
     maxMintPublic(overrides?: CallOverrides): Promise<BigNumber>;
 
     maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintAdmin(
-      receiver: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     mintAlpha(
       amount: BigNumberish,
@@ -1034,9 +1253,13 @@ export interface HypeHaus extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    name(overrides?: CallOverrides): Promise<BigNumber>;
+    mintUnchecked(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
+    name(overrides?: CallOverrides): Promise<BigNumber>;
 
     ownerOf(
       tokenId: BigNumberish,
@@ -1045,7 +1268,15 @@ export interface HypeHaus extends BaseContract {
 
     publicSalePrice(overrides?: CallOverrides): Promise<BigNumber>;
 
-    renounceOwnership(
+    renounceRole(
+      role: BytesLike,
+      account: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    revokeRole(
+      role: BytesLike,
+      account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1065,12 +1296,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     setActiveSale(
-      newActiveSale: BigNumberish,
+      newSale: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     setAlphaMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1081,7 +1312,7 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     setBaseTokenURI(
-      newBaseTokenURI: string,
+      newTokenURI: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1091,17 +1322,17 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     setHypelisterMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     setHypememberMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     setMaxSupply(
-      newMaxSupply: BigNumberish,
+      newSupply: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1138,17 +1369,22 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     withdraw(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    BURNER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    DEFAULT_ADMIN_ROLE(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    OPERATOR_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    WITHDRAWER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     activeSale(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     approve(
@@ -1176,6 +1412,29 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getRoleAdmin(
+      role: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    grantRole(
+      role: BytesLike,
+      account: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    hasGivenOrAdminRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    hasRole(
+      role: BytesLike,
+      account: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     isApprovedForAll(
       owner: string,
       operator: string,
@@ -1191,12 +1450,6 @@ export interface HypeHaus extends BaseContract {
     maxMintPublic(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     maxSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mintAdmin(
-      receiver: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     mintAlpha(
       amount: BigNumberish,
@@ -1221,9 +1474,13 @@ export interface HypeHaus extends BaseContract {
       overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    mintUnchecked(
+      receiver: string,
+      amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     ownerOf(
       tokenId: BigNumberish,
@@ -1232,7 +1489,15 @@ export interface HypeHaus extends BaseContract {
 
     publicSalePrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    renounceOwnership(
+    renounceRole(
+      role: BytesLike,
+      account: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    revokeRole(
+      role: BytesLike,
+      account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1252,12 +1517,12 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setActiveSale(
-      newActiveSale: BigNumberish,
+      newSale: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setAlphaMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1268,7 +1533,7 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setBaseTokenURI(
-      newBaseTokenURI: string,
+      newTokenURI: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1278,17 +1543,17 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setHypelisterMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setHypememberMerkleRoot(
-      newMerkleRoot: BytesLike,
+      newRoot: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setMaxSupply(
-      newMaxSupply: BigNumberish,
+      newSupply: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1322,11 +1587,6 @@ export interface HypeHaus extends BaseContract {
       from: string,
       to: string,
       tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

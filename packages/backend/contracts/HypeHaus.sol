@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "erc721a/contracts/ERC721A.sol";
+import "./HypeHausAccessControl.sol";
 
-contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
+contract HypeHaus is ERC721A, HypeHausAccessControl, ReentrancyGuard {
     using Strings for uint256;
 
     // ====== ENUMS ======
@@ -80,8 +80,6 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     }
 
     modifier isValidMintAmount(uint256 amount, uint256 maximum) {
-        // The front-end will ensure that `amount` is between 1 and `maximum`,
-        // but we'll do a check anyway.
         require(amount >= 1 && amount <= maximum, "HH_INVALID_MINT_AMOUNT");
         _;
     }
@@ -113,10 +111,20 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
 
     // ====== MINTING FUNCTIONS ======
 
-    // TODO: Consider using a different role here.
-    function mintAdmin(address receiver, uint256 amount)
+    /**
+     * @dev Mints `amount` number of HYPEHAUSes to `receiver`.
+     *
+     * As the name suggests, this function does not validate the receiver or the
+     * provided amount, except ensuring that there is enough supply available
+     * to mint `amount` HYPEHAUSes. The current sale will still be recorded as
+     * the last minted sale for the receiver.
+     *
+     * This function is useful to manually gift HYPEHAUSes to someone. It
+     * requires that the caller have at least the `OPERATOR_ROLE` role.
+     */
+    function mintUnchecked(address receiver, uint256 amount)
         external
-        onlyOwner
+        onlyOperator
         isSupplyAvailable(amount)
     {
         _mintToAddress(receiver, amount);
@@ -243,8 +251,6 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev Internal function that mints `amount` number of HYPEHAUSes to
      * `receiver`.
-     *
-     * TODO: Consider adding `require(tx.origin == msg.sender)` call.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
         // An address may only mint once during the current `activeSale`. Here,
@@ -288,65 +294,71 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
             );
     }
 
-    // ====== ONLY-OWNER OPERATIONS ======
+    // ====== PRIVILEGED OPERATIONS ======
 
     /**
      * @dev Transfers any pending balance available in the contract to the
      * designated team wallet address.
-     *
-     * TODO: Consider using a different role here.
      */
-    function withdraw() external onlyOwner {
+    function withdraw() external onlyWithdrawer {
         uint256 balance = address(this).balance;
         (bool success, ) = payable(_teamWalletAddress).call{value: balance}("");
         require(success, "HH_TRANSFER_FAILURE");
     }
 
-    // TODO: Consider using a different role here.
-    function burn(uint256 tokenId) external onlyOwner {
+    /**
+     * @dev Destroys a HYPEHAUS with the given token ID.
+     */
+    function burn(uint256 tokenId) external onlyBurner {
         _burn(tokenId);
     }
 
-    // ====== ONLY-OWNER SETTERS ======
+    // ====== ONLY-OPERATOR SETTERS ======
 
-    // TODO: Consider using a different role here.
-    function setCommunitySalePrice(uint256 newPrice) external onlyOwner {
+    function setCommunitySalePrice(uint256 newPrice) external onlyOperator {
         communitySalePrice = newPrice;
     }
 
-    // TODO: Consider using a different role here.
-    function setPublicSalePrice(uint256 newPrice) external onlyOwner {
+    function setPublicSalePrice(uint256 newPrice) external onlyOperator {
         publicSalePrice = newPrice;
     }
 
-    // TODO: Consider using a different role here.
-    function setActiveSale(Sale newActiveSale) external onlyOwner {
-        activeSale = newActiveSale;
+    function setActiveSale(Sale newSale) external onlyOperator {
+        activeSale = newSale;
     }
 
-    // TODO: Consider using a different role here.
-    function setMaxSupply(uint256 newMaxSupply) external onlyOwner {
-        maxSupply = newMaxSupply;
+    function setMaxSupply(uint256 newSupply) external onlyOperator {
+        maxSupply = newSupply;
     }
 
-    function setBaseTokenURI(string memory newBaseTokenURI) external onlyOwner {
-        _baseTokenURI = newBaseTokenURI;
+    function setBaseTokenURI(string memory newTokenURI) external onlyOperator {
+        _baseTokenURI = newTokenURI;
     }
 
-    // TODO: Consider using a different role here.
-    function setTeamWalletAddress(address newAddress) external onlyOwner {
+    function setTeamWalletAddress(address newAddress) external onlyOperator {
         _teamWalletAddress = newAddress;
     }
 
-    function setAlphaMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
-        _alphaMerkleRoot = newMerkleRoot;
+    function setAlphaMerkleRoot(bytes32 newRoot) external onlyOperator {
+        _alphaMerkleRoot = newRoot;
     }
 
-    function setHypelisterMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
-        _hypelisterMerkleRoot = newMerkleRoot;
+    function setHypelisterMerkleRoot(bytes32 newRoot) external onlyOperator {
+        _hypelisterMerkleRoot = newRoot;
     }
 
-    function setHypememberMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
-        _hypememberMerkleRoot = newMerkleRoot;
+    function setHypememberMerkleRoot(bytes32 newRoot) external onlyOperator {
+        _hypememberMerkleRoot = newRoot;
+    }
+
+    // ====== MISCELLANEOUS ======
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721A, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
