@@ -1,12 +1,22 @@
 import React from 'react';
-import Button from './Button';
 
+import Button from './Button';
 import hero from '../assets/hero.png';
+import { AuthAccount } from '../models';
+import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
 
 const MIN_MINT_AMOUNT = 1;
 const MAX_MINT_AMOUNT = 3;
 
-export default function MintPage() {
+type MintPageProps = {
+  authAccount: AuthAccount;
+};
+
+export default function MintPage({ authAccount }: MintPageProps) {
+  // React.useEffect(() => {
+  //   console.log(authAccount);
+  // }, [authAccount]);
+
   return (
     <div className="space-y-4">
       <img
@@ -14,6 +24,12 @@ export default function MintPage() {
         alt="Hero image"
         className="mx-auto aspect-square w-2/3 rounded-2xl"
       />
+      <div className="flex items-center justify-center pt-2 pb-2 pl-4 pr-4 w-40 mx-auto rounded-full bg-gray-200">
+        <MetaMaskLogo className="h-6 mr-1" />
+        <p className="font-semibold text-sm truncate text-gray-700">
+          {authAccount.address.slice(0, 9)}
+        </p>
+      </div>
       <p>How many *HYPEHAUSes would you like to mint?</p>
       <div className="flex">
         <PriceInfo price="0.05" caption="PRESALE" />

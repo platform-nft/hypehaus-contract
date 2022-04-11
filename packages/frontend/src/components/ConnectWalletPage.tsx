@@ -1,9 +1,12 @@
 import React from 'react';
 import { ethers } from 'ethers';
 
-import Button from './Button';
+import { AuthAccount } from '../models';
 import hero from '../assets/hero.png';
 import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
+
+import Button from './Button';
+import AuthAccountContext from './AuthAccountContext';
 
 declare let window: any;
 
@@ -22,18 +25,15 @@ export default function ConnectWalletPage() {
   );
 }
 
-type Account = {
-  address: string;
-  balance: ethers.BigNumber;
-};
-
 type Connection =
   | { status: 'idle' }
   | { status: 'pending' }
-  | { status: 'success'; network: ethers.providers.Network; account: Account }
+  | { status: 'success'; account: AuthAccount }
   | { status: 'failed'; reason: string };
 
 function ConnectWalletButton() {
+  const { setAuthAccount } = React.useContext(AuthAccountContext);
+
   const [connection, setConnection] = React.useState<Connection>({
     status: 'idle',
   });
@@ -51,14 +51,13 @@ function ConnectWalletButton() {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const [account] = await provider.send('eth_requestAccounts', []);
-      setConnection({
-        status: 'success',
+      const authAccount: AuthAccount = {
+        address: account,
+        balance: await provider.getBalance(account),
         network: await provider.getNetwork(),
-        account: {
-          address: account,
-          balance: await provider.getBalance(account),
-        },
-      });
+      };
+      setConnection({ status: 'success', account: authAccount });
+      setAuthAccount(authAccount);
     } catch (error: any) {
       // User cancelled request
       if (error.code === 4001) {
@@ -92,7 +91,7 @@ function ConnectWalletButton() {
               connection.status === 'pending' ? 'grayscale' : '',
             ].join(' ')}
           />
-          Connect MetaMask
+          {connection.status === 'pending' ? 'Connecting…' : 'Connect MetaMask'}
         </div>
       </Button>
       {connection.status === 'failed' && (

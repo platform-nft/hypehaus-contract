@@ -23,6 +23,10 @@ export default function Button(props: ButtonProps) {
         'disabled:border-gray-300',
         'disabled:bg-transparent',
         'hover:bg-primary-50',
+        'active:bg-primary-100',
+        'focus:outline-none',
+        'focus:ring',
+        'focus:ring-primary-300',
       ].join(' ')}>
       {children}
     </button>

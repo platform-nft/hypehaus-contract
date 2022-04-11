@@ -1,13 +1,22 @@
 import React from 'react';
-import { ConnectWalletPage, MintPage } from './components';
+
+import { AuthAccountContext, ConnectWalletPage, MintPage } from './components';
+import { MaybeAuthAccount } from './models';
 
 export default function App() {
+  const [authAccount, setAuthAccount] = React.useState<MaybeAuthAccount>();
+
   return (
-    <div className="flex h-screen">
-      <div className="flex-col m-auto max-w-lg px-16 py-12 text-center space-y-4 rounded-xl border-2 border-primary-100">
-        {/* <ConnectWalletPage /> */}
-        <MintPage />
+    <AuthAccountContext.Provider value={{ authAccount, setAuthAccount }}>
+      <div className="flex h-screen">
+        <div className="flex-col m-auto max-w-lg px-16 py-12 text-center space-y-4 rounded-xl border-2 border-primary-100">
+          {authAccount ? (
+            <MintPage authAccount={authAccount} />
+          ) : (
+            <ConnectWalletPage />
+          )}
+        </div>
       </div>
-    </div>
+    </AuthAccountContext.Provider>
   );
 }
