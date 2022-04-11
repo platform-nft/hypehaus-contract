@@ -2,6 +2,10 @@
   "name": "@platform/backend",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "compile": "pnpm hardhat compile",
+    "test": "pnpm hardhat test"
+  },
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",
     "erc721a": "^3.1.0",

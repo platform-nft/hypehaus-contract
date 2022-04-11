@@ -15,7 +15,7 @@ contract HypeHaus is ERC721A, Ownable, ReentrancyGuard {
     /**
      * @dev An enumeration of all the possible sales the contract may be in.
      *
-     * A `Closed` sale state indicates that the contract has either not begun
+     * A `Closed` state indicates that the contract has either not begun
      * the pre-sale (i.e. `Community` sale) or has finished the `Public` sale.
      * As a result, the contract will not accept any mints if `activeSale` is
      * set to `Closed`.
