@@ -1,9 +1,9 @@
 import React from 'react';
 import { ethers } from 'ethers';
 
-import { AsyncStatus, AuthAccount } from '../models';
 import hero from '../assets/hero.png';
 import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
+import { AsyncStatus, AuthAccount } from '../models';
 
 import Button from './Button';
 import AuthAccountContext from './AuthAccountContext';
