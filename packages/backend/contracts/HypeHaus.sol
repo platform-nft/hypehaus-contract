@@ -279,6 +279,18 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     // ====== EXTERNAL/PUBLIC FUNCTIONS ======
 
     /**
+     * @dev Returns the address of the contract's owner.
+     *
+     * This function is required by OpenSea. Normally, you'd inherit from
+     * `Ownable` and get the owner from there, but since we're using
+     * `AccessControl`, we'll return the only user with `DEFAULT_ADMIN_ROLE` as
+     * its role.
+     */
+    function owner() external view virtual returns (address) {
+        return _admin;
+    }
+
+    /**
      * @dev Reports the count of all the valid HYPEHAUSes tracked by this
      * contract.
      *

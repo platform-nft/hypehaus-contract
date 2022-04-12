@@ -822,6 +822,11 @@ describe('HypeHaus Contract', () => {
       expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, deployer));
     });
 
+    it('reports the deployer as the owner for OpenSea', async () => {
+      const { deployer } = addresses;
+      expect(await hypeHaus.owner()).to.eq(deployer);
+    });
+
     it('can grant and revoke roles for accounts', async () => {
       const { deployer, u1: user1, u2: user2 } = addresses;
 

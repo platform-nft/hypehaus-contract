@@ -11,9 +11,17 @@ abstract contract HypeHausAccessControl is AccessControl {
     // Responsible for withdrawing pending funds
     bytes32 public constant WITHDRAWER_ROLE = keccak256("HH_WITHDRAWER_ROLE");
 
+    // ====== STATE VARIABLES ======
+
+    // The account with the `DEFAULT_ADMIN_ROLE` role. This will never change.
+    address internal immutable _admin;
+
     // ====== CONSTRUCTOR ======
 
     constructor() {
+        // Set contract's deployer as the only admin.
+        _admin = msg.sender;
+
         // The admin may grant and revoke operators and withdrawers
         _setRoleAdmin(OPERATOR_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(WITHDRAWER_ROLE, DEFAULT_ADMIN_ROLE);
