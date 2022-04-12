@@ -8,6 +8,12 @@ export enum HypeHausErrorCode {
   VerificationFailure = 'HH_VERIFICATION_FAILURE',
 }
 
+export enum HypeHausAccessControlErrorCode {
+  CallerNotAdmin = 'HH_CALLER_NOT_ADMIN',
+  CallerNotOperator = 'HH_CALLER_NOT_OPERATOR',
+  CallerNotWithdrawer = 'HH_CALLER_NOT_WITHDRAWER',
+}
+
 export enum HypeHausSale {
   Closed = 0,
   Community = 1,

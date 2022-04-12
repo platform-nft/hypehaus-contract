@@ -5,7 +5,7 @@ import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
 
 import { HypeHaus } from '../typechain-types/HypeHaus';
-import { HypeHausErrorCode } from '../shared';
+import { HypeHausAccessControlErrorCode, HypeHausErrorCode } from '../shared';
 
 type MerkleTreeLeaf = ReturnType<typeof keccak256>;
 type MerkleTreeProof = ReturnType<MerkleTree['getHexProof']>;
@@ -66,22 +66,22 @@ describe('HypeHaus Contract', () => {
   });
 
   describe('Initialization', () => {
-    it('reports the correct maximum supply', async () => {
+    it('reports correct maximum supply', async () => {
       expect(await hypeHaus.maxSupply()).to.eq(MAX_SUPPLY);
     });
 
-    it('reports the correct total of minted HYPEHAUSes', async () => {
+    it('reports correct total of minted HYPEHAUSes', async () => {
       expect(await hypeHaus.totalMinted()).to.eq(0);
     });
 
-    it('starts off at the Inactive sale state', async () => {
+    it('starts off with Inactive sale state', async () => {
       expect(await hypeHaus.activeSale()).to.eq(Sale.Closed);
     });
   });
 
   describe('Prerequisites', () => {
     describe('Active Sale', () => {
-      it('can change the current active sale', async () => {
+      it('can change current active sale', async () => {
         expect(await hypeHaus.activeSale()).to.eq(Sale.Closed);
         await hypeHaus.setActiveSale(Sale.Community);
         expect(await hypeHaus.activeSale()).to.eq(Sale.Community);
@@ -94,7 +94,7 @@ describe('HypeHaus Contract', () => {
         ).to.be.revertedWith('');
       });
 
-      it('fails to mint when the community sale is not active', async () => {
+      it('fails to mint when community sale is not active', async () => {
         const leaves = [addresses.u1].map(keccak256);
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
         const root = tree.getHexRoot();
@@ -124,7 +124,7 @@ describe('HypeHaus Contract', () => {
         await expectFailedCommunityMints();
       });
 
-      it('fails to mint when the public sale is not active', async () => {
+      it('fails to mint when public sale is not active', async () => {
         await hypeHaus.setActiveSale(Sale.Closed);
         await expect(hypeHaus.mintPublic(1)).to.be.revertedWith(
           HypeHausErrorCode.PublicSaleNotActive,
@@ -180,7 +180,7 @@ describe('HypeHaus Contract', () => {
     });
 
     describe('Unique Claim', () => {
-      it('fails to mint when the signer has already minted in the community sale', async () => {
+      it('fails to mint when signer has already minted in community sale', async () => {
         const cohort = [signers.u1, signers.u2, signers.u3];
         const leaves = cohort.map((signer) => keccak256(signer.address));
         const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
@@ -231,7 +231,7 @@ describe('HypeHaus Contract', () => {
         );
       });
 
-      it('fails to mint when the signer has already minted in the public sale', async () => {
+      it('fails to mint when signer has already minted in public sale', async () => {
         const cohort = [signers.u1, signers.u2, signers.u3];
         await hypeHaus.setActiveSale(Sale.Public);
 
@@ -311,7 +311,7 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setHypememberMerkleRoot(tree.getHexRoot());
       });
 
-      it('fails to mint an invalid amount as an Alpha', async () => {
+      it('fails to mint invalid amount as Alpha', async () => {
         await expectFailedCommunityMint(
           signers[0],
           proofs[0],
@@ -320,7 +320,7 @@ describe('HypeHaus Contract', () => {
         );
       });
 
-      it('fails to mint an invalid amount as a Hypelister', async () => {
+      it('fails to mint invalid amount as Hypelister', async () => {
         await expectFailedCommunityMint(
           signers[0],
           proofs[0],
@@ -329,7 +329,7 @@ describe('HypeHaus Contract', () => {
         );
       });
 
-      it('fails to mint an invalid amount as a Hypemember', async () => {
+      it('fails to mint invalid amount as Hypemember', async () => {
         await expectFailedCommunityMint(
           signers[0],
           proofs[0],
@@ -338,7 +338,7 @@ describe('HypeHaus Contract', () => {
         );
       });
 
-      it('fails to mint an invalid amount as a public member', async () => {
+      it('fails to mint invalid amount as public member', async () => {
         await hypeHaus.setActiveSale(Sale.Public);
         await expect(hypeHaus.mintPublic(0)).to.be.revertedWith(
           HypeHausErrorCode.InvalidMintAmount,
@@ -366,7 +366,7 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setHypememberMerkleRoot(tree.getHexRoot());
       });
 
-      it('fails to mint with insufficient funds as an Alpha', async () => {
+      it('fails to mint with insufficient funds as Alpha', async () => {
         for (let amount = 1, i = 0; amount < MAX_MINT_ALPHA; amount++, i++) {
           await expect(
             hypeHaus.connect(signers[i]).mintAlpha(amount, proofs[i]),
@@ -374,7 +374,7 @@ describe('HypeHaus Contract', () => {
         }
       });
 
-      it('fails to mint with insufficient funds as a Hypelister', async () => {
+      it('fails to mint with insufficient funds as Hypelister', async () => {
         for (
           let amount = 1, i = 0;
           amount < MAX_MINT_HYPELISTER;
@@ -386,7 +386,7 @@ describe('HypeHaus Contract', () => {
         }
       });
 
-      it('fails to mint with insufficient funds as a Hypemember', async () => {
+      it('fails to mint with insufficient funds as Hypemember', async () => {
         for (
           let amount = 1, i = 0;
           amount < MAX_MINT_HYPELISTER;
@@ -398,7 +398,7 @@ describe('HypeHaus Contract', () => {
         }
       });
 
-      it('fails to mint with insufficient funds as a public member', async () => {
+      it('fails to mint with insufficient funds as public member', async () => {
         await hypeHaus.setActiveSale(Sale.Public);
         await expect(
           hypeHaus.connect(signers[0]).mintPublic(1),
@@ -467,7 +467,7 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setHypememberMerkleRoot(hmTree.getHexRoot());
       });
 
-      it('fails to mint when the signer cannot be proved to be an Alpha', async () => {
+      it('fails to mint when signer cannot be proved to be Alpha', async () => {
         for (const [index, signer] of alphaTier.verifiedSigners.entries()) {
           expect(
             hypeHaus.connect(signer).mintAlpha(1, alphaTier.proofs[index], {
@@ -485,7 +485,7 @@ describe('HypeHaus Contract', () => {
         ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
 
-      it('fails to mint when the signer cannot be proved to be a Hypelister', async () => {
+      it('fails to mint when signer cannot be proved to be Hypelister', async () => {
         for (const [
           index,
           signer,
@@ -508,7 +508,7 @@ describe('HypeHaus Contract', () => {
         ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
 
-      it('fails to mint when the signer cannot be proved to be a Hypemember', async () => {
+      it('fails to mint when signer cannot be proved to be Hypemember', async () => {
         for (const [
           index,
           signer,
@@ -579,7 +579,7 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setHypememberMerkleRoot(tree.getHexRoot());
       });
 
-      it('mints a valid amount as an Alpha', async () => {
+      it('mints valid amount as Alpha', async () => {
         for (
           let amount = 1, index = 0;
           amount <= MAX_MINT_ALPHA;
@@ -594,7 +594,7 @@ describe('HypeHaus Contract', () => {
         }
       });
 
-      it('mints a valid amount as a Hypelister', async () => {
+      it('mints valid amount as Hypelister', async () => {
         for (
           let amount = 1, index = 0;
           amount <= MAX_MINT_HYPELISTER;
@@ -609,7 +609,7 @@ describe('HypeHaus Contract', () => {
         }
       });
 
-      it('mints a valid amount as a Hypemember', async () => {
+      it('mints valid amount as Hypemember', async () => {
         for (
           let amount = 1, index = 0;
           amount <= MAX_MINT_HYPEMEMBER;
@@ -630,7 +630,7 @@ describe('HypeHaus Contract', () => {
         await hypeHaus.setActiveSale(Sale.Public);
       });
 
-      it('mints a valid amount as a public member', async () => {
+      it('mints valid amount as public member', async () => {
         for (let amount = 1, i = 0; amount <= MAX_MINT_PUBLIC; amount++, i++) {
           const signer = signers[i];
           const previousTotal = await hypeHaus.totalMinted();
@@ -647,7 +647,7 @@ describe('HypeHaus Contract', () => {
   });
 
   describe('Token URI and Owner', () => {
-    it('reports the correct URI and owner of a given minted token', async () => {
+    it('reports correct URI and owner of given minted token', async () => {
       // Alpha Merkle Tree
       const alphas = [addresses.u1].map(keccak256);
       const alphaTree = new MerkleTree(alphas, keccak256, { sortPairs: true });
@@ -728,7 +728,7 @@ describe('HypeHaus Contract', () => {
       );
     });
 
-    it('can change the base URI for all minted HYPEHAUSes', async () => {
+    it('can change base token URI for all minted HYPEHAUSes', async () => {
       const newBaseTokenURI = 'test://zyx987/';
       await hypeHaus.setActiveSale(Sale.Public);
 
@@ -749,7 +749,7 @@ describe('HypeHaus Contract', () => {
   });
 
   describe('Withdrawing', () => {
-    it("withdraws balance into the team's wallet", async () => {
+    it("withdraws balance into designated team's wallet", async () => {
       await hypeHaus.setActiveSale(Sale.Public);
 
       // Helper functions
@@ -808,62 +808,76 @@ describe('HypeHaus Contract', () => {
     let adminRole: string;
     let operatorRole: string;
     let withdrawerRole: string;
-    let burnerRole: string;
 
     beforeEach(async () => {
       adminRole = await hypeHaus.DEFAULT_ADMIN_ROLE();
       operatorRole = await hypeHaus.OPERATOR_ROLE();
       withdrawerRole = await hypeHaus.WITHDRAWER_ROLE();
-      burnerRole = await hypeHaus.BURNER_ROLE();
     });
 
-    it('reports that the deployer has admin role', async () => {
+    it('reports deployer has admin role at initialization', async () => {
       const deployer = addresses.deployer;
       expect(await hypeHaus.hasGivenOrAdminRole(adminRole, deployer));
       expect(await hypeHaus.hasGivenOrAdminRole(operatorRole, deployer));
       expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, deployer));
-      expect(await hypeHaus.hasGivenOrAdminRole(burnerRole, deployer));
     });
 
     it('can grant and revoke roles for accounts', async () => {
       const { deployer, u1: user1, u2: user2 } = addresses;
 
-      await hypeHaus.revokeRole(burnerRole, deployer);
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+      // Deployer
+
+      await hypeHaus.revokeRole(withdrawerRole, deployer);
+      expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1)));
+
+      // User 1
 
       expect(!(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1)));
       expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
       expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1)));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
 
       await hypeHaus.grantRole(operatorRole, user1);
       expect(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1));
       expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
       expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1)));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
 
       await hypeHaus.grantRole(withdrawerRole, user1);
-      expect(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1));
       expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
 
       await hypeHaus.revokeRole(operatorRole, user1);
-      expect(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user1));
       expect(!(await hypeHaus.hasGivenOrAdminRole(operatorRole, user1)));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user1)));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user1)));
+
+      // User 2
 
       expect(!(await hypeHaus.hasGivenOrAdminRole(operatorRole, user2)));
       expect(!(await hypeHaus.hasGivenOrAdminRole(adminRole, user2)));
       expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user2)));
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user2)));
-
-      await hypeHaus.grantRole(burnerRole, user2);
-      expect(!(await hypeHaus.hasGivenOrAdminRole(burnerRole, user2)));
 
       await hypeHaus.grantRole(withdrawerRole, user2);
       expect(!(await hypeHaus.hasGivenOrAdminRole(withdrawerRole, user2)));
+    });
+
+    it('fails to call function with insufficient privileges', async () => {
+      await hypeHaus.grantRole(withdrawerRole, signers.u1.address);
+      await hypeHaus.grantRole(operatorRole, signers.u2.address);
+
+      await expect(
+        hypeHaus.connect(signers.u1).withdraw(),
+      ).to.not.be.revertedWith(
+        HypeHausAccessControlErrorCode.CallerNotWithdrawer,
+      );
+      await expect(hypeHaus.connect(signers.u2).withdraw()).to.be.revertedWith(
+        HypeHausAccessControlErrorCode.CallerNotWithdrawer,
+      );
+
+      await expect(
+        hypeHaus.connect(signers.u2).setActiveSale(Sale.Community),
+      ).to.not.be.revertedWith(
+        HypeHausAccessControlErrorCode.CallerNotOperator,
+      );
+      await expect(
+        hypeHaus.connect(signers.u1).setActiveSale(Sale.Community),
+      ).to.be.revertedWith(HypeHausAccessControlErrorCode.CallerNotOperator);
     });
   });
 });

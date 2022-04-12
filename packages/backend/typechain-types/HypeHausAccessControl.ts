@@ -19,7 +19,6 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface HypeHausAccessControlInterface extends utils.Interface {
   contractName: "HypeHausAccessControl";
   functions: {
-    "BURNER_ROLE()": FunctionFragment;
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "OPERATOR_ROLE()": FunctionFragment;
     "WITHDRAWER_ROLE()": FunctionFragment;
@@ -32,10 +31,6 @@ export interface HypeHausAccessControlInterface extends utils.Interface {
     "supportsInterface(bytes4)": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "BURNER_ROLE",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
@@ -77,10 +72,6 @@ export interface HypeHausAccessControlInterface extends utils.Interface {
     values: [BytesLike]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "BURNER_ROLE",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     data: BytesLike
@@ -174,8 +165,6 @@ export interface HypeHausAccessControl extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    BURNER_ROLE(overrides?: CallOverrides): Promise<[string]>;
-
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
     OPERATOR_ROLE(overrides?: CallOverrides): Promise<[string]>;
@@ -219,8 +208,6 @@ export interface HypeHausAccessControl extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
   };
-
-  BURNER_ROLE(overrides?: CallOverrides): Promise<string>;
 
   DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
@@ -266,8 +253,6 @@ export interface HypeHausAccessControl extends BaseContract {
   ): Promise<boolean>;
 
   callStatic: {
-    BURNER_ROLE(overrides?: CallOverrides): Promise<string>;
-
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
     OPERATOR_ROLE(overrides?: CallOverrides): Promise<string>;
@@ -348,8 +333,6 @@ export interface HypeHausAccessControl extends BaseContract {
   };
 
   estimateGas: {
-    BURNER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
     OPERATOR_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
@@ -398,8 +381,6 @@ export interface HypeHausAccessControl extends BaseContract {
   };
 
   populateTransaction: {
-    BURNER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     DEFAULT_ADMIN_ROLE(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

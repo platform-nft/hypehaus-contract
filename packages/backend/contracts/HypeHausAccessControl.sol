@@ -6,17 +6,17 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 abstract contract HypeHausAccessControl is AccessControl {
     // ====== CONSTANTS ======
 
+    // Responsible for changing state variables
     bytes32 public constant OPERATOR_ROLE = keccak256("HH_OPERATOR_ROLE");
+    // Responsible for withdrawing pending funds
     bytes32 public constant WITHDRAWER_ROLE = keccak256("HH_WITHDRAWER_ROLE");
-    bytes32 public constant BURNER_ROLE = keccak256("HH_BURNER_ROLE");
 
     // ====== CONSTRUCTOR ======
 
     constructor() {
-        // The admin may grant and revoke operators, withdrawers and burners
+        // The admin may grant and revoke operators and withdrawers
         _setRoleAdmin(OPERATOR_ROLE, DEFAULT_ADMIN_ROLE);
         _setRoleAdmin(WITHDRAWER_ROLE, DEFAULT_ADMIN_ROLE);
-        _setRoleAdmin(BURNER_ROLE, DEFAULT_ADMIN_ROLE);
 
         // The contract deployer is the admin
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -45,14 +45,6 @@ abstract contract HypeHausAccessControl is AccessControl {
         _;
     }
 
-    modifier onlyBurner() {
-        require(
-            hasGivenOrAdminRole(BURNER_ROLE, msg.sender),
-            "HH_CALLER_NOT_BURNER"
-        );
-        _;
-    }
-
     // ====== EXTERNAL/PUBLIC FUNCTIONS ======
 
     /**
@@ -60,9 +52,8 @@ abstract contract HypeHausAccessControl is AccessControl {
      * `role` or an admin.
      *
      * By default, `hasRole` only checks if the account is a member of a role.
-     * However, it is also useful to allow the admin (typically the contract
-     * deployer) to pass this check. This function instead checks whether the
-     * `account` is either a member of `role` or an admin.
+     * However, sometimes it is useful to allow the admin (typically the
+     * contract deployer) to also pass this check.
      */
     function hasGivenOrAdminRole(bytes32 role, address account)
         public

@@ -4,10 +4,10 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "erc721a/contracts/ERC721A.sol";
+import "erc721a/contracts/extensions/ERC721ABurnable.sol";
 import "./HypeHausAccessControl.sol";
 
-contract HypeHaus is ERC721A, HypeHausAccessControl, ReentrancyGuard {
+contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     using Strings for uint256;
 
     // ====== ENUMS ======
@@ -47,7 +47,7 @@ contract HypeHaus is ERC721A, HypeHausAccessControl, ReentrancyGuard {
     bytes32 internal _alphaMerkleRoot;
     bytes32 internal _hypelisterMerkleRoot;
     bytes32 internal _hypememberMerkleRoot;
-    // A mapping of addresses and the last sale they have claimed a HYPEHAUS.
+    // A mapping of addresses and the last sale it has claimed a HYPEHAUS.
     mapping(address => Sale) internal _claimed;
 
     // ====== CONSTRUCTOR ======
@@ -294,7 +294,7 @@ contract HypeHaus is ERC721A, HypeHausAccessControl, ReentrancyGuard {
             );
     }
 
-    // ====== PRIVILEGED OPERATIONS ======
+    // ====== ONLY-WITHDRAWER FUNCTIONS ======
 
     /**
      * @dev Transfers any pending balance available in the contract to the
@@ -306,14 +306,7 @@ contract HypeHaus is ERC721A, HypeHausAccessControl, ReentrancyGuard {
         require(success, "HH_TRANSFER_FAILURE");
     }
 
-    /**
-     * @dev Destroys a HYPEHAUS with the given token ID.
-     */
-    function burn(uint256 tokenId) external onlyBurner {
-        _burn(tokenId);
-    }
-
-    // ====== ONLY-OPERATOR SETTERS ======
+    // ====== ONLY-OPERATOR FUNCTIONS ======
 
     function setCommunitySalePrice(uint256 newPrice) external onlyOperator {
         communitySalePrice = newPrice;
