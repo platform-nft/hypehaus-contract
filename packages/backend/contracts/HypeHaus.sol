@@ -47,8 +47,13 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     bytes32 internal _alphaMerkleRoot;
     bytes32 internal _hypelisterMerkleRoot;
     bytes32 internal _hypememberMerkleRoot;
-    // A mapping of addresses and the last sale it has claimed a HYPEHAUS.
-    mapping(address => Sale) internal _claimed;
+
+    struct TotalClaimedPerSale {
+        uint256 communitySale;
+        uint256 publicSale;
+    }
+
+    mapping(address => TotalClaimedPerSale) internal _totalClaimed;
 
     // ====== CONSTRUCTOR ======
 
@@ -89,8 +94,21 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _;
     }
 
-    modifier hasNotClaimedDuringSale(Sale sale) {
-        require(_claimed[msg.sender] != sale, "HH_ADDRESS_ALREADY_CLAIMED");
+    modifier hasNotClaimedDuringCommunitySale(uint256 amount) {
+        require(
+            _totalClaimed[msg.sender].communitySale == 0,
+            "HH_ADDRESS_ALREADY_CLAIMED"
+        );
+        _totalClaimed[msg.sender].communitySale = amount;
+        _;
+    }
+
+    modifier hasNotClaimedDuringPublicSale(uint256 amount) {
+        require(
+            _totalClaimed[msg.sender].publicSale == 0,
+            "HH_ADDRESS_ALREADY_CLAIMED"
+        );
+        _totalClaimed[msg.sender].publicSale = amount;
         _;
     }
 
@@ -156,8 +174,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         nonReentrant
         isCommunitySaleActive
         isSupplyAvailable(amount)
-        hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, maxMintAlpha)
+        hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _alphaMerkleRoot)
     {
@@ -183,8 +201,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         nonReentrant
         isCommunitySaleActive
         isSupplyAvailable(amount)
-        hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, maxMintHypelister)
+        hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _hypelisterMerkleRoot)
     {
@@ -210,8 +228,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         nonReentrant
         isCommunitySaleActive
         isSupplyAvailable(amount)
-        hasNotClaimedDuringSale(Sale.Community)
         isValidMintAmount(amount, maxMintHypemember)
+        hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _hypememberMerkleRoot)
     {
@@ -241,8 +259,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         nonReentrant
         isPublicSaleActive
         isSupplyAvailable(amount)
-        hasNotClaimedDuringSale(Sale.Public)
         isValidMintAmount(amount, maxMintPublic)
+        hasNotClaimedDuringPublicSale(amount)
         isCorrectPayment(publicSalePrice, amount)
     {
         _mintToAddress(msg.sender, amount);
@@ -253,9 +271,6 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
      * `receiver`.
      */
     function _mintToAddress(address receiver, uint256 amount) internal {
-        // An address may only mint once during the current `activeSale`. Here,
-        // we record the last `activeSale` the receiver has minted.
-        _claimed[receiver] = activeSale;
         // The second argument of `_safeMint` in AZUKI's `ERC721A` contract
         // expects the amount to mint, not a token ID.
         _safeMint(receiver, amount);
