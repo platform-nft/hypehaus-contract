@@ -1,21 +1,17 @@
 import React from 'react';
 import { ethers } from 'ethers';
 
-import hero from '../assets/hero.png';
 import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
 import { AsyncStatus, AuthAccount } from '../models';
 
 import Button from './Button';
-import AuthAccountContext from './AuthAccountContext';
+import GlobalContext from './GlobalContext';
+import HeroImage from './HeroImage';
 
 export default function ConnectWalletPage() {
   return (
     <div className="space-y-4">
-      <img
-        src={hero}
-        alt="*HYPEHAUS"
-        className="mx-auto aspect-square w-2/3 rounded-2xl"
-      />
+      <HeroImage />
       <h1 className="text-3xl font-bold">Mint *HYPEHAUS</h1>
       <p>To mint, connect your MetaMask wallet below</p>
       <ConnectWalletButton />
@@ -26,14 +22,25 @@ export default function ConnectWalletPage() {
 type Connection = AsyncStatus<AuthAccount>;
 
 function ConnectWalletButton() {
-  const { setAuthAccount } = React.useContext(AuthAccountContext);
+  const { setAuthAccount } = React.useContext(GlobalContext);
 
   const [connection, setConnection] = React.useState<Connection>({
     status: 'idle',
   });
 
+  const isLoading = React.useMemo(() => {
+    return connection.status === 'pending';
+  }, [connection.status]);
+
+  React.useEffect(() => {
+    if (connection.status === 'success') {
+      setAuthAccount(connection.payload);
+    }
+  }, [connection]);
+
   const handleConnectWallet = async () => {
     setConnection({ status: 'pending' });
+
     if (!window.ethereum) {
       setConnection({
         status: 'failed',
@@ -57,7 +64,6 @@ function ConnectWalletButton() {
       }
 
       setConnection({ status: 'success', payload: authAccount });
-      setAuthAccount(authAccount);
     } catch (error: any) {
       // User cancelled request
       if (error.code === 4001) {
@@ -71,28 +77,21 @@ function ConnectWalletButton() {
     }
   };
 
-  React.useEffect(() => {
-    if (connection.status === 'success') {
-      console.log(connection);
-    }
-  }, [connection]);
-
   return (
     <div className="space-y-2">
       <Button
-        disabled={connection.status === 'pending'}
+        loading={isLoading}
+        loadingText="Connecting…"
         onClick={handleConnectWallet}>
-        <div className="flex flex-row">
-          <MetaMaskLogo
-            className={[
-              'h-6',
-              'aspect-square',
-              'mr-1.5',
-              connection.status === 'pending' ? 'grayscale' : '',
-            ].join(' ')}
-          />
-          {connection.status === 'pending' ? 'Connecting…' : 'Connect MetaMask'}
-        </div>
+        <MetaMaskLogo
+          className={[
+            'h-6',
+            'aspect-square',
+            'mr-1.5',
+            isLoading ? 'grayscale' : '',
+          ].join(' ')}
+        />
+        <p>Connect MetaMask</p>
       </Button>
       {connection.status === 'failed' && (
         <p className="text-sm text-error-500">

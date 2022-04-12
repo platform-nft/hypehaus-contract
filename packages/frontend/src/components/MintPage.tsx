@@ -1,12 +1,15 @@
 import React from 'react';
 import { ethers } from 'ethers';
+import {} from 'firebase/firestore';
+
 // import { HypeHausErrorCode } from '@platform/backend/shared';
 import { HypeHaus } from '@platform/backend/typechain-types/HypeHaus';
 import HypeHausJson from '@platform/backend/artifacts/contracts/HypeHaus.sol/HypeHaus.json';
 
 import Button from './Button';
-import hero from '../assets/hero.png';
 import { AsyncStatus, AuthAccount } from '../models';
+import GlobalContext from './GlobalContext';
+import HeroImage from './HeroImage';
 
 const { REACT_APP_CONTRACT_ADDRESS } = process.env;
 
@@ -16,24 +19,56 @@ const SALE_PRICE_PUBLIC = '0.08';
 const MIN_MINT_AMOUNT = 1;
 const MAX_MINT_AMOUNT = IS_PUBLIC_SALE_ACTIVE ? 2 : 3;
 
+{
+  /*
+  React.useEffect(() => {
+    (async () => {
+      console.log('INITIALIZING...');
+      const db = getFirestore(firebaseApp);
+      const walletsRef = collection(db, 'wallets-test');
+
+      console.log('CONNECTING...');
+      const wallets = await getDocs(walletsRef);
+      const list = wallets.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      console.log(list);
+
+      const walletRef = doc(
+        walletsRef,
+        '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
+      );
+      const wallet = await getDoc(walletRef);
+      console.log({ id: wallet.id, ...wallet.data() });
+
+      const q = query(walletsRef, where('tier', '==', 'hypelister'));
+      const results = await getDocs(q);
+      results.forEach((doc) => {
+        console.log(doc.id, ' => ', doc.data());
+      });
+    })();
+  }, []);
+  */
+}
+
 const MintAmountContext = React.createContext<{
   mintAmount: number;
   setMintAmount: React.Dispatch<React.SetStateAction<number>>;
 }>(null as any);
 
-type MintStatus = AsyncStatus<undefined>;
+type MintStatus = AsyncStatus<number>;
 
 type MintPageProps = {
   authAccount: AuthAccount;
 };
 
 export default function MintPage({ authAccount }: MintPageProps) {
+  const { setMintResult } = React.useContext(GlobalContext);
+
   const [mintAmount, setMintAmount] = React.useState(1);
   const [mintStatus, setMintStatus] = React.useState<MintStatus>({
     status: 'idle',
   });
 
-  const isPending = React.useMemo(() => {
+  const isLoading = React.useMemo(() => {
     return mintStatus.status === 'pending';
   }, [mintStatus]);
 
@@ -48,18 +83,23 @@ export default function MintPage({ authAccount }: MintPageProps) {
     return ethers.utils.formatEther(authAccount.balance.sub(remainder));
   }, [authAccount.balance]);
 
-  const mintButtonText = React.useMemo(() => {
-    if (mintAmount === 1) {
-      return 'Mint 1 *HYPEHAUS';
-    } else {
-      return `Mint ${mintAmount} *HYPEHAUSes`;
+  React.useEffect(() => {
+    if (mintStatus.status === 'success') {
+      setMintResult({ status: 'success', mintAmount: mintStatus.payload });
     }
-  }, [mintAmount]);
+  }, [mintStatus]);
 
   const handleClickMint = async () => {
     try {
       setMintStatus({ status: 'pending' });
 
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(true);
+        }, 2000);
+      });
+
+      /*
       console.log({ REACT_APP_CONTRACT_ADDRESS });
       if (!REACT_APP_CONTRACT_ADDRESS) {
         throw new Error('Internal error: The contract address is not valid.');
@@ -76,8 +116,9 @@ export default function MintPage({ authAccount }: MintPageProps) {
       await hypeHaus.mintPublic(mintAmount, {
         value: publicSalePrice.mul(mintAmount),
       });
+      */
 
-      setMintStatus({ status: 'success', payload: undefined });
+      setMintStatus({ status: 'success', payload: mintAmount });
     } catch (error: any) {
       let reason: string;
       const errorMessage: string = error.data?.message || error.message;
@@ -114,11 +155,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
   return (
     <MintAmountContext.Provider value={{ mintAmount, setMintAmount }}>
       <div className="space-y-4">
-        <img
-          src={hero}
-          alt="*HYPEHAUS"
-          className="mx-auto aspect-square w-2/3 rounded-2xl"
-        />
+        <HeroImage />
         <div
           className={[
             'flex',
@@ -166,9 +203,12 @@ export default function MintPage({ authAccount }: MintPageProps) {
             </tr>
           </tbody>
         </table>
-        <NumberInput disabled={isPending} />
-        <Button disabled={isPending} onClick={handleClickMint}>
-          {isPending ? 'Minting…' : mintButtonText}
+        <NumberInput disabled={isLoading} />
+        <Button
+          loading={isLoading}
+          loadingText="Minting…"
+          onClick={handleClickMint}>
+          Mint *HYPEHAUS
         </Button>
         {mintStatus.status === 'failed' && (
           <p className="font-medium text-sm text-error-500">
@@ -188,7 +228,7 @@ type PriceInfoProps = {
 function PriceInfo(props: PriceInfoProps) {
   return (
     <div className="space-y-1">
-      <p className="text-4xl font-bold">{props.price} Ξ</p>
+      <p className="text-3xl sm:text-4xl font-bold">{props.price} Ξ</p>
       <p className="text-xs text-gray-600">{props.caption}</p>
     </div>
   );
@@ -269,6 +309,10 @@ function NumberInputButton(props: NumberInputButtonProps) {
         'disabled:text-gray-400',
         'disabled:border-gray-200',
         'disabled:bg-gray-100',
+        'active:bg-primary-200',
+        'focus:ring',
+        'focus:outline-none',
+        'focus:ring-primary-300',
       ].join(' ')}>
       {props.children}
     </button>

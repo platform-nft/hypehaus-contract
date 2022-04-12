@@ -14,3 +14,7 @@ export type AuthAccount = {
 };
 
 export type MaybeAuthAccount = AuthAccount | undefined | null;
+
+export type MintResult =
+  | { status: 'pending' }
+  | { status: 'success'; mintAmount: number };

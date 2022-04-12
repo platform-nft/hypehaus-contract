@@ -9,7 +9,7 @@ module.exports = {
       black: colors.black,
       white: colors.white,
       gray: colors.gray,
-      primary: colors.orange,
+      primary: colors.purple,
       error: colors.red,
     },
   },
