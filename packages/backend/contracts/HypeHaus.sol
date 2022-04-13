@@ -10,7 +10,7 @@ import "./HypeHausAccessControl.sol";
 contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     using Strings for uint256;
 
-    // ====== ENUMS ======
+    // ====== TYPES ======
 
     /**
      * @dev An enumeration of all the possible sales the contract may be in.
@@ -24,6 +24,15 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         Closed,
         Community,
         Public
+    }
+
+    /**
+     * @dev A struct that informs the total amount of HYPEHAUSes claimed during
+     * each sale.
+     */
+    struct TotalClaimedPerSale {
+        uint256 communitySale;
+        uint256 publicSale;
     }
 
     // ====== PUBLIC STATE VARIABLES ======
@@ -41,29 +50,27 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
 
     // ====== INTERNAL STATE VARIABLES ======
 
-    string internal _baseTokenURI;
+    bool internal _revealTokens;
+    string internal _maskBaseTokenURI;
+    string internal _revealBaseTokenURI;
     address internal _teamWalletAddress;
 
     bytes32 internal _alphaMerkleRoot;
     bytes32 internal _hypelisterMerkleRoot;
     bytes32 internal _hypememberMerkleRoot;
-
-    struct TotalClaimedPerSale {
-        uint256 communitySale;
-        uint256 publicSale;
-    }
-
     mapping(address => TotalClaimedPerSale) internal _totalClaimed;
 
     // ====== CONSTRUCTOR ======
 
     constructor(
         uint256 maxSupply_,
-        string memory baseTokenURI,
+        string memory maskBaseTokenURI,
+        string memory revealBaseTokenURI,
         address teamWalletAddress
     ) ERC721A("HYPEHAUS", "HYPE") {
         maxSupply = maxSupply_;
-        _baseTokenURI = baseTokenURI;
+        _maskBaseTokenURI = maskBaseTokenURI;
+        _revealBaseTokenURI = revealBaseTokenURI;
         _teamWalletAddress = teamWalletAddress;
     }
 
@@ -94,6 +101,27 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _;
     }
 
+    /*
+    modifier hasNotClaimedDuringSale(Sale sale, uint256 amount) {
+        if (sale == Sale.Community) {
+            require(
+                _totalClaimed[msg.sender].communitySale == 0,
+                "HH_ADDRESS_ALREADY_CLAIMED"
+            );
+            _totalClaimed[msg.sender].communitySale = amount;
+        } else if (sale == Sale.Public) {
+            require(
+                _totalClaimed[msg.sender].publicSale == 0,
+                "HH_ADDRESS_ALREADY_CLAIMED"
+            );
+            _totalClaimed[msg.sender].publicSale = amount;
+        }
+
+        _;
+    }
+    */
+
+    // /*
     modifier hasNotClaimedDuringCommunitySale(uint256 amount) {
         require(
             _totalClaimed[msg.sender].communitySale == 0,
@@ -111,6 +139,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _totalClaimed[msg.sender].publicSale = amount;
         _;
     }
+    // */
 
     modifier isValidMerkleProof(
         bytes32[] calldata merkleProof,
@@ -134,8 +163,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
      *
      * As the name suggests, this function does not validate the receiver or the
      * provided amount, except ensuring that there is enough supply available
-     * to mint `amount` HYPEHAUSes. The current sale will still be recorded as
-     * the last minted sale for the receiver.
+     * to mint `amount` HYPEHAUSes.
      *
      * This function is useful to manually gift HYPEHAUSes to someone. It
      * requires that the caller have at least the `OPERATOR_ROLE` role.
@@ -145,6 +173,12 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         onlyOperator
         isSupplyAvailable(amount)
     {
+        if (activeSale == Sale.Community) {
+            _totalClaimed[msg.sender].communitySale += amount;
+        } else if (activeSale == Sale.Public) {
+            _totalClaimed[msg.sender].publicSale += amount;
+        }
+
         _mintToAddress(receiver, amount);
     }
 
@@ -175,6 +209,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintAlpha)
+        // hasNotClaimedDuringSale(Sale.Community, amount)
         hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _alphaMerkleRoot)
@@ -202,6 +237,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintHypelister)
+        // hasNotClaimedDuringSale(Sale.Community, amount)
         hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _hypelisterMerkleRoot)
@@ -229,6 +265,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintHypemember)
+        // hasNotClaimedDuringSale(Sale.Community, amount)
         hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
         isValidMerkleProof(merkleProof, _hypememberMerkleRoot)
@@ -260,6 +297,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isPublicSaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintPublic)
+        // hasNotClaimedDuringSale(Sale.Public, amount)
         hasNotClaimedDuringPublicSale(amount)
         isCorrectPayment(publicSalePrice, amount)
     {
@@ -283,8 +321,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
      *
      * This function is required by OpenSea. Normally, you'd inherit from
      * `Ownable` and get the owner from there, but since we're using
-     * `AccessControl`, we'll return the only user with `DEFAULT_ADMIN_ROLE` as
-     * its role.
+     * `AccessControl`, we'll return the only user with `DEFAULT_ADMIN_ROLE`.
      */
     function owner() external view virtual returns (address) {
         return _admin;
@@ -315,9 +352,19 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         returns (string memory)
     {
         require(_exists(tokenId), "HH_NONEXISTENT_TOKEN");
+
+        if (!_revealTokens) {
+            return
+                string(abi.encodePacked(_maskBaseTokenURI, tokenId.toString()));
+        }
+
         return
             string(
-                abi.encodePacked(_baseTokenURI, tokenId.toString(), ".json")
+                abi.encodePacked(
+                    _revealBaseTokenURI,
+                    tokenId.toString(),
+                    ".json"
+                )
             );
     }
 
@@ -334,6 +381,26 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     }
 
     // ====== ONLY-OPERATOR FUNCTIONS ======
+
+    function toggleReveal() external onlyOperator {
+        _revealTokens = !_revealTokens;
+    }
+
+    function setMaxMintAlpha(uint8 newMax) external onlyOperator {
+        maxMintAlpha = newMax;
+    }
+
+    function setMaxMintHypelister(uint8 newMax) external onlyOperator {
+        maxMintHypelister = newMax;
+    }
+
+    function setMaxMintHypemember(uint8 newMax) external onlyOperator {
+        maxMintHypemember = newMax;
+    }
+
+    function setMaxMintPublic(uint8 newMax) external onlyOperator {
+        maxMintPublic = newMax;
+    }
 
     function setCommunitySalePrice(uint256 newPrice) external onlyOperator {
         communitySalePrice = newPrice;
@@ -352,7 +419,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     }
 
     function setBaseTokenURI(string memory newTokenURI) external onlyOperator {
-        _baseTokenURI = newTokenURI;
+        _revealBaseTokenURI = newTokenURI;
     }
 
     function setTeamWalletAddress(address newAddress) external onlyOperator {

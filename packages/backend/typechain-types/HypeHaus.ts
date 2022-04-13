@@ -59,11 +59,16 @@ export interface HypeHausInterface extends utils.Interface {
     "setCommunitySalePrice(uint256)": FunctionFragment;
     "setHypelisterMerkleRoot(bytes32)": FunctionFragment;
     "setHypememberMerkleRoot(bytes32)": FunctionFragment;
+    "setMaxMintAlpha(uint8)": FunctionFragment;
+    "setMaxMintHypelister(uint8)": FunctionFragment;
+    "setMaxMintHypemember(uint8)": FunctionFragment;
+    "setMaxMintPublic(uint8)": FunctionFragment;
     "setMaxSupply(uint256)": FunctionFragment;
     "setPublicSalePrice(uint256)": FunctionFragment;
     "setTeamWalletAddress(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
+    "toggleReveal()": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "totalMinted()": FunctionFragment;
     "totalSupply()": FunctionFragment;
@@ -209,6 +214,22 @@ export interface HypeHausInterface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "setMaxMintAlpha",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMaxMintHypelister",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMaxMintHypemember",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMaxMintPublic",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setMaxSupply",
     values: [BigNumberish]
   ): string;
@@ -225,6 +246,10 @@ export interface HypeHausInterface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "toggleReveal",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "tokenURI",
     values: [BigNumberish]
@@ -357,6 +382,22 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setMaxMintAlpha",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMaxMintHypelister",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMaxMintHypemember",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMaxMintPublic",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setMaxSupply",
     data: BytesLike
   ): Result;
@@ -373,6 +414,10 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "toggleReveal",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "tokenURI", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalMinted",
@@ -643,6 +688,26 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setMaxMintAlpha(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setMaxMintHypelister(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setMaxMintHypemember(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setMaxMintPublic(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setMaxSupply(
       newSupply: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -664,6 +729,10 @@ export interface HypeHaus extends BaseContract {
     ): Promise<[boolean]>;
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
+
+    toggleReveal(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     tokenURI(
       tokenId: BigNumberish,
@@ -850,6 +919,26 @@ export interface HypeHaus extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setMaxMintAlpha(
+    newMax: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setMaxMintHypelister(
+    newMax: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setMaxMintHypemember(
+    newMax: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setMaxMintPublic(
+    newMax: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setMaxSupply(
     newSupply: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -871,6 +960,10 @@ export interface HypeHaus extends BaseContract {
   ): Promise<boolean>;
 
   symbol(overrides?: CallOverrides): Promise<string>;
+
+  toggleReveal(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
@@ -1048,6 +1141,26 @@ export interface HypeHaus extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setMaxMintAlpha(
+      newMax: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setMaxMintHypelister(
+      newMax: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setMaxMintHypemember(
+      newMax: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setMaxMintPublic(
+      newMax: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setMaxSupply(
       newSupply: BigNumberish,
       overrides?: CallOverrides
@@ -1069,6 +1182,8 @@ export interface HypeHaus extends BaseContract {
     ): Promise<boolean>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
+
+    toggleReveal(overrides?: CallOverrides): Promise<void>;
 
     tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
@@ -1325,6 +1440,26 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setMaxMintAlpha(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setMaxMintHypelister(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setMaxMintHypemember(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setMaxMintPublic(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setMaxSupply(
       newSupply: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1346,6 +1481,10 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
+
+    toggleReveal(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     tokenURI(
       tokenId: BigNumberish,
@@ -1546,6 +1685,26 @@ export interface HypeHaus extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    setMaxMintAlpha(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setMaxMintHypelister(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setMaxMintHypemember(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setMaxMintPublic(
+      newMax: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     setMaxSupply(
       newSupply: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1567,6 +1726,10 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    toggleReveal(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     tokenURI(
       tokenId: BigNumberish,

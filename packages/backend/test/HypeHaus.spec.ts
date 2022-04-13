@@ -11,7 +11,8 @@ type MerkleTreeLeaf = ReturnType<typeof keccak256>;
 type MerkleTreeProof = ReturnType<MerkleTree['getHexProof']>;
 
 const MAX_SUPPLY = 10;
-const BASE_TOKEN_URI = 'test://abc123/';
+const MASK_BASE_TOKEN_URI = 'mask://abc123/';
+const REVEAL_BASE_TOKEN_URI = 'test://abc123/';
 
 const keccak256 = ethers.utils.keccak256;
 
@@ -52,7 +53,8 @@ describe('HypeHaus Contract', () => {
 
     hypeHaus = (await factory.deploy(
       MAX_SUPPLY,
-      BASE_TOKEN_URI,
+      MASK_BASE_TOKEN_URI,
+      REVEAL_BASE_TOKEN_URI,
       team.address,
     )) as HypeHaus;
     await hypeHaus.deployed();
@@ -700,7 +702,7 @@ describe('HypeHaus Contract', () => {
       await Promise.all(
         [...Array(8)].map(async (_, i) => {
           expect(await hypeHaus.tokenURI(i)).to.eq(
-            `${BASE_TOKEN_URI}${i}.json`,
+            `${REVEAL_BASE_TOKEN_URI}${i}.json`,
           );
         }),
       );
@@ -739,8 +741,12 @@ describe('HypeHaus Contract', () => {
         .connect(signers.u2)
         .mintPublic(1, { value: PUBLIC_SALE_PRICE });
 
-      expect(await hypeHaus.tokenURI(0)).to.eq(`${BASE_TOKEN_URI}0.json`);
-      expect(await hypeHaus.tokenURI(1)).to.eq(`${BASE_TOKEN_URI}1.json`);
+      expect(await hypeHaus.tokenURI(0)).to.eq(
+        `${REVEAL_BASE_TOKEN_URI}0.json`,
+      );
+      expect(await hypeHaus.tokenURI(1)).to.eq(
+        `${REVEAL_BASE_TOKEN_URI}1.json`,
+      );
 
       await hypeHaus.setBaseTokenURI(newBaseTokenURI);
       expect(await hypeHaus.tokenURI(0)).to.eq(`${newBaseTokenURI}0.json`);

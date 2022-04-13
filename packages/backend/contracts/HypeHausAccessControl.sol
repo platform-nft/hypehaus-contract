@@ -59,9 +59,10 @@ abstract contract HypeHausAccessControl is AccessControl {
      * @dev Determines whether the given `account` is a member of the given
      * `role` or an admin.
      *
-     * By default, `hasRole` only checks if the account is a member of a role.
-     * However, sometimes it is useful to allow the admin (typically the
-     * contract deployer) to also pass this check.
+     * By default, `hasRole` only checks if the account is a member of the role.
+     * However, sometimes it is useful to allow the admin to also pass this
+     * check. This function does just that by checking if `account` is first
+     * a member of `role` before checking if it is the admin.
      */
     function hasGivenOrAdminRole(bytes32 role, address account)
         public
