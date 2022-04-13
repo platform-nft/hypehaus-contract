@@ -11,8 +11,8 @@ type MerkleTreeLeaf = ReturnType<typeof keccak256>;
 type MerkleTreeProof = ReturnType<MerkleTree['getHexProof']>;
 
 const MAX_SUPPLY = 10;
-const MASK_BASE_TOKEN_URI = 'mask://abc123/';
-const REVEAL_BASE_TOKEN_URI = 'test://abc123/';
+const MASKED_BASE_TOKEN_URI = 'protocol://mask1234/';
+const REVEALED_BASE_TOKEN_URI = 'protocol://abcd1234/';
 
 const keccak256 = ethers.utils.keccak256;
 
@@ -53,8 +53,8 @@ describe('HypeHaus Contract', () => {
 
     hypeHaus = (await factory.deploy(
       MAX_SUPPLY,
-      MASK_BASE_TOKEN_URI,
-      REVEAL_BASE_TOKEN_URI,
+      MASKED_BASE_TOKEN_URI,
+      REVEALED_BASE_TOKEN_URI,
       team.address,
     )) as HypeHaus;
     await hypeHaus.deployed();
@@ -292,17 +292,17 @@ describe('HypeHaus Contract', () => {
               hypeHaus
                 .connect(signer)
                 .mintAlpha(1, getProof(index), { value: COMMUNITY_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
             await expect(
               hypeHaus.connect(signer).mintHypelister(1, getProof(index), {
                 value: COMMUNITY_SALE_PRICE,
               }),
-            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
             await expect(
               hypeHaus.connect(signer).mintHypemember(1, getProof(index), {
                 value: COMMUNITY_SALE_PRICE,
               }),
-            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
           }),
         );
       });
@@ -335,17 +335,17 @@ describe('HypeHaus Contract', () => {
               hypeHaus
                 .connect(signer)
                 .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
             await expect(
               hypeHaus
                 .connect(signer)
                 .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
             await expect(
               hypeHaus
                 .connect(signer)
                 .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AddressAlreadyClaimed);
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
           }),
         );
       });
@@ -649,6 +649,52 @@ describe('HypeHaus Contract', () => {
   });
 
   describe('Token URI and Owner', () => {
+    it('reports mask base token URI on initialization', async () => {
+      await hypeHaus.setActiveSale(Sale.Public);
+      await hypeHaus.mintPublic(2, { value: PUBLIC_SALE_PRICE.mul(2) });
+
+      expect(await hypeHaus.tokenURI(0)).to.eq(`${MASKED_BASE_TOKEN_URI}0`);
+      expect(await hypeHaus.tokenURI(1)).to.eq(`${MASKED_BASE_TOKEN_URI}1`);
+
+      await hypeHaus.toggleReveal();
+      expect(await hypeHaus.tokenURI(0)).to.eq(
+        `${REVEALED_BASE_TOKEN_URI}0.json`,
+      );
+      expect(await hypeHaus.tokenURI(1)).to.eq(
+        `${REVEALED_BASE_TOKEN_URI}1.json`,
+      );
+    });
+
+    it('can reveal real base URI of minted tokens', async () => {
+      await hypeHaus.setActiveSale(Sale.Public);
+
+      const minters = [signers.u1, signers.u2, signers.u3, signers.u4];
+      await Promise.all(
+        minters.map(async (minter) => {
+          await hypeHaus
+            .connect(minter)
+            .mintPublic(MAX_MINT_PUBLIC, { value: PUBLIC_SALE_PRICE.mul(2) });
+        }),
+      );
+
+      await Promise.all(
+        [...Array(minters.length)].map(async (_, i) => {
+          expect(await hypeHaus.tokenURI(i)).to.eq(
+            `${MASKED_BASE_TOKEN_URI}${i}`,
+          );
+        }),
+      );
+
+      await hypeHaus.toggleReveal();
+      await Promise.all(
+        [...Array(minters.length)].map(async (_, i) => {
+          expect(await hypeHaus.tokenURI(i)).to.eq(
+            `${REVEALED_BASE_TOKEN_URI}${i}.json`,
+          );
+        }),
+      );
+    });
+
     it('reports correct URI and owner of given minted token', async () => {
       // Alpha Merkle Tree
       const alphas = [addresses.u1].map(keccak256);
@@ -672,6 +718,7 @@ describe('HypeHaus Contract', () => {
       await hypeHaus.setHypememberMerkleRoot(hmRoot);
 
       // Activate community sale
+      await hypeHaus.toggleReveal();
       await hypeHaus.setActiveSale(Sale.Community);
       const communityMintOverrides = {
         value: COMMUNITY_SALE_PRICE.mul(MAX_MINT_ALPHA),
@@ -702,7 +749,7 @@ describe('HypeHaus Contract', () => {
       await Promise.all(
         [...Array(8)].map(async (_, i) => {
           expect(await hypeHaus.tokenURI(i)).to.eq(
-            `${REVEAL_BASE_TOKEN_URI}${i}.json`,
+            `${REVEALED_BASE_TOKEN_URI}${i}.json`,
           );
         }),
       );
@@ -731,7 +778,8 @@ describe('HypeHaus Contract', () => {
     });
 
     it('can change base token URI for all minted HYPEHAUSes', async () => {
-      const newBaseTokenURI = 'test://zyx987/';
+      const newBaseTokenURI = 'protocol://zyxw9876/';
+      await hypeHaus.toggleReveal();
       await hypeHaus.setActiveSale(Sale.Public);
 
       await hypeHaus
@@ -742,10 +790,10 @@ describe('HypeHaus Contract', () => {
         .mintPublic(1, { value: PUBLIC_SALE_PRICE });
 
       expect(await hypeHaus.tokenURI(0)).to.eq(
-        `${REVEAL_BASE_TOKEN_URI}0.json`,
+        `${REVEALED_BASE_TOKEN_URI}0.json`,
       );
       expect(await hypeHaus.tokenURI(1)).to.eq(
-        `${REVEAL_BASE_TOKEN_URI}1.json`,
+        `${REVEALED_BASE_TOKEN_URI}1.json`,
       );
 
       await hypeHaus.setBaseTokenURI(newBaseTokenURI);

@@ -1,10 +1,10 @@
 export enum HypeHausErrorCode {
+  AlreadyClaimed = 'HH_ALREADY_CLAIMED',
   CommunitySaleNotActive = 'HH_COMMUNITY_SALE_NOT_ACTIVE',
+  InsufficientFunds = 'HH_INSUFFICIENT_FUNDS',
+  InvalidMintAmount = 'HH_INVALID_MINT_AMOUNT',
   PublicSaleNotActive = 'HH_PUBLIC_SALE_NOT_ACTIVE',
   SupplyExhausted = 'HH_SUPPLY_EXHAUSTED',
-  InvalidMintAmount = 'HH_INVALID_MINT_AMOUNT',
-  InsufficientFunds = 'HH_INSUFFICIENT_FUNDS',
-  AddressAlreadyClaimed = 'HH_ADDRESS_ALREADY_CLAIMED',
   VerificationFailure = 'HH_VERIFICATION_FAILURE',
 }
 

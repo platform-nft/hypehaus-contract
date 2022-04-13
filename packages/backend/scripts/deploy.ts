@@ -1,12 +1,13 @@
 import { ethers, network } from 'hardhat';
 
-const { METADATA_CID, TEAM_WALLET_ADDRESS } = process.env;
+const { MASKED_BASE_TOKEN_URL, REVEALED_BASED_TOKEN_URI, TEAM_WALLET_ADDRESS } =
+  process.env;
 
 async function main() {
-  if (!METADATA_CID) {
+  if (!MASKED_BASE_TOKEN_URL || !REVEALED_BASED_TOKEN_URI) {
     throw new Error(
-      'METADATA_CID has not been set in an .env file. Please set it before ' +
-        'deploying the contract.',
+      'MASKED_BASE_TOKEN_URL or REVEALED_BASED_TOKEN_URI has not been set in ' +
+        'an .env file. Please set them both before deploying the contract.',
     );
   }
 
@@ -21,8 +22,12 @@ async function main() {
   console.log('Account balance:', (await deployer.getBalance()).toString());
 
   const HypeHaus = await ethers.getContractFactory('HypeHaus');
-  const baseURI = `ipfs://${METADATA_CID}/`;
-  const hypeHaus = await HypeHaus.deploy(555, baseURI, teamWalletAddress);
+  const hypeHaus = await HypeHaus.deploy(
+    555,
+    MASKED_BASE_TOKEN_URL,
+    REVEALED_BASED_TOKEN_URI,
+    teamWalletAddress,
+  );
   await hypeHaus.deployed();
 
   console.log('HyperHaus contract deployed to:', hypeHaus.address);

@@ -51,26 +51,26 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     // ====== INTERNAL STATE VARIABLES ======
 
     bool internal _revealTokens;
-    string internal _maskBaseTokenURI;
-    string internal _revealBaseTokenURI;
+    string internal _maskedBaseTokenURI;
+    string internal _revealedBaseTokenURI;
     address internal _teamWalletAddress;
+    mapping(address => TotalClaimedPerSale) internal _totalClaimed;
 
     bytes32 internal _alphaMerkleRoot;
     bytes32 internal _hypelisterMerkleRoot;
     bytes32 internal _hypememberMerkleRoot;
-    mapping(address => TotalClaimedPerSale) internal _totalClaimed;
 
     // ====== CONSTRUCTOR ======
 
     constructor(
         uint256 maxSupply_,
-        string memory maskBaseTokenURI,
-        string memory revealBaseTokenURI,
+        string memory maskedBaseTokenURI,
+        string memory revealedBaseTokenURI,
         address teamWalletAddress
     ) ERC721A("HYPEHAUS", "HYPE") {
         maxSupply = maxSupply_;
-        _maskBaseTokenURI = maskBaseTokenURI;
-        _revealBaseTokenURI = revealBaseTokenURI;
+        _maskedBaseTokenURI = maskedBaseTokenURI;
+        _revealedBaseTokenURI = revealedBaseTokenURI;
         _teamWalletAddress = teamWalletAddress;
     }
 
@@ -101,31 +101,10 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _;
     }
 
-    /*
-    modifier hasNotClaimedDuringSale(Sale sale, uint256 amount) {
-        if (sale == Sale.Community) {
-            require(
-                _totalClaimed[msg.sender].communitySale == 0,
-                "HH_ADDRESS_ALREADY_CLAIMED"
-            );
-            _totalClaimed[msg.sender].communitySale = amount;
-        } else if (sale == Sale.Public) {
-            require(
-                _totalClaimed[msg.sender].publicSale == 0,
-                "HH_ADDRESS_ALREADY_CLAIMED"
-            );
-            _totalClaimed[msg.sender].publicSale = amount;
-        }
-
-        _;
-    }
-    */
-
-    // /*
     modifier hasNotClaimedDuringCommunitySale(uint256 amount) {
         require(
             _totalClaimed[msg.sender].communitySale == 0,
-            "HH_ADDRESS_ALREADY_CLAIMED"
+            "HH_ALREADY_CLAIMED"
         );
         _totalClaimed[msg.sender].communitySale = amount;
         _;
@@ -134,12 +113,11 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     modifier hasNotClaimedDuringPublicSale(uint256 amount) {
         require(
             _totalClaimed[msg.sender].publicSale == 0,
-            "HH_ADDRESS_ALREADY_CLAIMED"
+            "HH_ALREADY_CLAIMED"
         );
         _totalClaimed[msg.sender].publicSale = amount;
         _;
     }
-    // */
 
     modifier isValidMerkleProof(
         bytes32[] calldata merkleProof,
@@ -165,7 +143,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
      * provided amount, except ensuring that there is enough supply available
      * to mint `amount` HYPEHAUSes.
      *
-     * This function is useful to manually gift HYPEHAUSes to someone. It
+     * This function is useful for manually gifting HYPEHAUSes to someone. It
      * requires that the caller have at least the `OPERATOR_ROLE` role.
      */
     function mintUnchecked(address receiver, uint256 amount)
@@ -178,7 +156,6 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         } else if (activeSale == Sale.Public) {
             _totalClaimed[msg.sender].publicSale += amount;
         }
-
         _mintToAddress(receiver, amount);
     }
 
@@ -209,9 +186,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintAlpha)
-        // hasNotClaimedDuringSale(Sale.Community, amount)
-        hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
+        hasNotClaimedDuringCommunitySale(amount)
         isValidMerkleProof(merkleProof, _alphaMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -237,9 +213,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintHypelister)
-        // hasNotClaimedDuringSale(Sale.Community, amount)
-        hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
+        hasNotClaimedDuringCommunitySale(amount)
         isValidMerkleProof(merkleProof, _hypelisterMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -265,9 +240,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isCommunitySaleActive
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintHypemember)
-        // hasNotClaimedDuringSale(Sale.Community, amount)
-        hasNotClaimedDuringCommunitySale(amount)
         isCorrectPayment(communitySalePrice, amount)
+        hasNotClaimedDuringCommunitySale(amount)
         isValidMerkleProof(merkleProof, _hypememberMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -296,9 +270,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         nonReentrant
         isPublicSaleActive
         isSupplyAvailable(amount)
-        isValidMintAmount(amount, maxMintPublic)
-        // hasNotClaimedDuringSale(Sale.Public, amount)
         hasNotClaimedDuringPublicSale(amount)
+        isValidMintAmount(amount, maxMintPublic)
         isCorrectPayment(publicSalePrice, amount)
     {
         _mintToAddress(msg.sender, amount);
@@ -354,14 +327,17 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         require(_exists(tokenId), "HH_NONEXISTENT_TOKEN");
 
         if (!_revealTokens) {
+            // No file extension since this would point to an API URI
             return
-                string(abi.encodePacked(_maskBaseTokenURI, tokenId.toString()));
+                string(
+                    abi.encodePacked(_maskedBaseTokenURI, tokenId.toString())
+                );
         }
 
         return
             string(
                 abi.encodePacked(
-                    _revealBaseTokenURI,
+                    _revealedBaseTokenURI,
                     tokenId.toString(),
                     ".json"
                 )
@@ -419,7 +395,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     }
 
     function setBaseTokenURI(string memory newTokenURI) external onlyOperator {
-        _revealBaseTokenURI = newTokenURI;
+        _revealedBaseTokenURI = newTokenURI;
     }
 
     function setTeamWalletAddress(address newAddress) external onlyOperator {
