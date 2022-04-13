@@ -101,7 +101,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _;
     }
 
-    modifier hasNotClaimedDuringCommunitySale(uint256 amount) {
+    modifier hasNotClaimedBeforeInCommunitySale(uint256 amount) {
         require(
             _totalClaimed[msg.sender].communitySale == 0,
             "HH_ALREADY_CLAIMED"
@@ -110,12 +110,12 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _;
     }
 
-    modifier hasNotClaimedDuringPublicSale(uint256 amount) {
+    modifier hasNotClaimedMaximumInPublicSale(uint256 amount) {
         require(
-            _totalClaimed[msg.sender].publicSale == 0,
+            _totalClaimed[msg.sender].publicSale + amount <= maxMintPublic,
             "HH_ALREADY_CLAIMED"
         );
-        _totalClaimed[msg.sender].publicSale = amount;
+        _totalClaimed[msg.sender].publicSale += amount;
         _;
     }
 
@@ -187,7 +187,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintAlpha)
         isCorrectPayment(communitySalePrice, amount)
-        hasNotClaimedDuringCommunitySale(amount)
+        hasNotClaimedBeforeInCommunitySale(amount)
         isValidMerkleProof(merkleProof, _alphaMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -214,7 +214,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintHypelister)
         isCorrectPayment(communitySalePrice, amount)
-        hasNotClaimedDuringCommunitySale(amount)
+        hasNotClaimedBeforeInCommunitySale(amount)
         isValidMerkleProof(merkleProof, _hypelisterMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -241,7 +241,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         isSupplyAvailable(amount)
         isValidMintAmount(amount, maxMintHypemember)
         isCorrectPayment(communitySalePrice, amount)
-        hasNotClaimedDuringCommunitySale(amount)
+        hasNotClaimedBeforeInCommunitySale(amount)
         isValidMerkleProof(merkleProof, _hypememberMerkleRoot)
     {
         _mintToAddress(msg.sender, amount);
@@ -270,9 +270,9 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         nonReentrant
         isPublicSaleActive
         isSupplyAvailable(amount)
-        hasNotClaimedDuringPublicSale(amount)
         isValidMintAmount(amount, maxMintPublic)
         isCorrectPayment(publicSalePrice, amount)
+        hasNotClaimedMaximumInPublicSale(amount)
     {
         _mintToAddress(msg.sender, amount);
     }

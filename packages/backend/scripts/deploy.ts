@@ -1,12 +1,15 @@
 import { ethers, network } from 'hardhat';
 
-const { MASKED_BASE_TOKEN_URL, REVEALED_BASED_TOKEN_URI, TEAM_WALLET_ADDRESS } =
+const { MASKED_BASE_TOKEN_URI, REVEALED_BASE_TOKEN_URI, TEAM_WALLET_ADDRESS } =
   process.env;
 
 async function main() {
-  if (!MASKED_BASE_TOKEN_URL || !REVEALED_BASED_TOKEN_URI) {
+  console.log('Masked base token URI:', MASKED_BASE_TOKEN_URI);
+  console.log('Revealed base token URI:', REVEALED_BASE_TOKEN_URI);
+
+  if (!MASKED_BASE_TOKEN_URI || !REVEALED_BASE_TOKEN_URI) {
     throw new Error(
-      'MASKED_BASE_TOKEN_URL or REVEALED_BASED_TOKEN_URI has not been set in ' +
+      'MASKED_BASE_TOKEN_URI or REVEALED_BASE_TOKEN_URI has not been set in ' +
         'an .env file. Please set them both before deploying the contract.',
     );
   }
@@ -24,8 +27,8 @@ async function main() {
   const HypeHaus = await ethers.getContractFactory('HypeHaus');
   const hypeHaus = await HypeHaus.deploy(
     555,
-    MASKED_BASE_TOKEN_URL,
-    REVEALED_BASED_TOKEN_URI,
+    MASKED_BASE_TOKEN_URI,
+    REVEALED_BASE_TOKEN_URI,
     teamWalletAddress,
   );
   await hypeHaus.deployed();

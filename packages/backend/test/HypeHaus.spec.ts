@@ -255,102 +255,6 @@ describe('HypeHaus Contract', () => {
       });
     });
 
-    describe('Unique Claim', () => {
-      it('fails to mint when signer has already minted in community sale', async () => {
-        const cohort = [signers.u1, signers.u2, signers.u3];
-        const leaves = cohort.map((signer) => keccak256(signer.address));
-        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-        const root = tree.getHexRoot();
-        const getProof = (index: number) => tree.getHexProof(leaves[index]);
-
-        await hypeHaus.setActiveSale(Sale.Community);
-        await hypeHaus.setAlphaMerkleRoot(root);
-        await hypeHaus.setHypelisterMerkleRoot(root);
-        await hypeHaus.setHypememberMerkleRoot(root);
-
-        await expect(
-          hypeHaus
-            .connect(signers.u1)
-            .mintAlpha(1, getProof(0), { value: COMMUNITY_SALE_PRICE }),
-        ).to.not.be.revertedWith('');
-
-        await expect(
-          hypeHaus
-            .connect(signers.u2)
-            .mintHypelister(1, getProof(1), { value: COMMUNITY_SALE_PRICE }),
-        ).to.not.be.revertedWith('');
-
-        await expect(
-          hypeHaus
-            .connect(signers.u3)
-            .mintHypemember(1, getProof(2), { value: COMMUNITY_SALE_PRICE }),
-        ).to.not.be.revertedWith('');
-
-        await Promise.all(
-          cohort.map(async (signer, index) => {
-            await expect(
-              hypeHaus
-                .connect(signer)
-                .mintAlpha(1, getProof(index), { value: COMMUNITY_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
-            await expect(
-              hypeHaus.connect(signer).mintHypelister(1, getProof(index), {
-                value: COMMUNITY_SALE_PRICE,
-              }),
-            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
-            await expect(
-              hypeHaus.connect(signer).mintHypemember(1, getProof(index), {
-                value: COMMUNITY_SALE_PRICE,
-              }),
-            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
-          }),
-        );
-      });
-
-      it('fails to mint when signer has already minted in public sale', async () => {
-        const cohort = [signers.u1, signers.u2, signers.u3];
-        await hypeHaus.setActiveSale(Sale.Public);
-
-        await expect(
-          hypeHaus
-            .connect(signers.u1)
-            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-        ).to.not.be.revertedWith('');
-
-        await expect(
-          hypeHaus
-            .connect(signers.u2)
-            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-        ).to.not.be.revertedWith('');
-
-        await expect(
-          hypeHaus
-            .connect(signers.u3)
-            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-        ).to.not.be.revertedWith('');
-
-        await Promise.all(
-          cohort.map(async (signer) => {
-            await expect(
-              hypeHaus
-                .connect(signer)
-                .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
-            await expect(
-              hypeHaus
-                .connect(signer)
-                .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
-            await expect(
-              hypeHaus
-                .connect(signer)
-                .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
-            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
-          }),
-        );
-      });
-    });
-
     describe('Sufficient Funds', () => {
       let tree: MerkleTree;
       let leaves: MerkleTreeLeaf[];
@@ -409,6 +313,96 @@ describe('HypeHaus Contract', () => {
         await expect(
           hypeHaus.connect(signers[0]).mintPublic(MAX_MINT_PUBLIC),
         ).to.be.revertedWith(HypeHausErrorCode.InsufficientFunds);
+      });
+    });
+
+    describe('Unique Claim', () => {
+      it('fails to mint when signer has already minted in community sale', async () => {
+        const cohort = [signers.u1, signers.u2, signers.u3];
+        const leaves = cohort.map((signer) => keccak256(signer.address));
+        const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+        const root = tree.getHexRoot();
+        const getProof = (index: number) => tree.getHexProof(leaves[index]);
+
+        await hypeHaus.setActiveSale(Sale.Community);
+        await hypeHaus.setAlphaMerkleRoot(root);
+        await hypeHaus.setHypelisterMerkleRoot(root);
+        await hypeHaus.setHypememberMerkleRoot(root);
+
+        await expect(
+          hypeHaus
+            .connect(signers.u1)
+            .mintAlpha(1, getProof(0), { value: COMMUNITY_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u2)
+            .mintHypelister(1, getProof(1), { value: COMMUNITY_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u3)
+            .mintHypemember(1, getProof(2), { value: COMMUNITY_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await Promise.all(
+          cohort.map(async (signer, index) => {
+            await expect(
+              hypeHaus
+                .connect(signer)
+                .mintAlpha(1, getProof(index), { value: COMMUNITY_SALE_PRICE }),
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
+            await expect(
+              hypeHaus.connect(signer).mintHypelister(1, getProof(index), {
+                value: COMMUNITY_SALE_PRICE,
+              }),
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
+            await expect(
+              hypeHaus.connect(signer).mintHypemember(1, getProof(index), {
+                value: COMMUNITY_SALE_PRICE,
+              }),
+            ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
+          }),
+        );
+      });
+
+      it('fails to mint when signer has already minted maximum in public sale', async () => {
+        await hypeHaus.setActiveSale(Sale.Public);
+
+        await expect(
+          hypeHaus
+            .connect(signers.u1)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.not.be.revertedWith('');
+
+        await expect(
+          hypeHaus
+            .connect(signers.u2)
+            .mintPublic(2, { value: PUBLIC_SALE_PRICE.mul(2) }),
+        ).to.not.be.revertedWith('');
+
+        // Should be able to mint 1 and no more after
+        await expect(
+          hypeHaus
+            .connect(signers.u1)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.not.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
+
+        // Should NOT be able to mint anymore
+        await expect(
+          hypeHaus
+            .connect(signers.u2)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
+
+        // Should be able to mint 1 more after
+        await expect(
+          hypeHaus
+            .connect(signers.u3)
+            .mintPublic(1, { value: PUBLIC_SALE_PRICE }),
+        ).to.not.be.revertedWith(HypeHausErrorCode.AlreadyClaimed);
       });
     });
 
