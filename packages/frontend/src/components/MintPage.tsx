@@ -56,11 +56,52 @@ async function getTierForAddress(address: string): Promise<MintTier> {
     const allWalletsRef = collection(firestore, 'wallets');
     const walletRef = doc(allWalletsRef, address);
     const walletData = await getDoc(walletRef).then((doc) => doc.data());
-    if (!walletData) return 'public';
+    if (!walletData || !walletData['tier']) return 'public';
     return walletData['tier'];
   } catch (error) {
     console.error('Tier for address could not be found:', error);
     return 'public';
+  }
+}
+
+async function mintHypeHaus(
+  contract: HypeHaus,
+  authAccount: AuthAccount,
+  mintTier: MintTier,
+  mintAmount: number,
+  { publicSalePrice, communitySalePrice }: HypeHausProperties,
+) {
+  if (mintTier === 'public') {
+    const ethToPay = publicSalePrice.mul(mintAmount);
+    await contract.mintPublic(mintAmount, { value: ethToPay });
+    console.log({ mintTier, ethToPay });
+    return;
+  }
+
+  let verificationBaseURI: string;
+  if (
+    process.env.NODE_ENV === 'development' ||
+    !REACT_APP_FIREBASE_FUNCTIONS_BASE_URI
+  ) {
+    verificationBaseURI = `http://localhost:5001/hypehaus-nft/us-central1`;
+  } else {
+    verificationBaseURI = `https://${REACT_APP_FIREBASE_FUNCTIONS_BASE_URI}`;
+  }
+
+  const minterAddress = authAccount.address;
+  const fetchURL = `${verificationBaseURI}/api/merkle-proof/${mintTier}/${minterAddress}`;
+  const response = await fetch(fetchURL, { method: 'GET' });
+  const merkleProof = await response.json();
+  const ethToPay = communitySalePrice.mul(mintAmount);
+
+  console.log({ mintTier, merkleProof, ethToPay });
+
+  if (mintTier === 'alpha') {
+    await contract.mintAlpha(mintAmount, merkleProof, { value: ethToPay });
+  } else if (mintTier === 'hypelister') {
+    await contract.mintHypelister(mintAmount, merkleProof, { value: ethToPay });
+  } else if (mintTier === 'hypemember') {
+    await contract.mintHypemember(mintAmount, merkleProof, { value: ethToPay });
   }
 }
 
@@ -69,10 +110,12 @@ type MintPageProps = {
 };
 
 export default function MintPage({ authAccount }: MintPageProps) {
-  const {} = React.useContext(GlobalContext);
+  const { setMintResult } = React.useContext(GlobalContext);
+
+  const [isMinting, setIsMinting] = React.useState(false);
+  const [error, setError] = React.useState<string>();
 
   const [mintAmount, setMintAmount] = React.useState(1);
-
   const [mintTierStatus, setMintTierStatus] =
     React.useState<MintTierStatus>(IDLE);
 
@@ -96,19 +139,23 @@ export default function MintPage({ authAccount }: MintPageProps) {
       return undefined;
     }
 
-    const minterAddress = authAccount.address;
-    const minter = authAccount.provider.getSigner(minterAddress);
-
-    return new ethers.Contract(
+    const hypeHaus = new ethers.Contract(
       REACT_APP_CONTRACT_ADDRESS,
       HypeHausJson.abi,
-      minter,
+      authAccount.provider,
     ) as HypeHaus;
+
+    const minter = authAccount.provider.getSigner(authAccount.address);
+    return hypeHaus.connect(minter);
   }, [authAccount]);
 
   const isInitializing = React.useMemo(() => {
-    return !hypeHaus || mintTierStatus.status === 'pending' || isSyncing;
-  }, [hypeHaus, mintTierStatus, isSyncing]);
+    return !hypeHaus || mintTierStatus.status === 'pending';
+  }, [hypeHaus, mintTierStatus, isSyncing, isMinting]);
+
+  const isLoading = React.useMemo(() => {
+    return isSyncing || isMinting;
+  }, [isSyncing, isMinting]);
 
   const isDisabled = React.useMemo(() => {
     // The sale is closed
@@ -124,9 +171,9 @@ export default function MintPage({ authAccount }: MintPageProps) {
   }, [mintTierStatus, properties.activeSale]);
 
   React.useEffect(() => {
-    getTierForAddress(authAccount.address).then((tier) =>
-      setMintTierStatus({ status: 'success', payload: tier }),
-    );
+    getTierForAddress(authAccount.address.toLowerCase()).then((tier) => {
+      setMintTierStatus({ status: 'success', payload: tier });
+    });
   }, [authAccount]);
 
   React.useEffect(() => {
@@ -169,7 +216,14 @@ export default function MintPage({ authAccount }: MintPageProps) {
   }, [hypeHaus]);
 
   const personalMintMax = React.useMemo(() => {
-    if (mintTierStatus.status !== 'success') return properties.maxMintPublic;
+    if (properties.activeSale !== HypeHausSale.Community) {
+      return properties.maxMintPublic;
+    }
+
+    if (mintTierStatus.status !== 'success') {
+      return properties.maxMintPublic;
+    }
+
     switch (mintTierStatus.payload) {
       case 'alpha':
         return properties.maxMintAlpha;
@@ -183,9 +237,51 @@ export default function MintPage({ authAccount }: MintPageProps) {
   }, [mintTierStatus, properties]);
 
   const handleClickMint = React.useCallback(async () => {
-    if (!hypeHaus) return;
-    console.log('MINT!');
-  }, [hypeHaus]);
+    if (!hypeHaus || mintTierStatus.status !== 'success') return;
+    try {
+      setIsMinting(true);
+      await mintHypeHaus(
+        hypeHaus,
+        authAccount,
+        mintTierStatus.payload,
+        mintAmount,
+        properties,
+      );
+      setMintResult({ status: 'success', mintAmount });
+    } catch (error: any) {
+      let reason: string;
+      const errorMessage: string = error.data?.message || error.message;
+
+      if (!errorMessage) {
+        reason = `An unknown error occurred. Please try again later. (Error ${
+          error.code || 'UNKNOWN'
+        })`;
+        console.error('An unknown error occurred:', error);
+      }
+
+      if (errorMessage.includes('HH_ALREADY_CLAIMED')) {
+        reason = `Sorry, you've already claimed one or more *HYPEHAUSes!`;
+      } else if (errorMessage.includes('HH_COMMUNITY_SALE_NOT_ACTIVE')) {
+        reason = 'Sorry, the community sale is not open yet! Come back later.';
+      } else if (errorMessage.includes('HH_INSUFFICIENT_FUNDS')) {
+        reason = `You don't have enough ETH to mint!`;
+      } else if (errorMessage.includes('HH_INVALID_MINT_AMOUNT')) {
+        reason = 'You provided an invalid amount to mint! Please try again.';
+      } else if (errorMessage.includes('HH_PUBLIC_SALE_NOT_ACTIVE')) {
+        reason = 'Sorry, the public sale is not open yet! Come back later.';
+      } else if (errorMessage.includes('HH_SUPPLY_EXHAUSTED')) {
+        reason = 'Sorry, there are no more *HYPEHAUS left to mint!';
+      } else if (errorMessage.includes('HH_VERIFICATION_FAILURE')) {
+        reason = `You don't seem to be in the allow list. Come back later for the public sale.`;
+      } else {
+        reason = errorMessage;
+      }
+
+      setError(reason);
+    } finally {
+      setIsMinting(false);
+    }
+  }, [hypeHaus, authAccount, mintTierStatus, mintAmount, properties]);
 
   return (
     <MintAmountContext.Provider value={{ mintAmount, setMintAmount }}>
@@ -203,14 +299,20 @@ export default function MintPage({ authAccount }: MintPageProps) {
         <PriceInfoTable {...properties} />
         <NumberInputContext.Provider
           value={{ value: mintAmount, setValue: setMintAmount }}>
-          <NumberInput disabled={isDisabled} min={1} max={personalMintMax} />
+          <NumberInput
+            disabled={isDisabled || isLoading}
+            min={1}
+            max={personalMintMax}
+          />
         </NumberInputContext.Provider>
         <Button
-          disabled={isDisabled}
-          loading={isInitializing}
+          disabled={isDisabled || isLoading}
+          loading={isInitializing || isLoading}
+          loadingText={isMinting ? 'Minting…' : ''}
           onClick={handleClickMint}>
           {isDisabled ? "Sorry, you can't mint now!" : 'Mint *HYPEHAUS'}
         </Button>
+        {error && <p className="font-medium text-sm text-error-500">{error}</p>}
       </div>
     </MintAmountContext.Provider>
   );
@@ -257,15 +359,15 @@ function AuthAccountDetails({
         <tbody>
           <tr>
             <td className="border-r-2 border-gray-300">
+              <p>{authAccount.address.slice(0, 9)}</p>
+            </td>
+            <td className="border-r-2 border-gray-300">
               <p
                 className={[
                   mintTier !== 'public' ? 'text-primary-500' : '',
                 ].join(' ')}>
                 {mintTier.toUpperCase()}
               </p>
-            </td>
-            <td className="border-r-2 border-gray-300">
-              <p>{authAccount.address.slice(0, 9)}</p>
             </td>
             <td>
               <p className={[tooLowBalance ? 'text-error-600' : ''].join(' ')}>
