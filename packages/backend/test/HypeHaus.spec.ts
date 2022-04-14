@@ -16,6 +16,10 @@ const REVEALED_BASE_TOKEN_URI = 'protocol://abcd1234/';
 
 const keccak256 = ethers.utils.keccak256;
 
+function getHexProof(tree: MerkleTree, address: string): MerkleTreeProof {
+  return tree.getHexProof(keccak256(address));
+}
+
 enum Sale {
   Closed = 0,
   Community = 1,
@@ -410,7 +414,6 @@ describe('HypeHaus Contract', () => {
       type Tier = {
         tree: MerkleTree;
         leaves: MerkleTreeLeaf[];
-        proofs: MerkleTreeProof[];
         verifiedSigners: SignerWithAddress[];
       };
 
@@ -424,37 +427,34 @@ describe('HypeHaus Contract', () => {
         const [a1, a2, hl1, hl2, hm1, hm2, ...restSigners] = allSigners;
         unverifiedSigners = restSigners;
 
-        const aLeaves = [a1, a2].map((s) => keccak256(s.address));
-        const hlLeaves = [hl1, hl2].map((s) => keccak256(s.address));
-        const hmLeaves = [hm1, hm2].map((s) => keccak256(s.address));
+        const aSigners = [a1, a2];
+        const hlSigners = [hl1, hl2];
+        const hmSigners = [hm1, hm2];
+
+        const aLeaves = aSigners.map((s) => keccak256(s.address));
+        const hlLeaves = hlSigners.map((s) => keccak256(s.address));
+        const hmLeaves = hmSigners.map((s) => keccak256(s.address));
 
         const aTree = new MerkleTree(aLeaves, keccak256, { sortPairs: true });
         const hlTree = new MerkleTree(hlLeaves, keccak256, { sortPairs: true });
         const hmTree = new MerkleTree(hmLeaves, keccak256, { sortPairs: true });
 
-        const aProofs = aLeaves.map((leaf) => aTree.getHexProof(leaf));
-        const hlProofs = hlLeaves.map((leaf) => hlTree.getHexProof(leaf));
-        const hmProofs = hmLeaves.map((leaf) => hmTree.getHexProof(leaf));
-
         alphaTier = {
-          leaves: aLeaves,
           tree: aTree,
-          proofs: aProofs,
-          verifiedSigners: [a1, a2],
+          leaves: aLeaves,
+          verifiedSigners: aSigners,
         };
 
         hypelisterTier = {
-          leaves: hlLeaves,
           tree: hlTree,
-          proofs: hlProofs,
-          verifiedSigners: [hl1, hl2],
+          leaves: hlLeaves,
+          verifiedSigners: hlSigners,
         };
 
         hypememberTier = {
-          leaves: hmLeaves,
           tree: hmTree,
-          proofs: hmProofs,
-          verifiedSigners: [hm1, hm2],
+          leaves: hmLeaves,
+          verifiedSigners: hmSigners,
         };
 
         await hypeHaus.setActiveSale(Sale.Community);
@@ -464,66 +464,59 @@ describe('HypeHaus Contract', () => {
       });
 
       it('fails to mint when signer cannot be proved to be Alpha', async () => {
-        for (const [index, signer] of alphaTier.verifiedSigners.entries()) {
+        for (const signer of alphaTier.verifiedSigners) {
+          const claimedProof = getHexProof(alphaTier.tree, signer.address);
           expect(
-            hypeHaus.connect(signer).mintAlpha(1, alphaTier.proofs[index], {
+            hypeHaus.connect(signer).mintAlpha(1, claimedProof, {
               value: COMMUNITY_SALE_PRICE,
             }),
           ).to.not.be.revertedWith(HypeHausErrorCode.VerificationFailure);
         }
 
+        const claimer = unverifiedSigners[0];
+        const claimedProof = getHexProof(alphaTier.tree, claimer.address);
         expect(
-          hypeHaus
-            .connect(unverifiedSigners[0])
-            .mintAlpha(1, alphaTier.proofs[0], {
-              value: COMMUNITY_SALE_PRICE,
-            }),
+          hypeHaus.connect(claimer).mintAlpha(1, claimedProof, {
+            value: COMMUNITY_SALE_PRICE,
+          }),
         ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
 
       it('fails to mint when signer cannot be proved to be Hypelister', async () => {
-        for (const [
-          index,
-          signer,
-        ] of hypelisterTier.verifiedSigners.entries()) {
+        for (const signer of hypelisterTier.verifiedSigners) {
+          const claimedProof = getHexProof(hypelisterTier.tree, signer.address);
           expect(
-            hypeHaus
-              .connect(signer)
-              .mintHypelister(1, hypelisterTier.proofs[index], {
-                value: COMMUNITY_SALE_PRICE,
-              }),
+            hypeHaus.connect(signer).mintHypelister(1, claimedProof, {
+              value: COMMUNITY_SALE_PRICE,
+            }),
           ).to.not.be.revertedWith(HypeHausErrorCode.VerificationFailure);
         }
 
+        const claimer = unverifiedSigners[0];
+        const claimedProof = getHexProof(hypelisterTier.tree, claimer.address);
         expect(
-          hypeHaus
-            .connect(unverifiedSigners[0])
-            .mintHypelister(1, hypelisterTier.proofs[0], {
-              value: COMMUNITY_SALE_PRICE,
-            }),
+          hypeHaus.connect(claimer).mintHypelister(1, claimedProof, {
+            value: COMMUNITY_SALE_PRICE,
+          }),
         ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
 
       it('fails to mint when signer cannot be proved to be Hypemember', async () => {
-        for (const [
-          index,
-          signer,
-        ] of hypememberTier.verifiedSigners.entries()) {
+        for (const signer of hypememberTier.verifiedSigners) {
+          const claimedProof = getHexProof(hypememberTier.tree, signer.address);
           expect(
-            hypeHaus
-              .connect(signer)
-              .mintHypemember(1, hypememberTier.proofs[index], {
-                value: COMMUNITY_SALE_PRICE,
-              }),
+            hypeHaus.connect(signer).mintHypemember(1, claimedProof, {
+              value: COMMUNITY_SALE_PRICE,
+            }),
           ).to.not.be.revertedWith(HypeHausErrorCode.VerificationFailure);
         }
 
+        const claimer = unverifiedSigners[0];
+        const claimedProof = getHexProof(hypememberTier.tree, claimer.address);
         expect(
-          hypeHaus
-            .connect(unverifiedSigners[0])
-            .mintHypemember(1, hypememberTier.proofs[0], {
-              value: COMMUNITY_SALE_PRICE,
-            }),
+          hypeHaus.connect(claimer).mintHypemember(1, claimedProof, {
+            value: COMMUNITY_SALE_PRICE,
+          }),
         ).to.be.revertedWith(HypeHausErrorCode.VerificationFailure);
       });
     });
@@ -532,14 +525,12 @@ describe('HypeHaus Contract', () => {
   describe('Minting', () => {
     let tree: MerkleTree;
     let leaves: MerkleTreeLeaf[];
-    let proofs: MerkleTreeProof[];
     let signers: SignerWithAddress[];
 
     beforeEach(async () => {
       signers = await ethers.getSigners().then((signers) => signers.slice(2));
       leaves = signers.slice(0, -1).map((s) => keccak256(s.address));
       tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-      proofs = leaves.map((l) => tree.getHexProof(l));
       expect(await hypeHaus.totalMinted()).to.eq(0);
     });
 
@@ -554,7 +545,7 @@ describe('HypeHaus Contract', () => {
       ) => Promise<ContractTransaction>,
     ) {
       const signer = signers[index];
-      const proof = proofs[index];
+      const proof = getHexProof(tree, signer.address);
       const previousTotal = await hypeHaus.totalMinted();
 
       const overrides = { value: COMMUNITY_SALE_PRICE.mul(maxMintAmount) };
