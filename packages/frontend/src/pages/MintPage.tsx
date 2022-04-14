@@ -176,14 +176,15 @@ export default function MintPage({ authAccount }: MintPageProps) {
 
     if (authAccount.balance.lt(amountToPay)) return true;
 
-    const mintTier =
-      mintTierStatus.status === 'success' ? mintTierStatus.payload : 'public';
+    // const mintTier =
+    //   mintTierStatus.status === 'success' ? mintTierStatus.payload : 'public';
+    // // Community sale is on and user is not from the community
+    // return (
+    //   properties.activeSale === HypeHausSale.Community && mintTier === 'public'
+    // );
 
-    // Community sale is on and user is not from the community
-    return (
-      properties.activeSale === HypeHausSale.Community && mintTier === 'public'
-    );
-  }, [properties.activeSale, mintAmount, authAccount.balance, mintTierStatus]);
+    return false;
+  }, [properties, mintAmount, authAccount, mintTierStatus]);
 
   React.useEffect(() => {
     getTierForAddress(authAccount.address.toLowerCase()).then((tier) => {
