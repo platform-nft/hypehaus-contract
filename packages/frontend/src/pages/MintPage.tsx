@@ -164,6 +164,18 @@ export default function MintPage({ authAccount }: MintPageProps) {
     // The sale is closed
     if (properties.activeSale === HypeHausSale.Inactive) return true;
 
+    // User does not have enough ETH
+    let amountToPay: ethers.BigNumber;
+    if (properties.activeSale === HypeHausSale.Community) {
+      amountToPay = properties.communitySalePrice.mul(mintAmount);
+    } else if (properties.activeSale === HypeHausSale.Public) {
+      amountToPay = properties.publicSalePrice.mul(mintAmount);
+    } else {
+      return true;
+    }
+
+    if (authAccount.balance.lt(amountToPay)) return true;
+
     const mintTier =
       mintTierStatus.status === 'success' ? mintTierStatus.payload : 'public';
 
@@ -171,7 +183,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
     return (
       properties.activeSale === HypeHausSale.Community && mintTier === 'public'
     );
-  }, [mintTierStatus, properties.activeSale]);
+  }, [properties.activeSale, mintAmount, authAccount.balance, mintTierStatus]);
 
   React.useEffect(() => {
     getTierForAddress(authAccount.address.toLowerCase()).then((tier) => {
