@@ -26,7 +26,7 @@ export async function connectToContract(
   const contractAddress =
     contract ||
     (networkName === 'localhost' ? LOCAL_CONTRACT_ADDRESS : CONTRACT_ADDRESS);
-  console.log('Contract address:', contractAddress);
+  console.log('Connecting to contract at address:', contractAddress);
 
   const HypeHaus = await hre.ethers.getContractFactory('HypeHaus');
   const hypeHaus = HypeHaus.attach(contractAddress) as HypeHaus;
