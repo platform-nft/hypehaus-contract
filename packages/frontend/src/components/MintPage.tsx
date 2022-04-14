@@ -45,6 +45,7 @@ type HypeHausProperties = {
   activeSale: HypeHausSale;
   communitySalePrice: ethers.BigNumber;
   publicSalePrice: ethers.BigNumber;
+  totalMinted: ethers.BigNumber;
   maxMintAlpha: number;
   maxMintHypelister: number;
   maxMintHypemember: number;
@@ -124,6 +125,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
     activeSale: HypeHausSale.Inactive,
     communitySalePrice: ethers.utils.parseEther('0.05'),
     publicSalePrice: ethers.utils.parseEther('0.08'),
+    totalMinted: ethers.BigNumber.from(0),
     maxMintAlpha: 3,
     maxMintHypelister: 2,
     maxMintHypemember: 1,
@@ -185,6 +187,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
           activeSale,
           communitySalePrice,
           publicSalePrice,
+          totalMinted,
           maxMintAlpha,
           maxMintHypelister,
           maxMintHypemember,
@@ -193,6 +196,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
           hypeHaus.activeSale(),
           hypeHaus.communitySalePrice(),
           hypeHaus.publicSalePrice(),
+          hypeHaus.totalMinted(),
           hypeHaus.maxMintAlpha(),
           hypeHaus.maxMintHypelister(),
           hypeHaus.maxMintHypemember(),
@@ -202,6 +206,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
           activeSale,
           communitySalePrice,
           publicSalePrice,
+          totalMinted,
           maxMintAlpha,
           maxMintHypelister,
           maxMintHypemember,

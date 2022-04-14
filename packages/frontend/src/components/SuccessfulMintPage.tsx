@@ -1,6 +1,5 @@
 import React from 'react';
-// import tailwindColors from 'tailwindcss/colors';
-// import { IoCheckmarkCircle } from 'react-icons/io5';
+import logo from '../assets/hypehaus-animated.gif';
 
 type SuccessfulMintPageProps = {
   mintAmount: number;
@@ -11,13 +10,12 @@ export default function SuccessfulMintPage({
 }: SuccessfulMintPageProps) {
   return (
     <div className="flex flex-col space-y-4 items-center">
-      {/* <IoCheckmarkCircle size="8rem" color={tailwindColors.green[600]} /> */}
-      <p className="text-[8rem]">🎉</p>
-      <h1 className="text-3xl font-bold">Congratulations!</h1>
-      <p>
-        You've successfully minted {mintAmount} *HYPEHAUS
-        {mintAmount === 1 ? '' : 'es'}!
-      </p>
+      <img src={logo} alt="*HYPEHAUS logo" className="rounded-lg" />
+      <h1 className="text-3xl font-bold">CONGRATULATIONS</h1>
+      <div>
+        <p>You've successfully minted {mintAmount} *HYPEHAUSes.</p>
+        <p>Welcome to *HYPEHAUS!</p>
+      </div>
     </div>
   );
 }
