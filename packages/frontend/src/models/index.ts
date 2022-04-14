@@ -6,6 +6,8 @@ export type AsyncStatus<T> =
   | { status: 'success'; payload: T }
   | { status: 'failed'; reason: string };
 
+export const IDLE: AsyncStatus<any> = { status: 'idle' };
+
 export type AuthAccount = {
   address: string;
   balance: ethers.BigNumber;

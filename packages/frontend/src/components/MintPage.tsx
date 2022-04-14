@@ -1,52 +1,36 @@
 import React from 'react';
 import { ethers } from 'ethers';
-import {} from 'firebase/firestore';
+import { getApp } from 'firebase/app';
+import {
+  collection,
+  connectFirestoreEmulator,
+  doc,
+  getDoc,
+  getFirestore,
+} from 'firebase/firestore';
 
-// import { HypeHausErrorCode } from '@platform/backend/shared';
+// import { HypeHausSale } from '@platform/backend/shared';
 import { HypeHaus } from '@platform/backend/typechain-types/HypeHaus';
 import HypeHausJson from '@platform/backend/artifacts/contracts/HypeHaus.sol/HypeHaus.json';
 
+import { AsyncStatus, AuthAccount, IDLE } from '../models';
 import Button from './Button';
-import { AsyncStatus, AuthAccount } from '../models';
 import GlobalContext from './GlobalContext';
 import HeroImage from './HeroImage';
+import NumberInput, { NumberInputContext } from './NumberInput';
 
-const { REACT_APP_CONTRACT_ADDRESS } = process.env;
+enum HypeHausSale {
+  Inactive = 0,
+  Community = 1,
+  Public = 2,
+}
 
-const IS_PUBLIC_SALE_ACTIVE = true;
-const SALE_PRICE_COMMUNITY = '0.05';
-const SALE_PRICE_PUBLIC = '0.08';
-const MIN_MINT_AMOUNT = 1;
-const MAX_MINT_AMOUNT = IS_PUBLIC_SALE_ACTIVE ? 2 : 3;
+const { REACT_APP_CONTRACT_ADDRESS, REACT_APP_FIREBASE_FUNCTIONS_BASE_URI } =
+  process.env;
 
-{
-  /*
-  React.useEffect(() => {
-    (async () => {
-      console.log('INITIALIZING...');
-      const db = getFirestore(firebaseApp);
-      const walletsRef = collection(db, 'wallets-test');
-
-      console.log('CONNECTING...');
-      const wallets = await getDocs(walletsRef);
-      const list = wallets.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      console.log(list);
-
-      const walletRef = doc(
-        walletsRef,
-        '0x70997970c51812dc3a010c7d01b50e0d17dc79c8',
-      );
-      const wallet = await getDoc(walletRef);
-      console.log({ id: wallet.id, ...wallet.data() });
-
-      const q = query(walletsRef, where('tier', '==', 'hypelister'));
-      const results = await getDocs(q);
-      results.forEach((doc) => {
-        console.log(doc.id, ' => ', doc.data());
-      });
-    })();
-  }, []);
-  */
+const firestore = getFirestore(getApp());
+if (process.env.NODE_ENV === 'development') {
+  connectFirestoreEmulator(firestore, 'localhost', 8080);
 }
 
 const MintAmountContext = React.createContext<{
@@ -54,24 +38,193 @@ const MintAmountContext = React.createContext<{
   setMintAmount: React.Dispatch<React.SetStateAction<number>>;
 }>(null as any);
 
-type MintStatus = AsyncStatus<number>;
+type MintTier = 'alpha' | 'hypelister' | 'hypemember' | 'public';
+type MintTierStatus = AsyncStatus<MintTier>;
+
+type HypeHausProperties = {
+  activeSale: HypeHausSale;
+  communitySalePrice: ethers.BigNumber;
+  publicSalePrice: ethers.BigNumber;
+  maxMintAlpha: number;
+  maxMintHypelister: number;
+  maxMintHypemember: number;
+  maxMintPublic: number;
+};
+
+async function getTierForAddress(address: string): Promise<MintTier> {
+  try {
+    const allWalletsRef = collection(firestore, 'wallets');
+    const walletRef = doc(allWalletsRef, address);
+    const walletData = await getDoc(walletRef).then((doc) => doc.data());
+    if (!walletData) return 'public';
+    return walletData['tier'];
+  } catch (error) {
+    console.error('Tier for address could not be found:', error);
+    return 'public';
+  }
+}
 
 type MintPageProps = {
   authAccount: AuthAccount;
 };
 
 export default function MintPage({ authAccount }: MintPageProps) {
-  const { setMintResult } = React.useContext(GlobalContext);
+  const {} = React.useContext(GlobalContext);
 
   const [mintAmount, setMintAmount] = React.useState(1);
-  const [mintStatus, setMintStatus] = React.useState<MintStatus>({
-    status: 'idle',
+
+  const [mintTierStatus, setMintTierStatus] =
+    React.useState<MintTierStatus>(IDLE);
+
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [properties, setProperties] = React.useState<HypeHausProperties>({
+    activeSale: HypeHausSale.Inactive,
+    communitySalePrice: ethers.utils.parseEther('0.05'),
+    publicSalePrice: ethers.utils.parseEther('0.08'),
+    maxMintAlpha: 3,
+    maxMintHypelister: 2,
+    maxMintHypemember: 1,
+    maxMintPublic: 2,
   });
 
-  const isLoading = React.useMemo(() => {
-    return mintStatus.status === 'pending';
-  }, [mintStatus]);
+  const hypeHaus = React.useMemo(() => {
+    if (
+      !REACT_APP_CONTRACT_ADDRESS ||
+      !ethers.utils.isAddress(REACT_APP_CONTRACT_ADDRESS)
+    ) {
+      console.error('The contract address is not valid!');
+      return undefined;
+    }
 
+    const minterAddress = authAccount.address;
+    const minter = authAccount.provider.getSigner(minterAddress);
+
+    return new ethers.Contract(
+      REACT_APP_CONTRACT_ADDRESS,
+      HypeHausJson.abi,
+      minter,
+    ) as HypeHaus;
+  }, [authAccount]);
+
+  const isInitializing = React.useMemo(() => {
+    return !hypeHaus || mintTierStatus.status === 'pending' || isSyncing;
+  }, [hypeHaus, mintTierStatus, isSyncing]);
+
+  const isDisabled = React.useMemo(() => {
+    // The sale is closed
+    if (properties.activeSale === HypeHausSale.Inactive) return true;
+
+    const mintTier =
+      mintTierStatus.status === 'success' ? mintTierStatus.payload : 'public';
+
+    // Community sale is on and user is not from the community
+    return (
+      properties.activeSale === HypeHausSale.Community && mintTier === 'public'
+    );
+  }, [mintTierStatus, properties.activeSale]);
+
+  React.useEffect(() => {
+    getTierForAddress(authAccount.address).then((tier) =>
+      setMintTierStatus({ status: 'success', payload: tier }),
+    );
+  }, [authAccount]);
+
+  React.useEffect(() => {
+    if (!hypeHaus) return;
+    (async () => {
+      try {
+        setIsSyncing(true);
+        const [
+          activeSale,
+          communitySalePrice,
+          publicSalePrice,
+          maxMintAlpha,
+          maxMintHypelister,
+          maxMintHypemember,
+          maxMintPublic,
+        ] = await Promise.all([
+          hypeHaus.activeSale(),
+          hypeHaus.communitySalePrice(),
+          hypeHaus.publicSalePrice(),
+          hypeHaus.maxMintAlpha(),
+          hypeHaus.maxMintHypelister(),
+          hypeHaus.maxMintHypemember(),
+          hypeHaus.maxMintPublic(),
+        ]);
+        setProperties({
+          activeSale,
+          communitySalePrice,
+          publicSalePrice,
+          maxMintAlpha,
+          maxMintHypelister,
+          maxMintHypemember,
+          maxMintPublic,
+        });
+      } catch (_) {
+        // Do nothing
+      } finally {
+        setIsSyncing(false);
+      }
+    })();
+  }, [hypeHaus]);
+
+  const personalMintMax = React.useMemo(() => {
+    if (mintTierStatus.status !== 'success') return properties.maxMintPublic;
+    switch (mintTierStatus.payload) {
+      case 'alpha':
+        return properties.maxMintAlpha;
+      case 'hypelister':
+        return properties.maxMintHypelister;
+      case 'hypemember':
+        return properties.maxMintHypemember;
+      default:
+        return properties.maxMintPublic;
+    }
+  }, [mintTierStatus, properties]);
+
+  const handleClickMint = React.useCallback(async () => {
+    if (!hypeHaus) return;
+    console.log('MINT!');
+  }, [hypeHaus]);
+
+  return (
+    <MintAmountContext.Provider value={{ mintAmount, setMintAmount }}>
+      <div className="space-y-4">
+        <HeroImage />
+        <AuthAccountDetails
+          authAccount={authAccount}
+          mintTier={
+            mintTierStatus.status === 'success'
+              ? mintTierStatus.payload
+              : undefined
+          }
+        />
+        <p className="flex-1">How many *HYPEHAUSes would you like to mint?</p>
+        <PriceInfoTable {...properties} />
+        <NumberInputContext.Provider
+          value={{ value: mintAmount, setValue: setMintAmount }}>
+          <NumberInput disabled={isDisabled} min={1} max={personalMintMax} />
+        </NumberInputContext.Provider>
+        <Button
+          disabled={isDisabled}
+          loading={isInitializing}
+          onClick={handleClickMint}>
+          {isDisabled ? "Sorry, you can't mint now!" : 'Mint *HYPEHAUS'}
+        </Button>
+      </div>
+    </MintAmountContext.Provider>
+  );
+}
+
+type AuthAccountDetailsProps = {
+  authAccount: AuthAccount;
+  mintTier?: MintTier | undefined;
+};
+
+function AuthAccountDetails({
+  authAccount,
+  mintTier = 'public',
+}: AuthAccountDetailsProps) {
   const tooLowBalance = React.useMemo(() => {
     return authAccount.balance.lt(ethers.utils.parseEther('0.05'));
   }, [authAccount.balance]);
@@ -83,238 +236,107 @@ export default function MintPage({ authAccount }: MintPageProps) {
     return ethers.utils.formatEther(authAccount.balance.sub(remainder));
   }, [authAccount.balance]);
 
-  React.useEffect(() => {
-    if (mintStatus.status === 'success') {
-      setMintResult({ status: 'success', mintAmount: mintStatus.payload });
-    }
-  }, [mintStatus]);
-
-  const handleClickMint = async () => {
-    try {
-      setMintStatus({ status: 'pending' });
-
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(true);
-        }, 2000);
-      });
-
-      /*
-      console.log({ REACT_APP_CONTRACT_ADDRESS });
-      if (!REACT_APP_CONTRACT_ADDRESS) {
-        throw new Error('Internal error: The contract address is not valid.');
-      }
-
-      const signer = authAccount.provider.getSigner(authAccount.address);
-      const hypeHaus = new ethers.Contract(
-        REACT_APP_CONTRACT_ADDRESS,
-        HypeHausJson.abi,
-        signer,
-      ) as HypeHaus;
-
-      const publicSalePrice = await hypeHaus.publicSalePrice();
-      await hypeHaus.mintPublic(mintAmount, {
-        value: publicSalePrice.mul(mintAmount),
-      });
-      */
-
-      setMintStatus({ status: 'success', payload: mintAmount });
-    } catch (error: any) {
-      let reason: string;
-      const errorMessage: string = error.data?.message || error.message;
-
-      if (!errorMessage) {
-        reason = `An unknown error occurred. Please try again later. (Error ${
-          error.code || 'UNKNOWN'
-        })`;
-        console.error('An unknown error occurred:', error);
-      }
-
-      if (errorMessage.includes('HH_ADDRESS_ALREADY_CLAIMED')) {
-        reason = `Sorry, you've already claimed one or more *HYPEHAUSes!`;
-      } else if (errorMessage.includes('HH_COMMUNITY_SALE_NOT_ACTIVE')) {
-        reason = 'Sorry, the community sale is not open yet! Come back later.';
-      } else if (errorMessage.includes('HH_INSUFFICIENT_FUNDS')) {
-        reason = `You don't have enough ETH to mint!`;
-      } else if (errorMessage.includes('HH_INVALID_MINT_AMOUNT')) {
-        reason = 'You provided an invalid amount to mint! Please try again.';
-      } else if (errorMessage.includes('HH_PUBLIC_SALE_NOT_ACTIVE')) {
-        reason = 'Sorry, the public sale is not open yet! Come back later.';
-      } else if (errorMessage.includes('HH_SUPPLY_EXHAUSTED')) {
-        reason = 'Sorry, there are no more *HYPEHAUS left to mint!';
-      } else if (errorMessage.includes('HH_VERIFICATION_FAILURE')) {
-        reason = `You don't seem to be in the allow list. Come back later for the public sale.`;
-      } else {
-        reason = errorMessage;
-      }
-
-      setMintStatus({ status: 'failed', reason });
-    }
-  };
-
   return (
-    <MintAmountContext.Provider value={{ mintAmount, setMintAmount }}>
-      <div className="space-y-4">
-        <HeroImage />
-        <div
-          className={[
-            'flex',
-            'items-center',
-            'justify-center',
-            'p-2',
-            'w-56',
-            'mx-auto',
-            'rounded-full',
-            'font-semibold',
-            'text-sm',
-            'text-center',
-            'font-mono',
-            'text-gray-700',
-            'bg-gray-200',
-          ].join(' ')}>
-          <table className="table-fixed w-full border-collapse">
-            <tbody>
-              <tr>
-                <td className="border-r-2 border-gray-300">
-                  <p>{authAccount.address.slice(0, 9)}</p>
-                </td>
-                <td>
-                  <p
-                    className={[tooLowBalance ? 'text-error-600' : ''].join(
-                      ' ',
-                    )}>
-                    {formattedBalance} Ξ
-                  </p>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="flex-1">How many *HYPEHAUSes would you like to mint?</p>
-        <table className="table-fixed w-full border-collapse">
-          <tbody>
-            <tr>
-              <td className="border-r-2">
-                <PriceInfo price={SALE_PRICE_COMMUNITY} caption="PRESALE" />
-              </td>
-              <td>
-                <PriceInfo price={SALE_PRICE_PUBLIC} caption="PUBLIC" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <NumberInput disabled={isLoading} />
-        <Button
-          loading={isLoading}
-          loadingText="Minting…"
-          onClick={handleClickMint}>
-          Mint *HYPEHAUS
-        </Button>
-        {mintStatus.status === 'failed' && (
-          <p className="font-medium text-sm text-error-500">
-            {mintStatus.reason}
-          </p>
-        )}
-      </div>
-    </MintAmountContext.Provider>
+    <div
+      className={[
+        'flex',
+        'items-center',
+        'justify-center',
+        'p-2',
+        'w-fit',
+        'mx-auto',
+        'rounded-full',
+        'font-semibold',
+        'text-sm',
+        'text-center',
+        'font-mono',
+        'text-gray-700',
+        'bg-gray-200',
+      ].join(' ')}>
+      <table className="table-fixed w-full border-collapse">
+        <tbody>
+          <tr>
+            <td className="border-r-2 border-gray-300">
+              <p
+                className={[
+                  mintTier !== 'public' ? 'text-primary-500' : '',
+                ].join(' ')}>
+                {mintTier.toUpperCase()}
+              </p>
+            </td>
+            <td className="border-r-2 border-gray-300">
+              <p>{authAccount.address.slice(0, 9)}</p>
+            </td>
+            <td>
+              <p className={[tooLowBalance ? 'text-error-600' : ''].join(' ')}>
+                {formattedBalance} Ξ
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
-type PriceInfoProps = {
-  price: string;
-  caption: string;
+type PriceInfoTableProps = {
+  activeSale: HypeHausSale;
+  communitySalePrice: ethers.BigNumber;
+  publicSalePrice: ethers.BigNumber;
 };
 
-function PriceInfo(props: PriceInfoProps) {
+function PriceInfoTable(props: PriceInfoTableProps) {
+  const [formattedCommunityPrice, formattedPublicPrice] = React.useMemo(() => {
+    return [
+      ethers.utils.formatEther(props.communitySalePrice),
+      ethers.utils.formatEther(props.publicSalePrice),
+    ] as const;
+  }, [props]);
+
   return (
-    <div className="space-y-1">
+    <table className="table-fixed w-full border-collapse">
+      <tbody>
+        <tr>
+          <td className="border-r-2">
+            <PriceInfoItem
+              selected={props.activeSale === HypeHausSale.Community}
+              price={formattedCommunityPrice}
+              caption="PRESALE"
+            />
+          </td>
+          <td>
+            <PriceInfoItem
+              selected={props.activeSale === HypeHausSale.Public}
+              price={formattedPublicPrice}
+              caption="PUBLIC"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+type PriceInfoItemProps = {
+  price: string;
+  caption: string;
+  selected?: boolean;
+};
+
+function PriceInfoItem(props: PriceInfoItemProps) {
+  return (
+    <div
+      className={[
+        'relative space-y-1 py-4',
+        props.selected ? 'bg-primary-100' : '',
+      ].join(' ')}>
+      {props.selected && (
+        <div className="absolute px-3 rounded-md translate-x-[-0.8rem] translate-y-[-0.5rem] rotate-[-35deg] bg-primary-600">
+          <p className="text-gray-50 font-semibold select-none">ACTIVE</p>
+        </div>
+      )}
       <p className="text-3xl sm:text-4xl font-bold">{props.price} Ξ</p>
       <p className="text-xs text-gray-600">{props.caption}</p>
     </div>
-  );
-}
-
-type NumberInputProps = {
-  disabled?: boolean;
-};
-
-function NumberInput({ disabled }: NumberInputProps) {
-  const { mintAmount, setMintAmount } = React.useContext(MintAmountContext);
-
-  const handleChange = (input: string) => {
-    try {
-      const number = Number.parseInt(input);
-      setMintAmount(
-        Math.max(MIN_MINT_AMOUNT, Math.min(number, MAX_MINT_AMOUNT)),
-      );
-    } catch (error) {
-      console.error('Failed to parse integer:', error);
-    }
-  };
-
-  const handleClickDecrement = () => {
-    setMintAmount((prev) => Math.max(MIN_MINT_AMOUNT, prev - 1));
-  };
-
-  const handleClickIncrement = () => {
-    setMintAmount((prev) => Math.min(MAX_MINT_AMOUNT, prev + 1));
-  };
-
-  return (
-    <div className="flex justify-center">
-      <NumberInputButton
-        disabled={disabled || mintAmount === MIN_MINT_AMOUNT}
-        onClick={handleClickDecrement}>
-        -
-      </NumberInputButton>
-      <input
-        className="w-12 text-center border-y-2"
-        disabled={disabled}
-        type="number"
-        step={1}
-        min={MIN_MINT_AMOUNT}
-        max={MAX_MINT_AMOUNT}
-        value={mintAmount}
-        onChange={(e) => handleChange(e.target.value)}
-      />
-      <NumberInputButton
-        disabled={disabled || mintAmount === MAX_MINT_AMOUNT}
-        onClick={handleClickIncrement}>
-        +
-      </NumberInputButton>
-    </div>
-  );
-}
-
-type NumberInputButtonProps = React.PropsWithChildren<{
-  disabled?: boolean;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
-}>;
-
-function NumberInputButton(props: NumberInputButtonProps) {
-  return (
-    <button
-      {...props}
-      className={[
-        'w-12',
-        'h-12',
-        'font-bold',
-        'border-2',
-        'text-center',
-        'select-none',
-        'first:rounded-l-md',
-        'last:rounded-r-md',
-        'border-primary-200',
-        'bg-primary-100',
-        'disabled:text-gray-400',
-        'disabled:border-gray-200',
-        'disabled:bg-gray-100',
-        'active:bg-primary-200',
-        'focus:ring',
-        'focus:outline-none',
-        'focus:ring-primary-300',
-      ].join(' ')}>
-      {props.children}
-    </button>
   );
 }

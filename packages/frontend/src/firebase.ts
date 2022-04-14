@@ -5,6 +5,7 @@ const {
   REACT_APP_FIREBASE_PROJECT_ID,
   REACT_APP_FIREBASE_STORAGE_BUCKET,
   REACT_APP_FIREBASE_APP_ID,
+  REACT_APP_MEASUREMENT_ID,
 } = process.env;
 
 const firebaseApp = initializeApp({
@@ -13,6 +14,7 @@ const firebaseApp = initializeApp({
   projectId: REACT_APP_FIREBASE_PROJECT_ID,
   storageBucket: REACT_APP_FIREBASE_STORAGE_BUCKET,
   appId: REACT_APP_FIREBASE_APP_ID,
+  measurementId: REACT_APP_MEASUREMENT_ID,
 });
 
 export default firebaseApp;
