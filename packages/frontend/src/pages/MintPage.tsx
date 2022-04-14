@@ -41,7 +41,7 @@ const MintAmountContext = React.createContext<{
   setMintAmount: React.Dispatch<React.SetStateAction<number>>;
 }>(null as any);
 
-type MintTier = 'alpha' | 'hypelister' | 'hypemember' | 'public';
+type MintTier = 'alpha' | 'hypelist' | 'hypemember' | 'public';
 type MintTierStatus = AsyncStatus<MintTier>;
 
 type HypeHausProperties = {
@@ -90,7 +90,7 @@ async function mintHypeHausCommunity(
   ) {
     verificationBaseURI = `http://localhost:5001/hypehaus-nft/us-central1`;
   } else {
-    verificationBaseURI = `https://${REACT_APP_FIREBASE_FUNCTIONS_BASE_URI}`;
+    verificationBaseURI = REACT_APP_FIREBASE_FUNCTIONS_BASE_URI;
   }
 
   const fetchURL = `${verificationBaseURI}/api/merkle-proof/${mintTier}/${minterAddress}`;
@@ -100,7 +100,7 @@ async function mintHypeHausCommunity(
 
   if (mintTier === 'alpha') {
     await contract.mintAlpha(mintAmount, merkleProof, { value: ethToPay });
-  } else if (mintTier === 'hypelister') {
+  } else if (mintTier === 'hypelist') {
     await contract.mintHypelister(mintAmount, merkleProof, { value: ethToPay });
   } else if (mintTier === 'hypemember') {
     await contract.mintHypemember(mintAmount, merkleProof, { value: ethToPay });
@@ -245,7 +245,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
     switch (mintTierStatus.payload) {
       case 'alpha':
         return properties.maxMintAlpha;
-      case 'hypelister':
+      case 'hypelist':
         return properties.maxMintHypelister;
       case 'hypemember':
         return properties.maxMintHypemember;
@@ -277,6 +277,10 @@ export default function MintPage({ authAccount }: MintPageProps) {
       }
       setMintResult({ status: 'success', mintAmount });
     } catch (error: any) {
+      if (error.code && error.code === 4001) {
+        return;
+      }
+
       let reason: string;
       const errorMessage: string = error.data?.message || error.message;
 
@@ -315,6 +319,14 @@ export default function MintPage({ authAccount }: MintPageProps) {
     <MintAmountContext.Provider value={{ mintAmount, setMintAmount }}>
       <div className="space-y-4">
         <HeroImage />
+        <div>
+          <p className="text-2xl font-semibold">
+            <span className="text-primary-500">
+              {properties.totalMinted.toNumber()}
+            </span>{' '}
+            / 555
+          </p>
+        </div>
         <AuthAccountDetails
           authAccount={authAccount}
           mintTier={
@@ -361,7 +373,7 @@ function AuthAccountDetails({
 
   const formattedBalance = React.useMemo(() => {
     const remainder = authAccount.balance.mod(
-      ethers.BigNumber.from(10).pow(16),
+      ethers.BigNumber.from(10).pow(14),
     );
     return ethers.utils.formatEther(authAccount.balance.sub(remainder));
   }, [authAccount.balance]);
