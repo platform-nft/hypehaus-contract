@@ -56,7 +56,6 @@ describe('HypeHaus Contract', () => {
     hypeHaus = (await factory.deploy(
       MAX_SUPPLY,
       MASKED_BASE_TOKEN_URI,
-      REVEALED_BASE_TOKEN_URI,
       team.address,
     )) as HypeHaus;
     await hypeHaus.deployed();
@@ -639,7 +638,7 @@ describe('HypeHaus Contract', () => {
       expect(await hypeHaus.tokenURI(0)).to.eq(`${MASKED_BASE_TOKEN_URI}0`);
       expect(await hypeHaus.tokenURI(1)).to.eq(`${MASKED_BASE_TOKEN_URI}1`);
 
-      await hypeHaus.toggleReveal();
+      await hypeHaus.setBaseTokenURI(REVEALED_BASE_TOKEN_URI, true);
       expect(await hypeHaus.tokenURI(0)).to.eq(
         `${REVEALED_BASE_TOKEN_URI}0.json`,
       );
@@ -668,7 +667,7 @@ describe('HypeHaus Contract', () => {
         }),
       );
 
-      await hypeHaus.toggleReveal();
+      await hypeHaus.setBaseTokenURI(REVEALED_BASE_TOKEN_URI, true);
       await Promise.all(
         [...Array(minters.length)].map(async (_, i) => {
           expect(await hypeHaus.tokenURI(i)).to.eq(
@@ -701,7 +700,6 @@ describe('HypeHaus Contract', () => {
       await hypeHaus.setHypememberMerkleRoot(hmRoot);
 
       // Activate community sale
-      await hypeHaus.toggleReveal();
       await hypeHaus.setActiveSale(HypeHausSale.Community);
       const communityMintOverrides = {
         value: COMMUNITY_SALE_PRICE.mul(MAX_MINT_ALPHA),
@@ -729,6 +727,7 @@ describe('HypeHaus Contract', () => {
         .mintPublic(1, { value: PUBLIC_SALE_PRICE });
 
       // Test all token URIs
+      await hypeHaus.setBaseTokenURI(REVEALED_BASE_TOKEN_URI, true);
       await Promise.all(
         [...Array(8)].map(async (_, i) => {
           expect(await hypeHaus.tokenURI(i)).to.eq(
@@ -750,7 +749,7 @@ describe('HypeHaus Contract', () => {
 
       // Expect all token URIs to have changed when setting a new base token URI
       const newBaseTokenURI = 'test://zyx987/';
-      await hypeHaus.setBaseTokenURI(newBaseTokenURI);
+      await hypeHaus.setBaseTokenURI(newBaseTokenURI, true);
       await Promise.all(
         [...Array(8)].map(async (_, i) => {
           expect(await hypeHaus.tokenURI(i)).to.eq(
@@ -762,7 +761,7 @@ describe('HypeHaus Contract', () => {
 
     it('can change base token URI for all minted HYPEHAUSes', async () => {
       const newBaseTokenURI = 'protocol://zyxw9876/';
-      await hypeHaus.toggleReveal();
+      await hypeHaus.setBaseTokenURI(REVEALED_BASE_TOKEN_URI, true);
       await hypeHaus.setActiveSale(HypeHausSale.Public);
 
       await hypeHaus
@@ -779,7 +778,7 @@ describe('HypeHaus Contract', () => {
         `${REVEALED_BASE_TOKEN_URI}1.json`,
       );
 
-      await hypeHaus.setBaseTokenURI(newBaseTokenURI);
+      await hypeHaus.setBaseTokenURI(newBaseTokenURI, true);
       expect(await hypeHaus.tokenURI(0)).to.eq(`${newBaseTokenURI}0.json`);
       expect(await hypeHaus.tokenURI(1)).to.eq(`${newBaseTokenURI}1.json`);
     });

@@ -28,7 +28,6 @@ async function main() {
   const hypeHaus = await HypeHaus.deploy(
     555,
     MASKED_BASE_TOKEN_URI,
-    REVEALED_BASE_TOKEN_URI,
     teamWalletAddress,
   );
   await hypeHaus.deployed();

@@ -55,7 +55,7 @@ export interface HypeHausInterface extends utils.Interface {
     "setActiveSale(uint8)": FunctionFragment;
     "setAlphaMerkleRoot(bytes32)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
-    "setBaseTokenURI(string)": FunctionFragment;
+    "setBaseTokenURI(string,bool)": FunctionFragment;
     "setCommunitySalePrice(uint256)": FunctionFragment;
     "setHypelisterMerkleRoot(bytes32)": FunctionFragment;
     "setHypememberMerkleRoot(bytes32)": FunctionFragment;
@@ -68,7 +68,6 @@ export interface HypeHausInterface extends utils.Interface {
     "setTeamWalletAddress(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
-    "toggleReveal()": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "totalMinted()": FunctionFragment;
     "totalSupply()": FunctionFragment;
@@ -199,7 +198,7 @@ export interface HypeHausInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setBaseTokenURI",
-    values: [string]
+    values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setCommunitySalePrice",
@@ -246,10 +245,6 @@ export interface HypeHausInterface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "toggleReveal",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "tokenURI",
     values: [BigNumberish]
@@ -414,10 +409,6 @@ export interface HypeHausInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "toggleReveal",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "tokenURI", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalMinted",
@@ -670,6 +661,7 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newTokenURI: string,
+      hasExtension: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -729,10 +721,6 @@ export interface HypeHaus extends BaseContract {
     ): Promise<[boolean]>;
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
-
-    toggleReveal(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     tokenURI(
       tokenId: BigNumberish,
@@ -901,6 +889,7 @@ export interface HypeHaus extends BaseContract {
 
   setBaseTokenURI(
     newTokenURI: string,
+    hasExtension: boolean,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -960,10 +949,6 @@ export interface HypeHaus extends BaseContract {
   ): Promise<boolean>;
 
   symbol(overrides?: CallOverrides): Promise<string>;
-
-  toggleReveal(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
@@ -1123,6 +1108,7 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newTokenURI: string,
+      hasExtension: boolean,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1182,8 +1168,6 @@ export interface HypeHaus extends BaseContract {
     ): Promise<boolean>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
-
-    toggleReveal(overrides?: CallOverrides): Promise<void>;
 
     tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
@@ -1422,6 +1406,7 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newTokenURI: string,
+      hasExtension: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1481,10 +1466,6 @@ export interface HypeHaus extends BaseContract {
     ): Promise<BigNumber>;
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
-
-    toggleReveal(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     tokenURI(
       tokenId: BigNumberish,
@@ -1667,6 +1648,7 @@ export interface HypeHaus extends BaseContract {
 
     setBaseTokenURI(
       newTokenURI: string,
+      hasExtension: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1726,10 +1708,6 @@ export interface HypeHaus extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    toggleReveal(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     tokenURI(
       tokenId: BigNumberish,

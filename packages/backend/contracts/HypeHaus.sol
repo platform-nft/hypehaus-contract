@@ -50,9 +50,8 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
 
     // ====== INTERNAL STATE VARIABLES ======
 
-    bool internal _revealTokens;
-    string internal _maskedBaseTokenURI;
-    string internal _revealedBaseTokenURI;
+    string internal _baseTokeURI;
+    bool internal _baseTokenURIHasExtension;
     address internal _teamWalletAddress;
     mapping(address => TotalClaimedPerSale) internal _totalClaimed;
 
@@ -64,13 +63,12 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
 
     constructor(
         uint256 maxSupply_,
-        string memory maskedBaseTokenURI,
-        string memory revealedBaseTokenURI,
+        string memory baseTokeURI,
         address teamWalletAddress
     ) ERC721A("HYPEHAUS", "HYPE") {
         maxSupply = maxSupply_;
-        _maskedBaseTokenURI = maskedBaseTokenURI;
-        _revealedBaseTokenURI = revealedBaseTokenURI;
+        _baseTokeURI = baseTokeURI;
+        _baseTokenURIHasExtension = false;
         _teamWalletAddress = teamWalletAddress;
     }
 
@@ -290,11 +288,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     // ====== OVERRIDES ======
 
     function _baseURI() internal view virtual override returns (string memory) {
-        if (_revealTokens) {
-            return _revealedBaseTokenURI;
-        } else {
-            return _maskedBaseTokenURI;
-        }
+        return _baseTokeURI;
     }
 
     // ====== EXTERNAL/PUBLIC FUNCTIONS ======
@@ -342,7 +336,7 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
                     tokenId.toString(),
                     // No file extension for masked token URI since it points to
                     // a URL to an API that generates a JSON file on demand.
-                    _revealTokens ? ".json" : ""
+                    _baseTokenURIHasExtension ? ".json" : ""
                 )
             );
     }
@@ -360,10 +354,6 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
     }
 
     // ====== ONLY-OPERATOR FUNCTIONS ======
-
-    function toggleReveal() external onlyOperator {
-        _revealTokens = !_revealTokens;
-    }
 
     function setMaxMintAlpha(uint8 newMax) external onlyOperator {
         maxMintAlpha = newMax;
@@ -397,8 +387,12 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         maxSupply = newSupply;
     }
 
-    function setBaseTokenURI(string memory newTokenURI) external onlyOperator {
-        _revealedBaseTokenURI = newTokenURI;
+    function setBaseTokenURI(string memory newTokenURI, bool hasExtension)
+        external
+        onlyOperator
+    {
+        _baseTokeURI = newTokenURI;
+        _baseTokenURIHasExtension = hasExtension;
     }
 
     function setTeamWalletAddress(address newAddress) external onlyOperator {

@@ -2,8 +2,8 @@ import { task, types } from 'hardhat/config';
 
 import * as utils from './utils';
 
-const HH_GET_TOKEN_URI = 'hypehaus:token-uri';
-const HH_TOGGLE_REVEAL = 'hypehaus:toggle-reveal';
+const HH_GET_TOKEN_URI = 'hypehaus:get-token-uri';
+const HH_SET_TOKEN_URI = 'hypehaus:set-token-uri';
 
 type GetTokenURIActionType = utils.OptionalContractActionType & {
   tokenId: number;
@@ -28,15 +28,37 @@ task(HH_GET_TOKEN_URI, 'Gets the token URI for a specific token')
     console.log('Token URI:', tokenURI);
   });
 
-task(HH_TOGGLE_REVEAL, 'Toggle reveal of tokens')
+type SetTokenURIActionType = utils.OptionalContractActionType & {
+  baseTokenURI: string;
+  hasExtension?: boolean;
+};
+
+task(HH_SET_TOKEN_URI, 'Sets the base token URI for all tokens')
   .addOptionalParam<string>(
     'contract',
     'The address of the HYPEHAUS contract to connect to',
     undefined,
     types.string,
   )
-  .setAction(async ({ contract }: utils.OptionalContractActionType, hre) => {
-    const hypeHaus = await utils.connectToContract(hre, contract);
-    await hypeHaus.toggleReveal();
-    console.log('Successfully toggled reveal');
-  });
+  .addPositionalParam<string>(
+    'baseTokenURI',
+    'The new base token URI',
+    undefined,
+    types.string,
+  )
+  .addOptionalParam<string>(
+    'hasExtension',
+    'Does the base token URI require a .json extension?',
+    undefined,
+    types.boolean,
+  )
+  .setAction(
+    async (
+      { contract, baseTokenURI, hasExtension = false }: SetTokenURIActionType,
+      hre,
+    ) => {
+      const hypeHaus = await utils.connectToContract(hre, contract);
+      await hypeHaus.setBaseTokenURI(baseTokenURI, hasExtension);
+      console.log('Successfully changed base token URI');
+    },
+  );
