@@ -1,12 +1,8 @@
 import React from 'react';
 
-import {
-  ConnectWalletPage,
-  GlobalContext,
-  MintPage,
-  SuccessfulMintPage,
-} from './components';
+import { GlobalContext } from './components';
 import { MaybeAuthAccount, MintResult } from './models';
+import { ConnectWalletPage, MintPage, SuccessfulMintPage } from './pages';
 
 declare global {
   interface Window {

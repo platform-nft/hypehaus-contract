@@ -2,11 +2,8 @@ import React from 'react';
 import { ethers } from 'ethers';
 
 import { ReactComponent as MetaMaskLogo } from '../assets/metamask-fox.svg';
+import { Button, GlobalContext, HeroImage } from '../components';
 import { AsyncStatus, AuthAccount } from '../models';
-
-import Button from './Button';
-import GlobalContext from './GlobalContext';
-import HeroImage from './HeroImage';
 
 export default function ConnectWalletPage() {
   return (

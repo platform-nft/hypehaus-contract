@@ -14,10 +14,13 @@ import { HypeHaus } from '@platform/backend/typechain-types/HypeHaus';
 import HypeHausJson from '@platform/backend/artifacts/contracts/HypeHaus.sol/HypeHaus.json';
 
 import { AsyncStatus, AuthAccount, IDLE } from '../models';
-import Button from './Button';
-import GlobalContext from './GlobalContext';
-import HeroImage from './HeroImage';
-import NumberInput, { NumberInputContext } from './NumberInput';
+import {
+  Button,
+  GlobalContext,
+  HeroImage,
+  NumberInput,
+  NumberInputContext,
+} from '../components';
 
 enum HypeHausSale {
   Inactive = 0,
@@ -60,25 +63,26 @@ async function getTierForAddress(address: string): Promise<MintTier> {
     if (!walletData || !walletData['tier']) return 'public';
     return walletData['tier'];
   } catch (error) {
-    console.error('Tier for address could not be found:', error);
     return 'public';
   }
 }
 
-async function mintHypeHaus(
+async function mintHypeHausPublic(
   contract: HypeHaus,
-  authAccount: AuthAccount,
-  mintTier: MintTier,
   mintAmount: number,
-  { publicSalePrice, communitySalePrice }: HypeHausProperties,
+  publicSalePrice: ethers.BigNumber,
 ) {
-  if (mintTier === 'public') {
-    const ethToPay = publicSalePrice.mul(mintAmount);
-    await contract.mintPublic(mintAmount, { value: ethToPay });
-    console.log({ mintTier, ethToPay });
-    return;
-  }
+  const ethToPay = publicSalePrice.mul(mintAmount);
+  await contract.mintPublic(mintAmount, { value: ethToPay });
+}
 
+async function mintHypeHausCommunity(
+  contract: HypeHaus,
+  mintTier: MintTier,
+  minterAddress: string,
+  mintAmount: number,
+  communitySalePrice: ethers.BigNumber,
+) {
   let verificationBaseURI: string;
   if (
     process.env.NODE_ENV === 'development' ||
@@ -89,13 +93,10 @@ async function mintHypeHaus(
     verificationBaseURI = `https://${REACT_APP_FIREBASE_FUNCTIONS_BASE_URI}`;
   }
 
-  const minterAddress = authAccount.address;
   const fetchURL = `${verificationBaseURI}/api/merkle-proof/${mintTier}/${minterAddress}`;
   const response = await fetch(fetchURL, { method: 'GET' });
   const merkleProof = await response.json();
   const ethToPay = communitySalePrice.mul(mintAmount);
-
-  console.log({ mintTier, merkleProof, ethToPay });
 
   if (mintTier === 'alpha') {
     await contract.mintAlpha(mintAmount, merkleProof, { value: ethToPay });
@@ -245,13 +246,23 @@ export default function MintPage({ authAccount }: MintPageProps) {
     if (!hypeHaus || mintTierStatus.status !== 'success') return;
     try {
       setIsMinting(true);
-      await mintHypeHaus(
-        hypeHaus,
-        authAccount,
-        mintTierStatus.payload,
-        mintAmount,
-        properties,
-      );
+      if (properties.activeSale === HypeHausSale.Public) {
+        await mintHypeHausPublic(
+          hypeHaus,
+          mintAmount,
+          properties.publicSalePrice,
+        );
+      } else if (properties.activeSale === HypeHausSale.Community) {
+        const mintTier = mintTierStatus.payload;
+        const minterAddress = authAccount.address;
+        await mintHypeHausCommunity(
+          hypeHaus,
+          mintTier,
+          minterAddress,
+          mintAmount,
+          properties.communitySalePrice,
+        );
+      }
       setMintResult({ status: 'success', mintAmount });
     } catch (error: any) {
       let reason: string;
@@ -364,15 +375,15 @@ function AuthAccountDetails({
         <tbody>
           <tr>
             <td className="border-r-2 border-gray-300">
-              <p>{authAccount.address.slice(0, 9)}</p>
-            </td>
-            <td className="border-r-2 border-gray-300">
               <p
                 className={[
                   mintTier !== 'public' ? 'text-primary-500' : '',
                 ].join(' ')}>
                 {mintTier.toUpperCase()}
               </p>
+            </td>
+            <td className="border-r-2 border-gray-300">
+              <p>{authAccount.address.slice(0, 9)}</p>
             </td>
             <td>
               <p className={[tooLowBalance ? 'text-error-600' : ''].join(' ')}>
@@ -437,11 +448,6 @@ function PriceInfoItem(props: PriceInfoItemProps) {
         'relative space-y-1 py-4',
         props.selected ? 'bg-primary-100' : '',
       ].join(' ')}>
-      {props.selected && (
-        <div className="absolute px-3 rounded-md translate-x-[-0.8rem] translate-y-[-0.5rem] rotate-[-35deg] bg-primary-600">
-          <p className="text-gray-50 font-semibold select-none">ACTIVE</p>
-        </div>
-      )}
       <p className="text-3xl sm:text-4xl font-bold">{props.price} Ξ</p>
       <p className="text-xs text-gray-600">{props.caption}</p>
     </div>
