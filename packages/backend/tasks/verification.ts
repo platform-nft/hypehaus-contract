@@ -6,7 +6,7 @@ const HH_SET_MERKLE_ROOTS = 'hypehaus:set-merkle';
 
 type SetMerkleRootActionType = utils.OptionalContractActionType & {
   alpha?: string;
-  hypelister?: string;
+  hypelist?: string;
   hypemember?: string;
 };
 
@@ -24,7 +24,7 @@ task(HH_SET_MERKLE_ROOTS, 'Sets the merkle roots for all tiers')
     types.string,
   )
   .addOptionalParam<string>(
-    'hypelister',
+    'hypelist',
     'Merkle root for the HYPELISTER tier',
     undefined,
     types.string,
@@ -40,7 +40,7 @@ task(HH_SET_MERKLE_ROOTS, 'Sets the merkle roots for all tiers')
       {
         contract,
         alpha: alphaMerkleRoot,
-        hypelister: hypelisterMerkleRoot,
+        hypelist: hypelistMerkleRoot,
         hypemember: hypememberMerkleRoot,
       }: SetMerkleRootActionType,
       hre,
@@ -52,12 +52,9 @@ task(HH_SET_MERKLE_ROOTS, 'Sets the merkle roots for all tiers')
         await hypeHaus.setAlphaMerkleRoot(alphaMerkleRoot);
       }
 
-      if (hypelisterMerkleRoot) {
-        console.log(
-          'Setting merkle root for HYPELISTER:',
-          hypelisterMerkleRoot,
-        );
-        await hypeHaus.setHypelisterMerkleRoot(hypelisterMerkleRoot);
+      if (hypelistMerkleRoot) {
+        console.log('Setting merkle root for HYPELISTER:', hypelistMerkleRoot);
+        await hypeHaus.setHypelisterMerkleRoot(hypelistMerkleRoot);
       }
 
       if (hypememberMerkleRoot) {
@@ -68,6 +65,6 @@ task(HH_SET_MERKLE_ROOTS, 'Sets the merkle roots for all tiers')
         await hypeHaus.setHypememberMerkleRoot(hypememberMerkleRoot);
       }
 
-      console.log('Successfully set merkle roots for all tiers!');
+      console.log('Successfully set merkle roots!');
     },
   );

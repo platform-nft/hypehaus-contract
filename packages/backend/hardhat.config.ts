@@ -15,7 +15,13 @@ import './tasks/tokens';
 import './tasks/verification';
 import './tasks/withdrawing';
 
-const { ALCHEMY_API_KEY = '', DEPLOYER_PRIVATE_KEY = '' } = process.env;
+const {
+  ALCHEMY_API_KEY = '',
+  POLYGON_ALCHEMY_API_KEY = '',
+  ETHERSCAN_API_KEY = '',
+  POLYGONSCAN_API_KEY = '',
+  DEPLOYER_PRIVATE_KEY = '',
+} = process.env;
 
 task('accounts', 'Prints a list of all accounts', async (_, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -64,14 +70,19 @@ const config: HardhatUserConfig = {
       url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [DEPLOYER_PRIVATE_KEY],
     },
+    matic: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${POLYGON_ALCHEMY_API_KEY}`,
+      accounts: [DEPLOYER_PRIVATE_KEY],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: 'USD',
   },
-  // etherscan: {
-  //   apiKey: process.env.ETHERSCAN_API_KEY,
-  // },
+  etherscan: {
+    // apiKey: ETHERSCAN_API_KEY,
+    apiKey: POLYGONSCAN_API_KEY,
+  },
 };
 
 export default config;
