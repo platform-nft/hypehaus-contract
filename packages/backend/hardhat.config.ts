@@ -18,8 +18,8 @@ import './tasks/withdrawing';
 const {
   ALCHEMY_API_KEY = '',
   POLYGON_ALCHEMY_API_KEY = '',
-  ETHERSCAN_API_KEY = '',
-  POLYGONSCAN_API_KEY = '',
+  // ETHERSCAN_API_KEY = '',
+  // POLYGONSCAN_API_KEY = '',
   DEPLOYER_PRIVATE_KEY = '',
 } = process.env;
 
@@ -62,6 +62,10 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    mainnet: {
+      url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
+      accounts: [DEPLOYER_PRIVATE_KEY],
+    },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [DEPLOYER_PRIVATE_KEY],
@@ -81,7 +85,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     // apiKey: ETHERSCAN_API_KEY,
-    apiKey: POLYGONSCAN_API_KEY,
+    // apiKey: POLYGONSCAN_API_KEY,
   },
 };
 
