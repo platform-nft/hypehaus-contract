@@ -11,9 +11,11 @@ import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
 import './tasks/minting';
+import './tasks/tokens';
+import './tasks/verification';
 import './tasks/withdrawing';
 
-const { ALCHEMY_API_KEY = '', PRIVATE_KEY = '' } = process.env;
+const { ALCHEMY_API_KEY = '', DEPLOYER_PRIVATE_KEY = '' } = process.env;
 
 task('accounts', 'Prints a list of all accounts', async (_, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -56,11 +58,11 @@ const config: HardhatUserConfig = {
   networks: {
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
-      accounts: [PRIVATE_KEY],
+      accounts: [DEPLOYER_PRIVATE_KEY],
     },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
-      accounts: [PRIVATE_KEY],
+      accounts: [DEPLOYER_PRIVATE_KEY],
     },
   },
   gasReporter: {

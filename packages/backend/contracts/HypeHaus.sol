@@ -287,6 +287,16 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         _safeMint(receiver, amount);
     }
 
+    // ====== OVERRIDES ======
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        if (_revealTokens) {
+            return _revealedBaseTokenURI;
+        } else {
+            return _maskedBaseTokenURI;
+        }
+    }
+
     // ====== EXTERNAL/PUBLIC FUNCTIONS ======
 
     /**
@@ -325,21 +335,14 @@ contract HypeHaus is ERC721ABurnable, HypeHausAccessControl, ReentrancyGuard {
         returns (string memory)
     {
         require(_exists(tokenId), "HH_NONEXISTENT_TOKEN");
-
-        if (!_revealTokens) {
-            // No file extension since this would point to an API URI
-            return
-                string(
-                    abi.encodePacked(_maskedBaseTokenURI, tokenId.toString())
-                );
-        }
-
         return
             string(
                 abi.encodePacked(
-                    _revealedBaseTokenURI,
+                    _baseURI(),
                     tokenId.toString(),
-                    ".json"
+                    // No file extension for masked token URI since it points to
+                    // a URL to an API that generates a JSON file on demand.
+                    _revealTokens ? ".json" : ""
                 )
             );
     }
