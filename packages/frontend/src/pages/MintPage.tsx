@@ -174,8 +174,6 @@ export default function MintPage({ authAccount }: MintPageProps) {
       return true;
     }
 
-    if (authAccount.balance.lt(amountToPay)) return true;
-
     if (
       properties.activeSale === HypeHausSale.Community &&
       mintTierStatus.status === 'success' &&
@@ -183,6 +181,8 @@ export default function MintPage({ authAccount }: MintPageProps) {
     ) {
       return true;
     }
+
+    if (authAccount.balance.lt(amountToPay)) return true;
 
     return false;
   }, [properties, mintAmount, authAccount, mintTierStatus]);
