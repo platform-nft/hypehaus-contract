@@ -2,8 +2,32 @@ import { task, types } from 'hardhat/config';
 
 import * as utils from './utils';
 
+const HH_BURN_TOKEN = 'hypehaus:burn';
 const HH_GET_TOKEN_URI = 'hypehaus:get-token-uri';
 const HH_SET_TOKEN_URI = 'hypehaus:set-token-uri';
+
+type BurnTokenActionType = utils.OptionalContractActionType & {
+  tokenId: number;
+};
+
+task(HH_BURN_TOKEN, 'Burns the given token')
+  .addOptionalParam<string>(
+    'contract',
+    'The address of the HYPEHAUS contract to connect to',
+    undefined,
+    types.string,
+  )
+  .addPositionalParam<number>(
+    'tokenId',
+    'The ID of the token to burn',
+    undefined,
+    types.int,
+  )
+  .setAction(async ({ contract, tokenId }: BurnTokenActionType, hre) => {
+    const hypeHaus = await utils.connectToContract(hre, contract);
+    await hypeHaus.burn(tokenId);
+    console.log(`Successfully burnt token with ID '${tokenId}'`);
+  });
 
 type GetTokenURIActionType = utils.OptionalContractActionType & {
   tokenId: number;
@@ -16,7 +40,7 @@ task(HH_GET_TOKEN_URI, 'Gets the token URI for a specific token')
     undefined,
     types.string,
   )
-  .addPositionalParam<string>(
+  .addPositionalParam<number>(
     'tokenId',
     'The ID of the token',
     undefined,
