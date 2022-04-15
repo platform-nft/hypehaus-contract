@@ -555,6 +555,22 @@ describe('HypeHaus Contract', () => {
       expect(currentTotal).to.eq(expectedTotal);
     }
 
+    describe('Airdrop', () => {
+      it('mints and gifts some amount to given address', async () => {
+        await hypeHaus.mintUnchecked(addresses.u1, 1);
+        expect(await hypeHaus.ownerOf(0)).to.eq(addresses.u1);
+
+        await hypeHaus.mintUnchecked(addresses.u2, MAX_MINT_ALPHA + 1);
+        expect(await hypeHaus.ownerOf(1)).to.eq(addresses.u2);
+        expect(await hypeHaus.ownerOf(2)).to.eq(addresses.u2);
+        expect(await hypeHaus.ownerOf(3)).to.eq(addresses.u2);
+        expect(await hypeHaus.ownerOf(4)).to.eq(addresses.u2);
+
+        await hypeHaus.mintUnchecked(addresses.deployer, 1);
+        expect(await hypeHaus.ownerOf(5)).to.eq(addresses.deployer);
+      });
+    });
+
     describe('Community Sale', () => {
       beforeEach(async () => {
         await hypeHaus.setActiveSale(HypeHausSale.Community);
