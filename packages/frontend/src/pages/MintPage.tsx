@@ -31,11 +31,6 @@ enum HypeHausSale {
 const { REACT_APP_CONTRACT_ADDRESS, REACT_APP_FIREBASE_FUNCTIONS_BASE_URI } =
   process.env;
 
-const firestore = getFirestore(getApp());
-if (process.env.NODE_ENV === 'development') {
-  connectFirestoreEmulator(firestore, 'localhost', 8080);
-}
-
 const MintAmountContext = React.createContext<{
   mintAmount: number;
   setMintAmount: React.Dispatch<React.SetStateAction<number>>;
@@ -57,6 +52,10 @@ type HypeHausProperties = {
 
 async function getTierForAddress(address: string): Promise<MintTier> {
   try {
+    const firestore = getFirestore(getApp());
+    if (process.env.NODE_ENV === 'development') {
+      connectFirestoreEmulator(firestore, 'localhost', 8080);
+    }
     const allWalletsRef = collection(firestore, 'wallets');
     const walletRef = doc(allWalletsRef, address);
     const walletData = await getDoc(walletRef).then((doc) => doc.data());
@@ -160,19 +159,20 @@ export default function MintPage({ authAccount }: MintPageProps) {
     return isSyncing || isMinting;
   }, [isSyncing, isMinting]);
 
-  const isDisabled = React.useMemo(() => {
-    // The sale is closed
-    if (properties.activeSale === HypeHausSale.Inactive) return true;
-
-    // User does not have enough ETH
-    let amountToPay: ethers.BigNumber;
+  const insufficientFunds = React.useMemo(() => {
+    let amountToPay = ethers.BigNumber.from(0);
     if (properties.activeSale === HypeHausSale.Community) {
       amountToPay = properties.communitySalePrice.mul(mintAmount);
     } else if (properties.activeSale === HypeHausSale.Public) {
       amountToPay = properties.publicSalePrice.mul(mintAmount);
-    } else {
-      return true;
     }
+
+    return authAccount.balance.lt(amountToPay);
+  }, [properties, mintAmount, authAccount]);
+
+  const isDisabled = React.useMemo(() => {
+    // The sale is closed
+    if (properties.activeSale === HypeHausSale.Inactive) return true;
 
     if (
       properties.activeSale === HypeHausSale.Community &&
@@ -182,10 +182,8 @@ export default function MintPage({ authAccount }: MintPageProps) {
       return true;
     }
 
-    if (authAccount.balance.lt(amountToPay)) return true;
-
-    return false;
-  }, [properties, mintAmount, authAccount, mintTierStatus]);
+    return insufficientFunds;
+  }, [properties, authAccount, mintTierStatus, insufficientFunds]);
 
   React.useEffect(() => {
     getTierForAddress(authAccount.address.toLowerCase()).then((tier) => {
@@ -352,7 +350,11 @@ export default function MintPage({ authAccount }: MintPageProps) {
           loading={isInitializing || isLoading}
           loadingText={isMinting ? 'Minting…' : ''}
           onClick={handleClickMint}>
-          {isDisabled ? "Sorry, you can't mint now!" : 'Mint *HYPEHAUS'}
+          {insufficientFunds
+            ? 'Insufficient funds!'
+            : isDisabled
+            ? "Sorry, you can't mint now!"
+            : 'Mint *HYPEHAUS'}
         </Button>
         {error && <p className="font-medium text-sm text-error-500">{error}</p>}
       </div>
