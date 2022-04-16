@@ -18,7 +18,10 @@ export default function SuccessfulMintPage({
       <div className="space-y-4">
         <h1 className="text-3xl font-bold">CONGRATULATIONS!</h1>
         <div>
-          <p>You've successfully minted {mintAmount} *HYPEHAUSes.</p>
+          <p>
+            You've successfully minted {mintAmount} *HYPEHAUS
+            {mintAmount !== 1 ? 'es' : ''}.
+          </p>
           <p>Welcome to *HYPEHAUS!</p>
         </div>
       </div>

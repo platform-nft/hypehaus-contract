@@ -4,6 +4,8 @@ import { GlobalContext } from './components';
 import { MaybeAuthAccount, MintResult } from './models';
 import { ConnectWalletPage, MintPage, SuccessfulMintPage } from './pages';
 
+const { REACT_APP_VERSION } = process.env;
+
 declare global {
   interface Window {
     ethereum: any;
@@ -29,6 +31,11 @@ export default function App() {
             <ConnectWalletPage />
           )}
         </div>
+        {REACT_APP_VERSION && (
+          <p className="absolute top-4 right-4 text-gray-400">
+            v{REACT_APP_VERSION}
+          </p>
+        )}
       </div>
     </GlobalContext.Provider>
   );
