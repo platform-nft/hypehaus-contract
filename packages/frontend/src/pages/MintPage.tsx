@@ -45,6 +45,8 @@ type HypeHausProperties = {
 const { REACT_APP_CONTRACT_ADDRESS, REACT_APP_FIREBASE_FUNCTIONS_BASE_URI } =
   process.env;
 
+const ETH_MAINNET_CHAIN_ID = 1;
+
 const MintAmountContext = React.createContext<{
   mintAmount: number;
   setMintAmount: React.Dispatch<React.SetStateAction<number>>;
@@ -343,7 +345,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
           />
         </div>
         <div className="space-y-4 md:flex md:flex-col md:justify-center md:align-center">
-          {authAccount.network.chainId !== 0 && (
+          {authAccount.network.chainId !== ETH_MAINNET_CHAIN_ID && (
             <div className="py-2 px-4 rounded-xl border-2 bg-warning-100 text-warning-600 border-warning-500">
               You're not connected to the Ethereum Mainnet!
             </div>
