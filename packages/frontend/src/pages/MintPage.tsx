@@ -28,14 +28,6 @@ enum HypeHausSale {
   Public = 2,
 }
 
-const { REACT_APP_CONTRACT_ADDRESS, REACT_APP_FIREBASE_FUNCTIONS_BASE_URI } =
-  process.env;
-
-const MintAmountContext = React.createContext<{
-  mintAmount: number;
-  setMintAmount: React.Dispatch<React.SetStateAction<number>>;
-}>(null as any);
-
 type MintTier = 'alpha' | 'hypelist' | 'hypemember' | 'public';
 type MintTierStatus = AsyncStatus<MintTier>;
 
@@ -50,12 +42,21 @@ type HypeHausProperties = {
   maxMintPublic: number;
 };
 
+const { REACT_APP_CONTRACT_ADDRESS, REACT_APP_FIREBASE_FUNCTIONS_BASE_URI } =
+  process.env;
+
+const MintAmountContext = React.createContext<{
+  mintAmount: number;
+  setMintAmount: React.Dispatch<React.SetStateAction<number>>;
+}>(null as any);
+
+const firestore = getFirestore(getApp());
+if (process.env.NODE_ENV === 'development') {
+  connectFirestoreEmulator(firestore, 'localhost', 8888);
+}
+
 async function getTierForAddress(address: string): Promise<MintTier> {
   try {
-    const firestore = getFirestore(getApp());
-    if (process.env.NODE_ENV === 'development') {
-      connectFirestoreEmulator(firestore, 'localhost', 8888);
-    }
     const allWalletsRef = collection(firestore, 'wallets');
     const walletRef = doc(allWalletsRef, address);
     const walletData = await getDoc(walletRef).then((doc) => doc.data());
@@ -159,7 +160,7 @@ export default function MintPage({ authAccount }: MintPageProps) {
     return isSyncing || isMinting;
   }, [isSyncing, isMinting]);
 
-  const insufficientFunds = React.useMemo(() => {
+  const hasInsufficientFunds = React.useMemo(() => {
     let amountToPay = ethers.BigNumber.from(0);
     if (properties.activeSale === HypeHausSale.Community) {
       amountToPay = properties.communitySalePrice.mul(mintAmount);
@@ -182,8 +183,12 @@ export default function MintPage({ authAccount }: MintPageProps) {
       return true;
     }
 
-    return insufficientFunds;
-  }, [properties, authAccount, mintTierStatus, insufficientFunds]);
+    return false;
+  }, [properties, authAccount, mintTierStatus]);
+
+  const isNumberInputDisabled = React.useMemo(() => {
+    return isDisabled || isLoading;
+  }, [isDisabled, isLoading]);
 
   React.useEffect(() => {
     getTierForAddress(authAccount.address.toLowerCase()).then((tier) => {
@@ -348,19 +353,19 @@ export default function MintPage({ authAccount }: MintPageProps) {
           <NumberInputContext.Provider
             value={{ value: mintAmount, setValue: setMintAmount }}>
             <NumberInput
-              disabled={isDisabled || isLoading}
               min={1}
               max={personalMintMax}
+              disabled={isNumberInputDisabled}
             />
           </NumberInputContext.Provider>
           <div className="space-y-2">
             <Button
               className="w-full"
-              disabled={isDisabled || isLoading}
+              disabled={isDisabled || hasInsufficientFunds || isLoading}
               loading={isInitializing || isLoading}
               loadingText={isMinting ? 'Minting…' : ''}
               onClick={handleClickMint}>
-              {insufficientFunds
+              {hasInsufficientFunds
                 ? 'Insufficient funds!'
                 : isDisabled
                 ? "Sorry, you can't mint now!"

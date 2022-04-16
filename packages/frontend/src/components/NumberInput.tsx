@@ -6,12 +6,12 @@ export const NumberInputContext = React.createContext<{
 }>(null as any);
 
 type NumberInputProps = {
-  disabled?: boolean;
   min: number;
   max: number;
+  disabled?: boolean;
 };
 
-export default function NumberInput({ disabled, min, max }: NumberInputProps) {
+export default function NumberInput({ min, max, disabled }: NumberInputProps) {
   const { value, setValue } = React.useContext(NumberInputContext);
 
   const handleChange = (input: string) => {

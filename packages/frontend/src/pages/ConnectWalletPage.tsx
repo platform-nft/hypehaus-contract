@@ -7,7 +7,7 @@ import { AsyncStatus, AuthAccount } from '../models';
 
 export default function ConnectWalletPage() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-xs">
       <HeroImage />
       <h1 className="text-3xl font-bold">Mint *HYPEHAUS</h1>
       <p>To mint, connect your MetaMask wallet below</p>
@@ -41,7 +41,7 @@ function ConnectWalletButton() {
     if (!window.ethereum) {
       setConnection({
         status: 'failed',
-        reason: 'Please install the MetaMask extension on your browser',
+        reason: `Please install the MetaMask extension in your browser or visit this webpage in the MetaMask app.`,
       });
       return;
     }
