@@ -11,6 +11,8 @@ module.exports = {
       gray: colors.gray,
       primary: colors.purple,
       error: colors.red,
+      warning: colors.orange,
+      success: colors.green,
     },
   },
   plugins: [],

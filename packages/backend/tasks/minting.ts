@@ -30,6 +30,7 @@ task(HH_SET_ACTIVE_SALE, 'Sets the current active sale')
     const newActiveSale = stringToHypeHausSale(sale);
     console.log('Setting active sale to:', newActiveSale);
     await hypeHaus.setActiveSale(newActiveSale);
+    console.log('Done!');
   });
 
 task(HH_TOTAL_MINTED, 'Reports total amount of HYPEHAUSes minted')

@@ -338,6 +338,11 @@ export default function MintPage({ authAccount }: MintPageProps) {
           />
         </div>
         <div className="space-y-4 md:flex md:flex-col md:justify-center md:align-center">
+          {authAccount.network.chainId !== 0 && (
+            <div className="py-2 px-4 rounded-xl border-2 bg-warning-100 text-warning-600 border-warning-500">
+              You're not connected to the Ethereum Mainnet!
+            </div>
+          )}
           <p>How many *HYPEHAUSes would you like to mint?</p>
           <PriceInfoTable {...properties} />
           <NumberInputContext.Provider
