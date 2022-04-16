@@ -9,17 +9,17 @@ export default function SuccessfulMintPage({
   mintAmount,
 }: SuccessfulMintPageProps) {
   return (
-    <div className="flex flex-col max-w-xs space-y-8 items-center">
+    <div className="flex flex-col items-center space-y-4 max-w-xs">
       <img
         src={logo}
         alt="*HYPEHAUS logo"
-        className="rounded-lg aspect-square"
+        className="w-full aspect-square rounded-2xl"
       />
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold">CONGRATULATIONS!</h1>
-        <div>
+        <h1 className="text-3xl font-bold">Congrats!</h1>
+        <div className="flex flex-col">
           <p>
-            Thank you for minting {mintAmount} *HYPEHAUS
+            You have minted {mintAmount} *HYPEHAUS
             {mintAmount !== 1 ? 'es' : ''}.
           </p>
           <p>Welcome to *HYPEHAUS!</p>

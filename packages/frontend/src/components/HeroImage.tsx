@@ -6,7 +6,7 @@ export default function HeroImage() {
     <img
       src={hero}
       alt="*HYPEHAUS"
-      className="w-full max-w-xs mx-auto aspect-square rounded-2xl sm:w-full"
+      className="w-full max-w-xs mx-auto aspect-square rounded-2xl"
     />
   );
 }

@@ -45,7 +45,7 @@ export default function Button({
         'focus:ring-primary-300',
         classNameOverrides,
       ].join(' ')}>
-      <div className="flex flex-row text-center justify-center">
+      <div className="flex flex-row text-center justify-center items-center">
         {loading ? (
           <>
             <div className="mr-1">

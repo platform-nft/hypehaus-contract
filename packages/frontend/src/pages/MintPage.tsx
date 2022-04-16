@@ -367,10 +367,10 @@ export default function MintPage({ authAccount }: MintPageProps) {
               loading={isInitializing || isLoading}
               loadingText={isMinting ? 'Minting…' : ''}
               onClick={handleClickMint}>
-              {hasInsufficientFunds
-                ? 'Insufficient funds!'
-                : isDisabled
+              {isDisabled
                 ? "Sorry, you can't mint now!"
+                : hasInsufficientFunds
+                ? 'Insufficient funds!'
                 : 'Mint *HYPEHAUS'}
             </Button>
             {error && (

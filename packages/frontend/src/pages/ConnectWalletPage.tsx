@@ -10,7 +10,7 @@ export default function ConnectWalletPage() {
     <div className="space-y-4 max-w-xs">
       <HeroImage />
       <h1 className="text-3xl font-bold">Mint *HYPEHAUS</h1>
-      <p>To mint, connect your MetaMask wallet below</p>
+      <p>Get started by connecting your MetaMask wallet below</p>
       <ConnectWalletButton />
     </div>
   );
