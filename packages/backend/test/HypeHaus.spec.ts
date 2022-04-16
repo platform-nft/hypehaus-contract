@@ -556,7 +556,7 @@ describe('HypeHaus Contract', () => {
     }
 
     describe('Airdrop', () => {
-      it('mints and gifts some amount to given address', async () => {
+      it('mints and gifts new HYPEHAUSes to some address', async () => {
         await hypeHaus.mintUnchecked(addresses.u1, 1);
         expect(await hypeHaus.ownerOf(0)).to.eq(addresses.u1);
 
@@ -568,6 +568,22 @@ describe('HypeHaus Contract', () => {
 
         await hypeHaus.mintUnchecked(addresses.deployer, 1);
         expect(await hypeHaus.ownerOf(5)).to.eq(addresses.deployer);
+      });
+
+      it('transfers a token to some address', async () => {
+        await hypeHaus.mintUnchecked(addresses.deployer, 5);
+
+        await hypeHaus.transferFrom(addresses.deployer, addresses.u1, 0);
+        await hypeHaus.transferFrom(addresses.deployer, addresses.u1, 1);
+        await hypeHaus.transferFrom(addresses.deployer, addresses.u2, 2);
+        await hypeHaus.transferFrom(addresses.deployer, addresses.u3, 3);
+        await hypeHaus.transferFrom(addresses.deployer, addresses.u4, 4);
+
+        expect(await hypeHaus.ownerOf(0)).to.eq(addresses.u1);
+        expect(await hypeHaus.ownerOf(1)).to.eq(addresses.u1);
+        expect(await hypeHaus.ownerOf(2)).to.eq(addresses.u2);
+        expect(await hypeHaus.ownerOf(3)).to.eq(addresses.u3);
+        expect(await hypeHaus.ownerOf(4)).to.eq(addresses.u4);
       });
     });
 
