@@ -54,7 +54,7 @@ async function getTierForAddress(address: string): Promise<MintTier> {
   try {
     const firestore = getFirestore(getApp());
     if (process.env.NODE_ENV === 'development') {
-      connectFirestoreEmulator(firestore, 'localhost', 8080);
+      connectFirestoreEmulator(firestore, 'localhost', 8888);
     }
     const allWalletsRef = collection(firestore, 'wallets');
     const walletRef = doc(allWalletsRef, address);
@@ -317,46 +317,55 @@ export default function MintPage({ authAccount }: MintPageProps) {
 
   return (
     <MintAmountContext.Provider value={{ mintAmount, setMintAmount }}>
-      <div className="space-y-4">
-        <HeroImage />
-        <div>
-          <p className="text-2xl font-semibold">
-            <span className="text-primary-500">
-              {properties.totalMinted.toNumber()}
-            </span>{' '}
-            / 555
-          </p>
-        </div>
-        <AuthAccountDetails
-          authAccount={authAccount}
-          mintTier={
-            mintTierStatus.status === 'success'
-              ? mintTierStatus.payload
-              : undefined
-          }
-        />
-        <p className="flex-1">How many *HYPEHAUSes would you like to mint?</p>
-        <PriceInfoTable {...properties} />
-        <NumberInputContext.Provider
-          value={{ value: mintAmount, setValue: setMintAmount }}>
-          <NumberInput
-            disabled={isDisabled || isLoading}
-            min={1}
-            max={personalMintMax}
+      <div className="space-y-4 flex flex-col md:flex-row md:space-y-0 md:space-x-8">
+        <div className="space-y-4 md:max-w-sm">
+          <HeroImage />
+          <div>
+            <p className="text-2xl font-bold">
+              <span className="text-primary-500">
+                {properties.totalMinted.toNumber()}
+              </span>{' '}
+              / 555
+            </p>
+          </div>
+          <AuthAccountDetails
+            authAccount={authAccount}
+            mintTier={
+              mintTierStatus.status === 'success'
+                ? mintTierStatus.payload
+                : undefined
+            }
           />
-        </NumberInputContext.Provider>
-        <Button
-          disabled={isDisabled || isLoading}
-          loading={isInitializing || isLoading}
-          loadingText={isMinting ? 'Minting…' : ''}
-          onClick={handleClickMint}>
-          {insufficientFunds
-            ? 'Insufficient funds!'
-            : isDisabled
-            ? "Sorry, you can't mint now!"
-            : 'Mint *HYPEHAUS'}
-        </Button>
-        {error && <p className="font-medium text-sm text-error-500">{error}</p>}
+        </div>
+        <div className="space-y-4 md:flex md:flex-col md:justify-center md:align-center">
+          <p>How many *HYPEHAUSes would you like to mint?</p>
+          <PriceInfoTable {...properties} />
+          <NumberInputContext.Provider
+            value={{ value: mintAmount, setValue: setMintAmount }}>
+            <NumberInput
+              disabled={isDisabled || isLoading}
+              min={1}
+              max={personalMintMax}
+            />
+          </NumberInputContext.Provider>
+          <div className="space-y-2">
+            <Button
+              className="w-full"
+              disabled={isDisabled || isLoading}
+              loading={isInitializing || isLoading}
+              loadingText={isMinting ? 'Minting…' : ''}
+              onClick={handleClickMint}>
+              {insufficientFunds
+                ? 'Insufficient funds!'
+                : isDisabled
+                ? "Sorry, you can't mint now!"
+                : 'Mint *HYPEHAUS'}
+            </Button>
+            {error && (
+              <p className="font-medium text-sm text-error-500">{error}</p>
+            )}
+          </div>
+        </div>
       </div>
     </MintAmountContext.Provider>
   );
@@ -382,6 +391,9 @@ function AuthAccountDetails({
     return ethers.utils.formatEther(authAccount.balance.sub(remainder));
   }, [authAccount.balance]);
 
+  const defaultTextStyles =
+    'overflow-hidden text-ellipsis px-2 whitespace-nowrap';
+
   return (
     <div
       className={[
@@ -393,7 +405,8 @@ function AuthAccountDetails({
         'mx-auto',
         'rounded-full',
         'font-semibold',
-        'text-sm',
+        'text-xs',
+        'md:text-sm',
         'text-center',
         'font-mono',
         'text-gray-700',
@@ -405,16 +418,23 @@ function AuthAccountDetails({
             <td className="border-r-2 border-gray-300">
               <p
                 className={[
+                  defaultTextStyles,
                   mintTier !== 'public' ? 'text-primary-500' : '',
                 ].join(' ')}>
                 {mintTier.toUpperCase()}
               </p>
             </td>
             <td className="border-r-2 border-gray-300">
-              <p>{authAccount.address.slice(0, 9)}</p>
+              <p className={defaultTextStyles}>
+                {authAccount.address.slice(0, 9)}
+              </p>
             </td>
             <td>
-              <p className={[tooLowBalance ? 'text-error-600' : ''].join(' ')}>
+              <p
+                className={[
+                  defaultTextStyles,
+                  tooLowBalance ? 'text-error-600' : '',
+                ].join(' ')}>
                 {formattedBalance} Ξ
               </p>
             </td>
@@ -476,7 +496,9 @@ function PriceInfoItem(props: PriceInfoItemProps) {
         'relative space-y-1 py-4',
         props.selected ? 'bg-primary-100' : '',
       ].join(' ')}>
-      <p className="text-3xl sm:text-4xl font-bold">{props.price} Ξ</p>
+      <p className="font-bold text-2xl md:text-3xl lg:text-4xl">
+        {props.price} Ξ
+      </p>
       <p className="text-xs text-gray-600">{props.caption}</p>
     </div>
   );

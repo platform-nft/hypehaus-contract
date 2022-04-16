@@ -77,17 +77,11 @@ function ConnectWalletButton() {
   return (
     <div className="space-y-2">
       <Button
+        className="w-full"
         loading={isLoading}
         loadingText="Connecting…"
         onClick={handleConnectWallet}>
-        <MetaMaskLogo
-          className={[
-            'h-6',
-            'aspect-square',
-            'mr-1.5',
-            isLoading ? 'grayscale' : '',
-          ].join(' ')}
-        />
+        <MetaMaskLogo className="h-6 aspect-square mr-1.5" />
         <p>Connect MetaMask</p>
       </Button>
       {connection.status === 'failed' && (
