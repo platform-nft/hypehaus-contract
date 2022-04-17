@@ -19,7 +19,7 @@ const {
   ALCHEMY_API_KEY = '',
   POLYGON_ALCHEMY_API_KEY = '',
   ETHERSCAN_API_KEY = '',
-  POLYGONSCAN_API_KEY = '',
+  // POLYGONSCAN_API_KEY = '',
   DEPLOYER_PRIVATE_KEY = '',
 } = process.env;
 

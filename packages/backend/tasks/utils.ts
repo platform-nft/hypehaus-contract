@@ -1,4 +1,5 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { task, types } from 'hardhat/config';
+import { HardhatRuntimeEnvironment, TaskArguments } from 'hardhat/types';
 import { HypeHaus } from '../typechain-types/HypeHaus';
 
 const { CONTRACT_ADDRESS = '', LOCAL_CONTRACT_ADDRESS = '' } = process.env;
@@ -37,4 +38,16 @@ export async function connectToContract(
 export async function logTotalMinted(contract: HypeHaus) {
   const totalMinted = await contract.totalSupply();
   console.log('Total minted so far:', totalMinted.toString());
+}
+
+export function taskWithOptionalContractParam<ArgsT extends TaskArguments>(
+  name: string,
+  description?: string,
+) {
+  return task<ArgsT>(name, description).addOptionalParam<string>(
+    'contract',
+    'The address of the HYPEHAUS contract to connect to',
+    undefined,
+    types.string,
+  );
 }
