@@ -12,6 +12,7 @@ import 'solidity-coverage';
 
 import './tasks/minting';
 import './tasks/tokens';
+import './tasks/transferring';
 import './tasks/verification';
 import './tasks/withdrawing';
 
