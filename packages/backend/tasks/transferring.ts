@@ -16,12 +16,15 @@ const addresses: string[] = [
 
 type TransferActionType = utils.OptionalContractActionType & {};
 
+const CURR_TOKEN = 286;
+const CURR_NONCE = 250;
+
 task(HH_TRANSFER).setAction(async ({ contract }: TransferActionType, hre) => {
-  let token = 285;
+  let token = CURR_TOKEN;
   const H = await utils.connectToContract(hre, contract);
 
   for (const [i, address] of addresses.entries()) {
-    const nonce = 248 + i;
+    const nonce = CURR_NONCE + i;
     console.log(address, '=>', `#${token}`, `(${nonce})`);
 
     while (RESERVED_TOKENS.includes(token)) {
